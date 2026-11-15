@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router";
+import { SwipeTabs } from "@/components/tabs/SwipeTabs";
 import { colors, fonts } from "@/design";
 
 export default function TabsLayout() {
   return (
     <Tabs
+      screenLayout={({ route, children }) => <SwipeTabs name={route.name}>{children}</SwipeTabs>}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.ink,
