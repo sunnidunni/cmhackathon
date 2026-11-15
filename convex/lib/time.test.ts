@@ -49,7 +49,7 @@ describe("notification text", () => {
   });
   test("today includes the time", () => {
     expect(notificationText({ ...base, title: "dentist", category: "deadlines", when: "2026-11-15T18:30" })).toBe(
-      "Psst: your dentist is due today at 6:30 pm. Want to see it?",
+      "Psst: your dentist is due today at 6:30 PM. Want to see it?",
     );
   });
 });
@@ -73,3 +73,37 @@ describe("notification thing", () => {
   });
 });
 
+
+describe("notification verbs by what the date is", () => {
+  const n = (title: string, category: string, when: string, what: string, amount?: string) =>
+    notificationText({ title, category, when, what, amount, at: Date.UTC(2026, 10, 15, 17, 0), tz: PST });
+  test("the flyer's event date is tomorrow at its time", () => {
+    expect(n("Harvest Lantern Night", "deadlines", "2026-11-16T18:30", "Harvest Lantern Night")).toBe(
+      "Psst: Harvest Lantern Night is tomorrow at 6:30 PM. Want to see it?",
+    );
+  });
+  test("the flyer's RSVP date is a due date on the RSVP", () => {
+    expect(n("Harvest Lantern Night", "deadlines", "2026-11-16", "RSVP deadline")).toBe(
+      "Psst: your Harvest Lantern Night RSVP is due tomorrow. Want to see it?",
+    );
+  });
+  test("an appointment is an event with its time", () => {
+    expect(n("Willow Creek Dental cleaning", "deadlines", "2026-11-16T09:15", "Dental cleaning with Dr. Okafor")).toBe(
+      "Psst: Willow Creek Dental cleaning is tomorrow at 9:15 AM. Want to see it?",
+    );
+  });
+  test("a bill is due, with the amount and no question", () => {
+    expect(n("Brightside Power bill", "money", "2026-11-16", "Payment due date", "$142.37")).toBe(
+      "Psst: your Brightside Power bill is due tomorrow. $142.37.",
+    );
+  });
+  test("a deal ends", () => {
+    expect(n("Drift Pro Wireless Headphones", "money", "2026-11-16", "Limited headphone deal ends", "$89.99")).toBe(
+      "Psst: the Drift Pro Wireless Headphones deal ends tomorrow. $89.99.",
+    );
+  });
+  test("an event with no time shown has no time, and unknown labels fall back to due", () => {
+    expect(n("Pottery class", "deadlines", "2026-11-16", "Event starts")).toBe("Psst: Pottery class is tomorrow. Want to see it?");
+    expect(n("Thing", "ideas", "2026-11-16", "something odd")).toBe("Psst: your Thing is due tomorrow. Want to see it?");
+  });
+});

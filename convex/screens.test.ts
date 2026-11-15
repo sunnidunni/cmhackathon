@@ -167,7 +167,7 @@ describe("reminders", () => {
   test("set stores a scheduled reminder with Psst text and replaces the old one", async () => {
     const { me, id, t, when } = await withDate();
     const r = await me.mutation(api.reminders.set, { screenshotId: id, tzOffsetMinutes: TZ });
-    expect(r.text).toBe("Psst: your Harvest Lantern Night is due tomorrow. Want to see it?");
+    expect(r.text).toBe("Psst: Harvest Lantern Night is tomorrow at 6:30 PM. Want to see it?");
     expect(r.dueAt).toBeGreaterThan(Date.now());
     const detail = await me.query(api.shots.detail, { id });
     expect(detail?.dates[0].reminder).toMatchObject({ state: "scheduled", dueAt: r.dueAt });
@@ -205,7 +205,7 @@ describe("reminders", () => {
   test("fire now marks it sent at once with the text, and works with no reminder set", async () => {
     const { me, id, t, seed } = await withDate();
     const first = await me.mutation(api.reminders.fireNow, { screenshotId: id, tzOffsetMinutes: TZ });
-    expect(first.text).toMatch(/^Psst: your Harvest Lantern Night is due tomorrow/);
+    expect(first.text).toMatch(/^Psst: Harvest Lantern Night is tomorrow at 6:30 PM/);
     expect((await t.run((ctx) => ctx.db.get(first.reminderId)))?.status).toBe("sent");
     expect((await me.query(api.today.get, { tzOffsetMinutes: TZ })).missed.map((c) => c._id)).toEqual([id]);
 

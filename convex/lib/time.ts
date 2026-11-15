@@ -47,5 +47,5 @@ export function clockPhrase(when: string, tz: number) {
   const p = parseWhen(when, tz);
   if (!p || !p.hasTime) return null;
   const h = p.hh % 12 === 0 ? 12 : p.hh % 12;
-  return `${h}:${String(p.mm).padStart(2, "0")} ${p.hh < 12 ? "am" : "pm"}`;
+  return `${h}:${String(p.mm).padStart(2, "0")} ${p.hh < 12 ? "AM" : "PM"}`;
 }
