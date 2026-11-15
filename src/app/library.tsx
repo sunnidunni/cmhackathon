@@ -1,4 +1,4 @@
-import { useConvex, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -6,14 +6,14 @@ import { FlatList, Linking, StyleSheet, Switch, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../convex/_generated/api";
 import { Button, LoadingView, MessageView } from "@/components/state-views";
-import { DEV_TOOLS, READ_ALL_PHOTOS_DEFAULT } from "@/lib/dev-flags";
-import { importOneScreenshot } from "@/lib/import-one";
 import {
-  getLibraryDiagnostics,
+  DEV_TOOLS,
   getPhotoAccess,
-  type LibraryDiagnostics,
   type PhotoAccess,
+  useLibraryDiagnostics,
+  useReadAllPhotos,
 } from "@/lib/photos";
+import { markImportStarted, runSync } from "@/lib/sync";
 
 const STATUS_LABEL = {
   uploaded: "Reading",
@@ -29,30 +29,32 @@ type ImportState =
   | { kind: "failed"; message: string };
 
 export default function Library() {
-  const convex = useConvex();
   const router = useRouter();
   const screenshots = useQuery(api.screenshots.list);
-  const [readAll, setReadAll] = useState(READ_ALL_PHOTOS_DEFAULT);
+  const [readAll, setReadAll] = useReadAllPhotos();
   const [access, setAccess] = useState<PhotoAccess | null>(null);
   const [state, setState] = useState<ImportState>({ kind: "idle" });
-  const [diag, setDiag] = useState<LibraryDiagnostics | string | null>(null);
+  const diag = useLibraryDiagnostics();
 
   useEffect(() => {
     getPhotoAccess().then(setAccess, () => setAccess(null));
-    if (DEV_TOOLS) getLibraryDiagnostics().then(setDiag, (e: unknown) => setDiag(String(e)));
   }, []);
 
   async function onImport() {
     setState({ kind: "working" });
     try {
-      const result = await importOneScreenshot(convex, readAll);
-      if (result.kind === "uploaded") setState({ kind: "idle" });
-      else if (result.kind === "nothing-new")
-        setState({ kind: "done", message: "All caught up. Nothing new to bring in." });
+      await markImportStarted();
+      const result = await runSync();
+      if (result.uploaded > 0) setState({ kind: "idle" });
       else
         setState({
           kind: "done",
-          message: readAll ? "No photos on this phone yet." : "No screenshots found yet.",
+          message:
+            result.skipped > 0
+              ? "All caught up. Nothing new to bring in."
+              : readAll
+                ? "No photos on this phone yet."
+                : "No screenshots found yet.",
         });
     } catch (e) {
       setState({ kind: "failed", message: e instanceof Error ? e.message : String(e) });
@@ -66,9 +68,6 @@ export default function Library() {
         <View style={styles.links}>
           <Text style={styles.link} onPress={() => router.push("/ask")} accessibilityRole="button">
             Ask
-          </Text>
-          <Text style={styles.link} onPress={() => router.push("/upgrade")} accessibilityRole="button">
-            Upgrade
           </Text>
         </View>
       </View>
@@ -101,7 +100,7 @@ export default function Library() {
       ) : null}
 
       <Button
-        label={state.kind === "working" ? "Bringing it in…" : "Bring in a screenshot"}
+        label={state.kind === "working" ? "Bringing them in…" : "Bring in my screenshots"}
         onPress={onImport}
         disabled={state.kind === "working"}
       />

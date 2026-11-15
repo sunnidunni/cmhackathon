@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
+import { FREE_IMPORT_LIMIT } from "./lib/importPlan";
 import { signWhopPayload } from "./lib/whop_signature";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -75,5 +76,15 @@ describe("myPlan", () => {
     expect(await me.query(api.plan.myPlan, {})).toBe("free");
     await deliver(t, userId);
     expect(await me.query(api.plan.myPlan, {})).toBe("paid");
+  });
+});
+
+describe("import cap", () => {
+  test("free users are capped and a paid webhook lifts the cap", async () => {
+    const { t, userId } = await setup();
+    const me = t.withIdentity({ subject: `${userId}|s` });
+    expect(await me.query(api.sync.importInfo, {})).toEqual({ plan: "free", limit: FREE_IMPORT_LIMIT });
+    await deliver(t, userId);
+    expect(await me.query(api.sync.importInfo, {})).toEqual({ plan: "paid", limit: null });
   });
 });

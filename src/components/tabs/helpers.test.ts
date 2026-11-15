@@ -1,0 +1,40 @@
+import { describe, expect, test } from "vitest";
+import { buttonLabel, cardSubtitle, formatWhen, lineFor, roomName, weekday } from "./helpers";
+
+describe("tab helpers", () => {
+  test("formats dates plainly", () => {
+    expect(weekday("2026-11-20")).toBe("Fri");
+    expect(formatWhen("2026-11-20")).toBe("Fri, Nov 20");
+    expect(formatWhen("2026-11-16T18:30")).toBe("Mon, Nov 16, 6:30 pm");
+    expect(formatWhen("2026-11-16T00:05")).toBe("Mon, Nov 16, 12:05 am");
+    expect(formatWhen("11-21", false)).toBe("11-21");
+  });
+
+  test("button labels follow the card actions", () => {
+    const date = { when: "2026-11-19", what: "appointment", confident: true };
+    expect(buttonLabel("remind", date)).toBe("Remind me Thu");
+    expect(buttonLabel("detail", date)).toBe("Reminder set, Thu");
+    expect(buttonLabel("keep", null)).toBe("Keep");
+    expect(buttonLabel("see", null)).toBe("See it");
+    expect(buttonLabel("delete", null)).toBe("Delete");
+  });
+
+  test("subtitle uses the date, else the saved day", () => {
+    expect(cardSubtitle({ date: { when: "2026-11-20", what: "sign-up closes", confident: true }, takenAt: 0 })).toBe(
+      "Fri, Nov 20, sign-up closes",
+    );
+    expect(cardSubtitle({ date: null, takenAt: new Date(2026, 9, 4).getTime() })).toBe("Saved Oct 4");
+  });
+
+  test("looks lines up by key, null when unknown", () => {
+    expect(lineFor("deadlines_01")).toBe("Got one! I've circled it twice already.");
+    expect(lineFor("unsorted_01")).toContain("Not sure");
+    expect(lineFor("nope")).toBeNull();
+    expect(lineFor(null)).toBeNull();
+  });
+
+  test("room names", () => {
+    expect(roomName("money")).toBe("Money");
+    expect(roomName("weird")).toBe("Unsorted");
+  });
+});

@@ -46,6 +46,12 @@
             "photo"
           ]
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "enableRemoteNotifications": false
+        }
       ]
     ],
     "experiments": {
