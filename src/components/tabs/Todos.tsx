@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import { showAllLabel, splitTodos, visibleOpen } from "./todos";
-import { colors, radii, SketchFrame, spacing, type } from "@/design";
+import { text, usePalette } from "@/design/psst";
 
 export function Todos() {
+  const p = usePalette();
   const items = useQuery(api.todos.list, {});
   const toggle = useMutation(api.todos.toggle);
   const remove = useMutation(api.todos.remove);
@@ -14,64 +15,68 @@ export function Todos() {
 
   const { open, done } = splitTodos(items ?? []);
   const { shown, hidden } = visibleOpen(open, expanded);
+  if (!items || items.length === 0) return null;
+
+  const rows = [...shown.map((t) => ({ t, done: false })), ...done.map((t) => ({ t, done: true }))];
 
   return (
-    <View style={{ gap: spacing.lg }}>
-      <Text style={[type.title, { color: colors.ink }]}>To do</Text>
-      {items && items.length === 0 ? (
-        <Text style={type.body}>Nothing to do yet. I'll add things as I read your screenshots.</Text>
-      ) : null}
-      {[...shown.map((t) => ({ t, done: false })), ...done.map((t) => ({ t, done: true }))].map(({ t, done: isDone }) => (
-        <Row
+    <View>
+      <Text style={[text.caption, { color: p.ink2, marginBottom: 8 }]}>To do</Text>
+      {rows.map(({ t, done: isDone }) => (
+        <View
           key={t._id}
-          text={t.text}
-          done={isDone}
-          onOpen={t.screenshotId ? () => router.push(`/shot/${t.screenshotId}`) : undefined}
-          onToggle={() => toggle({ id: t._id })}
-          onRemove={() => remove({ id: t._id })}
-        />
+          style={{ flexDirection: "row", alignItems: "center", gap: 4, minHeight: 52, borderTopWidth: 1, borderTopColor: p.hair }}
+        >
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isDone }}
+            accessibilityLabel={t.text}
+            onPress={() => toggle({ id: t._id })}
+            style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
+          >
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                borderWidth: 1.5,
+                borderColor: isDone ? p.ink : p.ink2,
+                backgroundColor: isDone ? p.ink : "transparent",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {isDone ? <Text style={[text.caption, { color: p.paper }]}>✓</Text> : null}
+            </View>
+          </Pressable>
+          <Pressable
+            accessibilityRole={t.screenshotId ? "button" : "text"}
+            onPress={t.screenshotId ? () => router.push(`/shot/${t.screenshotId}`) : undefined}
+            disabled={!t.screenshotId}
+            style={{ flex: 1, minHeight: 44, justifyContent: "center" }}
+          >
+            <Text style={[text.body, { color: isDone ? p.ink2 : p.ink }, isDone ? { textDecorationLine: "line-through" } : null]}>{t.text}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Remove ${t.text}`}
+            onPress={() => remove({ id: t._id })}
+            style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 8 }}
+          >
+            <Text style={[text.caption, { color: p.ink2 }]}>Remove</Text>
+          </Pressable>
+        </View>
       ))}
       {hidden > 0 ? (
-        <Pressable accessibilityRole="button" onPress={() => setExpanded(true)} style={{ minHeight: 44, justifyContent: "center" }}>
-          <Text style={type.label}>{showAllLabel(open.length)}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setExpanded(true)}
+          style={{ minHeight: 44, justifyContent: "center", borderTopWidth: 1, borderTopColor: p.hair }}
+        >
+          <Text style={[text.bodyBold, { color: p.ink }]}>{showAllLabel(open.length)}</Text>
         </Pressable>
       ) : null}
-    </View>
-  );
-}
-
-function Row({
-  text,
-  done,
-  onOpen,
-  onToggle,
-  onRemove,
-}: {
-  text: string;
-  done: boolean;
-  onOpen?: () => void;
-  onToggle: () => void;
-  onRemove: () => void;
-}) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, minHeight: 44 }}>
-      <Pressable
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: done }}
-        accessibilityLabel={text}
-        onPress={onToggle}
-        style={{ minHeight: 44, minWidth: 44, alignItems: "center", justifyContent: "center" }}
-      >
-        <SketchFrame fill={done ? colors.sun : colors.white} radius={radii.sm} seed={text} style={{ width: 28, height: 28, alignItems: "center", justifyContent: "center" }}>
-          {done ? <Text style={type.label}>✓</Text> : null}
-        </SketchFrame>
-      </Pressable>
-      <Pressable accessibilityRole={onOpen ? "button" : "text"} onPress={onOpen} disabled={!onOpen} style={{ flex: 1, minHeight: 44, justifyContent: "center" }}>
-        <Text style={[type.body, done ? { textDecorationLine: "line-through", color: colors.inkSoft } : null]}>{text}</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${text}`} onPress={onRemove} style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: spacing.sm }}>
-        <Text style={type.caption}>Remove</Text>
-      </Pressable>
+      <View style={{ borderTopWidth: 1, borderTopColor: p.hair }} />
     </View>
   );
 }

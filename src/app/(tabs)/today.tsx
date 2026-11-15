@@ -11,6 +11,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { ActCards } from "@/components/act/ActCards";
 import { ReminderRows, RememberCard } from "@/components/today/Extras";
 import { FocusCard, Headline } from "@/components/today/FocusCard";
+import { Todos } from "@/components/tabs/Todos";
 import { HandfulRows } from "@/components/today/HandfulRows";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
@@ -197,6 +198,7 @@ export default function Today() {
           ) : null}
           {screen.kind === "done" ? <DoneView /> : null}
           <HandfulRows rows={rows} now={now} tz={tz} title={rowTitle} onOpen={open} onRemind={remind} onSkip={skip} onMenu={menu} />
+          <Todos />
           <ReminderRows rows={reminderRows} now={now} tz={tz} onOpen={(id) => router.push(`/shot/${id}`)} />
           {resurfaced ? (
             <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
