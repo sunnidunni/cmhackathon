@@ -1,7 +1,7 @@
 import type { KeeperId } from "@/design/psst";
 
 export type ActStep =
-  | { kind: "draft-message"; to: string; via: "iMessage"; body: string; reply?: string }
+  | { kind: "draft-message"; to: string; via: "Messages"; body: string; reply?: string }
   | { kind: "order"; merchant: string; items: { name: string; price: string }[]; deliverTo: string; total: string; eta: string }
   | { kind: "move-reminder"; from: string; to: string }
   | { kind: "email-draft"; to: string; subject: string; body: string }

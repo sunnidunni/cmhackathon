@@ -33,7 +33,7 @@ describe("act pages", () => {
       expect(a.cta).toMatch(/^Review /);
       expect(a.done).toMatch(/^Demo: nothing was /);
     }
-    const draft: ActStep = { kind: "draft-message", to: "Mom", via: "iMessage", body: "x" };
+    const draft: ActStep = { kind: "draft-message", to: "Mom", via: "Messages", body: "x" };
     const order: ActStep = { kind: "order", merchant: "m", items: [], deliverTo: "d", total: "$1", eta: "e" };
     const calendar: ActStep = { kind: "calendar", title: "t", when: "w" };
     expect(demoLine(draft, "will")).toBe("Demo: nothing will be sent.");

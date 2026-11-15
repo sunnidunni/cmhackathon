@@ -12,7 +12,7 @@ export const scenario: ActScenario = {
   cta: "Review text to Sam",
   steps: [
     { kind: "move-reminder", from: "3:30 PM", to: "5:10 PM" },
-    { kind: "draft-message", to: "Sam (picking you up)", via: "iMessage", body: "Flight's delayed, landing 9:55 PM now instead of 8:15. Sorry!" },
+    { kind: "draft-message", to: "Sam (picking you up)", via: "Messages", body: "Flight's delayed, landing 9:55 PM now instead of 8:15. Sorry!" },
   ],
   confirm: {
     title: "Send this to Sam?",
