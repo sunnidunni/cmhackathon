@@ -1,5 +1,6 @@
 import { useConvex, useQuery } from "convex/react";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Linking, StyleSheet, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,6 +23,7 @@ type ImportState =
 
 export default function Library() {
   const convex = useConvex();
+  const router = useRouter();
   const screenshots = useQuery(api.screenshots.list);
   const [readAll, setReadAll] = useState(READ_ALL_PHOTOS_DEFAULT);
   const [access, setAccess] = useState<PhotoAccess | null>(null);
@@ -52,7 +54,12 @@ export default function Library() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Text style={styles.header}>Your screenshots</Text>
+      <View style={styles.row}>
+        <Text style={styles.header}>Your screenshots</Text>
+        <Text style={styles.link} onPress={() => router.push("/upgrade")} accessibilityRole="button">
+          Upgrade
+        </Text>
+      </View>
 
       {access === "limited" ? (
         <View style={styles.card}>
