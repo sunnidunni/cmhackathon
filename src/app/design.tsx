@@ -146,7 +146,7 @@ export default function DesignGallery() {
       </Section>
 
       <Section title="Screenshot sticker">
-        <View style={{ flexDirection: "row", gap: spacing.lg, paddingTop: spacing.sm }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.lg, rowGap: spacing.xl, paddingTop: spacing.sm }}>
           {ROOM_KEYS.slice(0, 3).map((r, i) => (
             <ScreenshotSticker key={r} room={r} width={88} tilt={tiltFor(r + i)}>
               <FakeShot room={r} />
