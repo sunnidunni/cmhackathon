@@ -72,21 +72,21 @@ export function previewTodos(kind: string): { todos: TodoItem[]; shots: [string,
   const t = (n: number, textLine: string, shot: string | null, done = false): TodoItem => ({ _id: `t${n}`, text: textLine, done, screenshotId: shot, createdAt: n });
   return {
     todos: [
-      t(1, "Confirm the dentist cleaning", "png/04-dentist-text.png"),
-      t(2, "Pay the energy bill", "png/15-utility-bill.png"),
-      t(3, "Share the wifi password with Sam", "png/08-wifi-chat.png"),
-      t(4, "Sign up for the pottery class", "png/01-pottery-flyer.png"),
-      t(5, "Buy miso for the pasta", "png/18-miso-pasta.png"),
+      t(1, "Confirm the dentist cleaning", "demo-04"),
+      t(2, "Pay the energy bill", "demo-15"),
+      t(3, "Share the wifi password with Sam", "demo-08"),
+      t(4, "Sign up for the pottery class", "demo-01"),
+      t(5, "Buy miso for the pasta", "demo-18"),
       t(6, "Call the landlord back", null),
       t(7, "Renew the parking permit", null),
       t(8, "Email Mom the photos", null, true),
     ],
     shots: [
-      ["png/04-dentist-text.png", { category: "deadlines", date: "2026-11-24T15:00" }],
-      ["png/15-utility-bill.png", { category: "money", date: "2026-11-21" }],
-      ["png/08-wifi-chat.png", { category: "chats", date: null }],
-      ["png/01-pottery-flyer.png", { category: "deadlines", date: "2026-11-22T10:00" }],
-      ["png/18-miso-pasta.png", { category: "ideas", date: null }],
+      ["demo-04", { category: "deadlines", date: "2026-11-24T15:00" }],
+      ["demo-15", { category: "money", date: "2026-11-21" }],
+      ["demo-08", { category: "chats", date: null }],
+      ["demo-01", { category: "deadlines", date: "2026-11-22T10:00" }],
+      ["demo-18", { category: "ideas", date: null }],
     ],
   };
 }
