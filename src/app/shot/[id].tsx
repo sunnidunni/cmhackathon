@@ -16,20 +16,15 @@ import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 
 const UNDO_MS = 5000;
 
-const DEMO_DATE_LABEL: [RegExp, string][] = [
-  [/pottery/i, "Sign-up closes"],
-  [/dentist/i, "Appointment"],
-];
-
 // The same shape as shots.detail, built from the demo world. Only a dev-tools build with an empty library reaches it.
 function demoDetail(r: DemoRow) {
   return {
     _id: r.id as Id<"screenshots">,
     status: "ready" as const,
     title: r.title,
-    summary: "",
-    reason: /pottery/i.test(r.title) ? "it's a flyer with a sign-up date." : "",
-    amount: r.amount,
+    summary: r.summary,
+    reason: r.reason ? `it's ${/^[aeiou]/i.test(r.reason) ? "an" : "a"} ${r.reason}` : "",
+    amount: null,
     category: r.category,
     userMoved: false,
     lineKey: null,
@@ -37,9 +32,7 @@ function demoDetail(r: DemoRow) {
     importance: 1,
     takenAt: r.takenAt,
     error: null,
-    dates: r.date
-      ? [{ when: r.date, what: DEMO_DATE_LABEL.find(([re]) => re.test(r.title))?.[1] ?? "Date", confident: true, reminder: null }]
-      : [],
+    dates: r.dates.map((d) => ({ ...d, reminder: null })),
   };
 }
 type Phase = "idle" | "pending" | "done";
