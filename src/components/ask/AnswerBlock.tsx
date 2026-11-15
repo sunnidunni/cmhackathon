@@ -6,6 +6,7 @@ import { Pressable, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { FunctionReturnType } from "convex/server";
+import { isConvexId } from "@/components/remind/ids";
 import { defaultReminder, dueParts, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
 import { KEEPERS, KeeperFace, PsstButton, ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
 
@@ -56,7 +57,7 @@ export function QuestionBubble({ question }: { question: string }) {
 
 function useShot(id: Id<"screenshots"> | undefined, shots?: Shots) {
   const given = id ? shots?.[id] : undefined;
-  const fetched = useQuery(api.shots.detail, id && !given ? { id } : "skip");
+  const fetched = useQuery(api.shots.detail, id && !given && isConvexId(id) ? { id } : "skip");
   return given ?? fetched;
 }
 

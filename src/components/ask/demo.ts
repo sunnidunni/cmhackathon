@@ -1,19 +1,12 @@
-import { Image } from "react-native";
 import manifest from "../../../demo-screenshots/manifest.json";
+import { assetUri } from "@/components/remind/fixture";
 import { whenLabel } from "@/components/remind/plan";
 import { DEMO_FLYER } from "@/lib/fixtures";
 import type { AskResult, Shots } from "./AnswerBlock";
 
 // Dev-only fallback (FIXTURES on and the ask action threw). Built from the demo screenshot manifest, never shipped as real data.
 const flyer = manifest[0]!;
-// react-native-web has no resolveAssetSource; there the bundler hands back the asset object or url directly.
-const asset: unknown = require("../../../demo-screenshots/png/01-pottery-flyer.png");
-const uri: string | null =
-  typeof asset === "string"
-    ? asset
-    : typeof asset === "object" && asset !== null && "uri" in asset
-      ? String(asset.uri)
-      : (Image.resolveAssetSource?.(asset as number)?.uri ?? null);
+const uri = assetUri(require("../../../demo-screenshots/png/01-pottery-flyer.png"));
 const closes = flyer.dates[0]!;
 
 export const demoResult: AskResult = {
