@@ -67,9 +67,6 @@ export default function Library() {
           <Text style={styles.link} onPress={() => router.push("/ask")} accessibilityRole="button">
             Ask
           </Text>
-          <Text style={styles.link} onPress={() => router.push("/upgrade")} accessibilityRole="button">
-            Upgrade
-          </Text>
         </View>
       </View>
 
