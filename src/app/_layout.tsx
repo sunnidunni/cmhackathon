@@ -4,6 +4,7 @@ import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { LoadingView, MessageView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
+import { usePalette, usePsstFonts } from "@/design/psst";
 import { convex } from "@/lib/convex";
 import { DEV_TOOLS } from "@/lib/dev-flags";
 import { AppLifecycle } from "@/lib/lifecycle";
@@ -52,11 +53,13 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   useStickerFonts();
+  usePsstFonts();
+  const pal = usePalette();
   return (
     <ConvexAuthProvider client={convex} storage={secureStorage}>
       <AnonymousSession>
         <AppLifecycle />
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
       </AnonymousSession>
     </ConvexAuthProvider>
   );
