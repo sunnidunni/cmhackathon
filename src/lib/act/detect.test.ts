@@ -130,10 +130,10 @@ describe("chat that asks you to bring or buy something", () => {
     expect(act?.keeper).toBe("murmur");
     expect(act?.id).toBe("real:chat:c1");
     expect(act?.steps).toEqual([
-      { kind: "draft-message", to: "Sam", via: "iMessage", body: "Yes, I can bring the lemonade on Saturday." },
+      { kind: "draft-message", to: "Sam", via: "Messages", body: "Yes, I can bring the lemonade on Saturday." },
     ]);
     expect(act?.noticed).toBe("Sam asked you to bring the lemonade on Saturday.");
-    expect(act?.confirm.lines[0]).toBe("To: Sam, iMessage");
+    expect(act?.confirm.lines[0]).toBe("To: Sam, Messages");
     expect(act?.done).toBe("Demo: nothing was sent.");
   });
 
@@ -190,7 +190,7 @@ describe("travel delay", () => {
     expect(act?.id).toBe("real:delay:t1");
     expect(act?.steps).toEqual([
       { kind: "move-reminder", from: "Reminder for Nov 22, 6:55 PM", to: "Reminder for Nov 22, 7:40 PM" },
-      { kind: "draft-message", to: "Maya", via: "iMessage", body: "Heads up, my trip is delayed. The new time is Nov 22, 7:40 PM." },
+      { kind: "draft-message", to: "Maya", via: "Messages", body: "Heads up, my trip is delayed. The new time is Nov 22, 7:40 PM." },
     ]);
     expect(act?.confirm.button).toBe("Send and move reminder");
   });
@@ -257,7 +257,7 @@ describe("detect over the act demo manifest", () => {
     const act = detect(pizza, NOW);
     expect(act?.id).toBe("real:chat:25-mom-pizza-text");
     expect(act?.keeper).toBe("murmur");
-    expect(act?.steps).toEqual([{ kind: "draft-message", to: "Mom", via: "iMessage", body: "Yes, I can order pizza for tonight." }]);
+    expect(act?.steps).toEqual([{ kind: "draft-message", to: "Mom", via: "Messages", body: "Yes, I can order pizza for tonight." }]);
     expect(act?.source.shotId).toBe("25-mom-pizza-text");
     expect(act?.confirm.price).toBeUndefined();
   });

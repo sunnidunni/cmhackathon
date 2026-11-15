@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
-import { buildPages } from "@/components/act/pages";
+import { buildPages, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
@@ -55,12 +55,13 @@ export default function Act() {
   const body = () => {
     if (page.kind === "done") return <DonePage scenario={scenario} onClose={close} />;
     const step = scenario.steps[page.step];
-    if (page.kind === "move" && step.kind === "move-reminder")
+    if (page.kind === "move" && isReminderStep(step))
       return (
         <MovePage
           scenario={scenario}
           step={step}
           moved={!undone.has(scenario.id)}
+          nextLabel={nextLabel(scenario.steps[page.step + 1])}
           onToggle={() => {
             feedback("light");
             setReminderMoved(scenario.id, undone.has(scenario.id));
@@ -86,7 +87,7 @@ export default function Act() {
       );
     if (page.kind === "reply" && step.kind === "draft-message") {
       const next = scenario.steps[page.step + 1];
-      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} nextLabel={next?.kind === "order" ? "Set up the order" : "Next"} onNext={() => go(index + 1)} />;
+      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} nextLabel={next?.kind === "order" ? "Set up the order" : nextLabel(next)} onNext={() => go(index + 1)} />;
     }
     return null;
   };

@@ -8,6 +8,7 @@ import { setReminderMoved, useActState } from "@/lib/act/store";
 import type { ActScenario } from "@/lib/act/types";
 import { FIXTURES } from "@/lib/fixtures";
 import { ActCard } from "./ActCard";
+import { isReminderStep, reminderCopy } from "./pages";
 import { Fade } from "./Motion";
 
 function ActRow({ scenario }: { scenario: ActScenario }) {
@@ -41,7 +42,7 @@ export function ActCards() {
   const acts = (FIXTURES ? DEMO_ACTS : []).filter((a) => a.steps.length > 0);
   const [first, ...rest] = acts.filter((a) => !dismissed.has(a.id) && !completed.has(a.id));
   const moved = acts.flatMap((a) => {
-    const step = a.steps.find((s) => s.kind === "move-reminder");
+    const step = a.steps.find(isReminderStep);
     return step && a !== first && !rest.includes(a) && !undone.has(a.id) ? [{ id: a.id, step, keeper: a.keeper }] : [];
   });
   if (!first && moved.length === 0) return null;
@@ -61,21 +62,22 @@ export function ActCards() {
           <View style={{ borderTopWidth: 1, borderTopColor: p.hair }} />
         </View>
       ) : null}
-      {moved.map(({ id, step, keeper }) =>
-        step.kind === "move-reminder" ? (
+      {moved.map(({ id, step, keeper }) => {
+        const copy = reminderCopy(step, KEEPERS[keeper].name);
+        return (
           <View key={id} style={{ gap: 0 }}>
-            <Text style={[text.body, { color: p.ink }]}>{`${KEEPERS[keeper].name} moved your ${step.label ?? "reminder"} from ${step.from} to ${step.to}.`}</Text>
+            <Text style={[text.body, { color: p.ink }]}>{copy.done}</Text>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Undo. Put the reminder back to ${step.from}`}
+              accessibilityLabel={copy.undoHint}
               onPress={() => setReminderMoved(id, false)}
               style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}
             >
-              <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>{`Undo · back to ${step.from}`}</Text>
+              <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>{copy.undo}</Text>
             </Pressable>
           </View>
-        ) : null,
-      )}
+        );
+      })}
     </View>
   );
 }
