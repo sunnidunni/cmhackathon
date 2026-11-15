@@ -1,5 +1,7 @@
 import { Pressable, Text, View } from "react-native";
-import { Keeper, KeeperFace, ShotSticker, Skeleton, SoftCard, usePalette, Wash, text, useKeeperColors, KEEPERS, keeperForRoom, type RoomKey } from "./kit";
+import { Keeper, KeeperFace, ShotSticker, Skeleton, SoftCard, usePalette, text, useKeeperColors, KEEPERS, keeperForRoom } from "@/design/psst";
+import type { RoomKey } from "@/design/theme";
+import { RoomWash } from "./RoomWash";
 import { countLabel } from "./format";
 
 export const ROOM_LABEL: Record<RoomKey, string> = { deadlines: "Deadlines", chats: "Chats", money: "Money", ideas: "Ideas" };
@@ -19,7 +21,7 @@ export function RoomCard({ room, count, onPress }: { room: RoomKey; count: numbe
       onPress={onPress}
       style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.85 : 1 })}
     >
-      <Wash keeper={quiet ? "muted" : id} style={{ minHeight: 168, padding: 16, overflow: "hidden" }}>
+      <RoomWash keeper={id} muted={quiet} style={{ minHeight: 168, padding: 16, overflow: "hidden" }}>
         <Text style={[text.bodyBold, { color: p.ink }]}>{ROOM_LABEL[room]}</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>{KEEPERS[id].name}</Text>
         {countText === null ? (
@@ -27,10 +29,10 @@ export function RoomCard({ room, count, onPress }: { room: RoomKey; count: numbe
         ) : (
           <Text style={[text.caption, { color: quiet ? p.ink2 : deep, marginTop: 2 }]}>{countText}</Text>
         )}
-        <View style={{ position: "absolute", right: 8, bottom: 8, opacity: quiet ? 0.45 : 1 }}>
-          <Keeper id={id} size={84} />
+        <View style={{ position: "absolute", right: 8, bottom: 8 }}>
+          <Keeper id={id} size={84} muted={quiet} />
         </View>
-      </Wash>
+      </RoomWash>
     </Pressable>
   );
 }

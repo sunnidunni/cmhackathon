@@ -4,7 +4,7 @@ import { Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
 import { COLUMNS, groupByLevel, stepLevel, type GridLevel } from "@/components/tabs/grid";
-import { ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "./kit";
+import { ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
 
 export type GridItem = { id: string; title: string; imageUrl: string | null; takenAt: number; sub: string | null };
 

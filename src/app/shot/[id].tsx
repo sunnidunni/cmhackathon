@@ -8,11 +8,40 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { lineFor, type Room } from "@/components/tabs/helpers";
 import { ZoomViewer } from "@/components/tabs/ZoomViewer";
 import { dateLabel, defaultReminder, monthDay, reminderLabel } from "@/components/rooms/format";
-import { KeeperFace, KeeperLine, PsstButton, ShotSticker, Skeleton, SoftCard, text, useKeeperColors, usePalette, Wash, keeperForRoom, type KeeperId } from "@/components/rooms/kit";
+import { KeeperFace, KeeperLine, PsstButton, ShotSticker, Skeleton, SoftCard, text, useKeeperColors, usePalette, keeperForRoom, type KeeperId } from "@/design/psst";
+import { RoomWash } from "@/components/rooms/RoomWash";
+import { demoById, isDemoId, useDemoFallback, type DemoRow } from "@/components/rooms/demo";
 import { MoveSheet } from "@/components/rooms/MoveSheet";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 
 const UNDO_MS = 5000;
+
+const DEMO_DATE_LABEL: [RegExp, string][] = [
+  [/pottery/i, "Sign-up closes"],
+  [/dentist/i, "Appointment"],
+];
+
+// The same shape as shots.detail, built from the demo world. Only a dev-tools build with an empty library reaches it.
+function demoDetail(r: DemoRow) {
+  return {
+    _id: r.id as Id<"screenshots">,
+    status: "ready" as const,
+    title: r.title,
+    summary: "",
+    reason: /pottery/i.test(r.title) ? "it's a flyer with a sign-up date." : "",
+    amount: r.amount,
+    category: r.category,
+    userMoved: false,
+    lineKey: null,
+    imageUrl: r.imageUrl,
+    importance: 1,
+    takenAt: r.takenAt,
+    error: null,
+    dates: r.date
+      ? [{ when: r.date, what: DEMO_DATE_LABEL.find(([re]) => re.test(r.title))?.[1] ?? "Date", confident: true, reminder: null }]
+      : [],
+  };
+}
 type Phase = "idle" | "pending" | "done";
 
 export default function Detail() {
@@ -20,7 +49,11 @@ export default function Detail() {
   const shotId = id as Id<"screenshots">;
   const p = usePalette();
   const insets = useSafeAreaInsets();
-  const shot = useQuery(api.shots.detail, { id: shotId });
+  const demoOn = useDemoFallback();
+  const demoRow = demoOn && isDemoId(id) ? demoById(id) : null;
+  const isDemo = demoOn && isDemoId(id);
+  const realShot = useQuery(api.shots.detail, isDemo ? "skip" : { id: shotId });
+  const shot = isDemo ? (demoRow ? demoDetail(demoRow) : null) : realShot;
   const markOpened = useMutation(api.shots.markOpened);
   const markDone = useMutation(api.shots.done);
   const move = useMutation(api.shots.move);
@@ -34,8 +67,8 @@ export default function Detail() {
   const found = shot !== undefined && shot !== null;
 
   useEffect(() => {
-    if (found) markOpened({ id: shotId }).catch(() => undefined);
-  }, [found, shotId, markOpened]);
+    if (found && !isDemo) markOpened({ id: shotId }).catch(() => undefined);
+  }, [found, isDemo, shotId, markOpened]);
 
   const setPhaseBoth = (next: Phase) => {
     phaseRef.current = next;
@@ -48,19 +81,20 @@ export default function Detail() {
     if (timer.current) clearTimeout(timer.current);
     phaseRef.current = "done";
     setPhase("done");
+    if (isDemo) return;
     await markDone({ id: shotId }).catch(() => {
       phaseRef.current = "idle";
       setPhase("idle");
       setError("That didn't save. Try again in a moment.");
     });
-  }, [markDone, shotId]);
+  }, [markDone, isDemo, shotId]);
 
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
-      if (phaseRef.current === "pending") markDone({ id: shotId }).catch(() => undefined);
+      if (phaseRef.current === "pending" && !isDemo) markDone({ id: shotId }).catch(() => undefined);
     },
-    [markDone, shotId],
+    [markDone, isDemo, shotId],
   );
 
   const header = <Stack.Screen options={{ headerShown: true, headerTransparent: true, title: "", headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }} />;
@@ -86,7 +120,7 @@ export default function Detail() {
         <View style={{ flex: 1, padding: 16, justifyContent: "center", gap: 12 }}>
           <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{"I can't find that screenshot."}</Text>
           <Text style={[text.lead, { color: p.ink2 }]}>It may have been deleted.</Text>
-          <PsstButton label="Back to Today" onPress={() => router.replace("/today")} />
+          <PsstButton kind="filled" label="Back to Today" onPress={() => router.replace("/today")} />
         </View>
       </View>
     );
@@ -95,7 +129,7 @@ export default function Detail() {
   const isRoom = category !== "unsorted";
   const keeper: KeeperId = isRoom ? keeperForRoom(category) : "mote";
   const roomLabel = ROOM_LABEL[category as keyof typeof ROOM_LABEL] ?? "Unsorted";
-  const line = lineFor(shot.lineKey);
+  const line = demoRow ? demoRow.keeperLine : lineFor(shot.lineKey);
   const dates = shot.dates.filter((d) => d.confident);
   const withReminder = dates.find((d) => d.reminder?.state === "scheduled");
   const primary = withReminder ?? dates.find((d) => defaultReminder(d.when)) ?? dates[0] ?? null;
@@ -112,7 +146,7 @@ export default function Detail() {
       <SoftCard style={{ gap: 8 }}>
         <Text style={[text.bodyBold, { color: p.ink }]}>{"Couldn't read this one."}</Text>
         <Text style={[text.body, { color: p.ink2 }]}>Your screenshot is still on your phone.</Text>
-        <PsstButton kind="outline" label="Try reading it again" onPress={() => retry({ screenshotId: shotId }).catch(() => undefined)} />
+        <PsstButton kind="outline" label="Try reading it again" onPress={() => (isDemo ? undefined : retry({ screenshotId: shotId }).catch(() => undefined))} />
       </SoftCard>
     ) : shot.status !== "ready" ? (
       <SoftCard>
@@ -125,7 +159,7 @@ export default function Detail() {
     <View style={{ flex: 1, backgroundColor: p.paper }}>
       {header}
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingTop: top, paddingBottom: 24, gap: 12 }}>
-        <Wash keeper={finished ? "muted" : isRoom ? keeper : "muted"} style={{ paddingVertical: 20, alignItems: "center" }}>
+        <RoomWash keeper={keeper} muted={finished || !isRoom} style={{ paddingVertical: 20, alignItems: "center" }}>
           <Pressable
             accessibilityRole="imagebutton"
             accessibilityLabel="Open full size"
@@ -134,7 +168,7 @@ export default function Detail() {
           >
             <ShotSticker uri={shot.imageUrl} title={shot.title || "Screenshot"} size={150} />
           </Pressable>
-        </Wash>
+        </RoomWash>
 
         {retryNode}
 
@@ -193,7 +227,7 @@ export default function Detail() {
                   </Pressable>
                 ) : null}
               </View>
-              <PsstButton
+              <PsstButton kind="filled"
                 label={`Back to ${roomLabel}`}
                 onPress={async () => {
                   await commitDone();
@@ -203,12 +237,12 @@ export default function Detail() {
             </>
           ) : withReminder ? (
             <>
-              <PsstButton keeper={keeper} label="Mark as done" onPress={() => beginDone()} />
+              <PsstButton kind="filled" keeper={keeper} label="Mark as done" onPress={() => beginDone()} />
               <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Marks it done. You can undo right after.</Text>
             </>
           ) : (
             <>
-              <PsstButton
+              <PsstButton kind="filled"
                 keeper={keeper}
                 label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Set a reminder"}
                 onPress={() => router.push(`/remind/${shotId}` as never)}
@@ -228,6 +262,7 @@ export default function Detail() {
         onClose={() => setMoveOpen(false)}
         onMove={(room) => {
           setMoveOpen(false);
+          if (isDemo) return;
           move({ id: shotId, category: room }).catch(() => setError("That didn't save. Try again in a moment."));
         }}
       />

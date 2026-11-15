@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
-import { KEEPERS, KeeperFace, keeperForRoom, PsstButton, text, usePalette } from "./kit";
+import { KEEPERS, KeeperFace, keeperForRoom, PsstButton, text, usePalette } from "@/design/psst";
 import { ROOM_KEYS, ROOM_LABEL } from "./RoomsParts";
-import type { RoomKey } from "./kit";
+import type { RoomKey } from "@/design/theme";
 
 const BLURB: Record<RoomKey, string> = { deadlines: "keeps your deadlines", chats: "where it is now", money: "keeps your money", ideas: "keeps your ideas" };
 
@@ -43,7 +43,7 @@ export function MoveSheet({ visible, current, onClose, onMove }: { visible: bool
         })}
         <Text style={[text.caption, { color: p.ink2, borderTopWidth: 1, borderColor: p.hair, paddingTop: 12 }]}>{"It stays where you put it. Psst won't move it back."}</Text>
         <View style={{ flex: 1 }} />
-        <PsstButton
+        <PsstButton kind="filled"
           label={target ? `Move to ${ROOM_LABEL[target]}` : "Pick a room"}
           disabled={target === null}
           onPress={() => {

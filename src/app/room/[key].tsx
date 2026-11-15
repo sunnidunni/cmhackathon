@@ -4,9 +4,12 @@ import { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import { countLabel, dateLabel, roomHeadline, roomLine, type Category } from "@/components/rooms/format";
-import { Keeper, KeeperLine, keeperForRoom, PsstButton, Skeleton, text, usePalette, Wash, type KeeperId, type RoomKey } from "@/components/rooms/kit";
+import { Keeper, KeeperLine, keeperForRoom, PsstButton, Skeleton, text, usePalette, type KeeperId } from "@/design/psst";
+import type { RoomKey } from "@/design/theme";
+import { RoomWash } from "@/components/rooms/RoomWash";
 import { PhotoGrid, ShotGridSkeleton } from "@/components/rooms/PhotoGrid";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
+import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
 import { runSync } from "@/lib/sync";
 
 const CATEGORIES: Category[] = ["deadlines", "chats", "money", "ideas", "unsorted"];
@@ -33,7 +36,12 @@ export default function RoomScreen() {
 
 function AllScreen() {
   const p = usePalette();
-  const all = useQuery(api.rooms.all, {});
+  const realAll = useQuery(api.rooms.all, {});
+  const demoOn = useDemoFallback();
+  const all =
+    realAll && realAll.count === 0 && demoOn
+      ? { count: DEMO_ROWS.length, items: DEMO_ROWS.map((r) => ({ _id: r.id, title: r.title, imageUrl: r.imageUrl, takenAt: r.takenAt, category: r.category })) }
+      : realAll;
   const header = (
     <View style={{ gap: 4 }}>
       <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
@@ -64,7 +72,14 @@ function AllScreen() {
 
 function SingleRoom({ category }: { category: Category }) {
   const p = usePalette();
-  const data = useQuery(api.rooms.get, { category });
+  const realData = useQuery(api.rooms.get, { category });
+  const demoOn = useDemoFallback();
+  const demoItems = demoRoom(category);
+  type Data = { items: { _id: string; title: string; date: string | null; imageUrl: string | null; takenAt: number; sub?: string | null }[] };
+  const data: Data | undefined =
+    realData && realData.items.length === 0 && demoOn && demoItems.length > 0
+      ? { items: demoItems.map((r) => ({ _id: r.id, title: r.title, date: r.date, imageUrl: r.imageUrl, takenAt: r.takenAt, sub: r.sub })) }
+      : realData;
   const [checking, setChecking] = useState(false);
   const isRoom = category !== "unsorted";
   const keeper: KeeperId = isRoom ? keeperForRoom(category) : "mote";
@@ -75,7 +90,7 @@ function SingleRoom({ category }: { category: Category }) {
   const isEmpty = items !== null && items.length === 0;
 
   const wash = (
-    <Wash keeper={isRoom ? keeper : "muted"} style={{ padding: 16, flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <RoomWash keeper={keeper} muted={!isRoom} style={{ padding: 16, flexDirection: "row", alignItems: "center", gap: 8 }}>
       <View style={{ flex: 1, gap: 6 }}>
         <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
           {headline}
@@ -83,7 +98,7 @@ function SingleRoom({ category }: { category: Category }) {
         {rows ? <KeeperLine id={keeper}>{roomLine(category, rows)}</KeeperLine> : <Skeleton w={160} h={14} />}
       </View>
       <Keeper id={keeper} size={88} />
-    </Wash>
+    </RoomWash>
   );
 
   if (items !== null && items.length > 0)
@@ -99,7 +114,7 @@ function SingleRoom({ category }: { category: Category }) {
               <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(items.length)}</Text>
             </>
           }
-          items={items.map((i) => ({ id: i._id, title: i.title, imageUrl: i.imageUrl, takenAt: i.takenAt, sub: i.date ? dateLabel(i.date) : null }))}
+          items={items.map((i) => ({ id: i._id, title: i.title, imageUrl: i.imageUrl, takenAt: i.takenAt, sub: i.sub !== undefined ? i.sub : i.date ? dateLabel(i.date) : null }))}
         />
       </View>
     );
@@ -126,7 +141,7 @@ function SingleRoom({ category }: { category: Category }) {
       </ScrollView>
       {isEmpty && isRoom ? (
         <View style={{ padding: 16 }}>
-          <PsstButton
+          <PsstButton kind="filled"
             label={checking ? "Checking" : "Check for new screenshots"}
             disabled={checking}
             onPress={() => {
