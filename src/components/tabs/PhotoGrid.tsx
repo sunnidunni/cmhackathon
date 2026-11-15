@@ -13,6 +13,21 @@ export type GridItem = { _id: string; title: string; imageUrl: string | null; ta
 const PAD = spacing.xl;
 const GAP = spacing.sm;
 
+// Cached by screenshot id, recycled by id, with a short fade so a scroll or level change never flashes blank.
+function Thumb({ item, width, height }: { item: GridItem; width: number; height: number }) {
+  if (!item.imageUrl) return null;
+  return (
+    <Image
+      source={{ uri: item.imageUrl, cacheKey: item._id }}
+      recyclingKey={item._id}
+      cachePolicy="memory-disk"
+      transition={120}
+      contentFit="cover"
+      style={{ width, height, backgroundColor: colors.paperDeep }}
+    />
+  );
+}
+
 // A Photos-style library: date lines above each group, and a pinch moves one level (days, months, years).
 export function PhotoGrid({ items, header }: { items: GridItem[]; header?: React.ReactNode }) {
   const [level, setLevel] = useState<GridLevel>("day");
@@ -48,13 +63,15 @@ export function PhotoGrid({ items, header }: { items: GridItem[]; header?: React
                   >
                     {level === "day" ? (
                       <>
-                        <ScreenshotSticker uri={item.imageUrl ?? undefined} width={Math.min(120, cell - 12)} tilt={tiltFor(item._id)} />
+                        <ScreenshotSticker width={Math.min(120, cell - 12)} tilt={tiltFor(item._id)}>
+                          <Thumb item={item} width={Math.min(120, cell - 12)} height={Math.round(Math.min(120, cell - 12) * 1.9)} />
+                        </ScreenshotSticker>
                         <Text style={type.bodyBold} numberOfLines={2}>{item.title}</Text>
                         {item.caption ? <Text style={type.caption}>{item.caption}</Text> : null}
                       </>
                     ) : (
                       <View style={{ width: cell, height: Math.round(cell * 1.7), borderRadius: radii.sm, overflow: "hidden", backgroundColor: colors.paperDeep }}>
-                        {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={{ width: cell, height: Math.round(cell * 1.7) }} contentFit="cover" /> : null}
+                        <Thumb item={item} width={cell} height={Math.round(cell * 1.7)} />
                       </View>
                     )}
                   </Pressable>
