@@ -1,4 +1,5 @@
 import { Pressable, Text } from "react-native";
+import { SketchFrame } from "./SketchFrame";
 import { colors, radii, spacing, type } from "./theme";
 
 export function Button({
@@ -18,20 +19,23 @@ export function Button({
       disabled={disabled}
       accessibilityRole="button"
       style={({ pressed }) => ({
-        backgroundColor: variant === "primary" ? colors.sun : colors.white,
-        borderColor: colors.ink,
-        borderWidth: 2,
-        borderRadius: radii.pill,
-        paddingHorizontal: spacing.xl,
-        paddingVertical: spacing.md,
-        alignItems: "center",
         alignSelf: "stretch",
         opacity: disabled ? 0.5 : 1,
-        boxShadow: pressed ? "0px 1px 0px #2B1D14" : "0px 4px 0px #2B1D14",
         transform: [{ translateY: pressed ? 3 : 0 }],
       })}
     >
-      <Text style={[type.heading, { fontSize: 17 }]}>{label}</Text>
+      {({ pressed }) => (
+        <SketchFrame
+          fill={variant === "primary" ? colors.sun : colors.white}
+          radius={radii.pill}
+          strokeWidth={2.4}
+          seed={label}
+          shadow={{ color: colors.ink, opacity: 1, dy: pressed ? 1 : 4 }}
+          style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md, alignItems: "center" }}
+        >
+          <Text style={type.heading}>{label}</Text>
+        </SketchFrame>
+      )}
     </Pressable>
   );
 }

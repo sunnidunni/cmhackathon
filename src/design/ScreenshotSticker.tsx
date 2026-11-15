@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { Text, View } from "react-native";
+import { SketchFrame } from "./SketchFrame";
 import { Sticker } from "./Sticker";
 import { colors, radii, RoomKey, rooms, type } from "./theme";
 
@@ -25,22 +26,22 @@ export function ScreenshotSticker({
         </View>
       </Sticker>
       {room ? (
-        <View
+        <SketchFrame
+          fill={rooms[room].color}
+          radius={radii.pill}
+          strokeWidth={1.7}
+          seed={room}
           style={{
             position: "absolute",
-            top: -8,
+            top: -9,
             right: -10,
-            backgroundColor: rooms[room].color,
-            borderColor: colors.ink,
-            borderWidth: 1.5,
-            borderRadius: radii.pill,
-            paddingHorizontal: 8,
-            paddingVertical: 3,
+            paddingHorizontal: 9,
+            paddingVertical: 2,
             transform: [{ rotate: `${tilt + 6}deg` }],
           }}
         >
           <Text style={[type.label, { color: colors.white }]}>{rooms[room].label}</Text>
-        </View>
+        </SketchFrame>
       ) : null}
     </View>
   );

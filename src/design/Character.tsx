@@ -1,12 +1,11 @@
-import Svg, { Circle, G, Path } from "react-native-svg";
+import { useId } from "react";
+import Svg, { Circle, ClipPath, Defs, G, Path } from "react-native-svg";
+import { circleD, seedFrom, scribble, Sketch, sketch } from "./sketch";
 import { colors, RoomKey, rooms } from "./theme";
 
 export type Expression = "neutral" | "happy";
 
 type Part = { d: string; fill: "body" | "white" | "none" };
-
-const circle = (cx: number, cy: number, r: number) =>
-  `M${cx - r} ${cy} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0 Z`;
 
 const SHAPES: Record<RoomKey, { parts: Part[]; details?: Part[]; face: { y: number; x?: number } }> = {
   deadlines: {
@@ -15,7 +14,7 @@ const SHAPES: Record<RoomKey, { parts: Part[]; details?: Part[]; face: { y: numb
       { d: "M36 22 H64 Q82 22 82 40 V68 Q82 86 64 86 H36 Q18 86 18 68 V40 Q18 22 36 22 Z", fill: "body" },
     ],
     details: [
-      { d: circle(50, 46, 14), fill: "white" },
+      { d: circleD(50, 46, 14), fill: "white" },
       { d: "M50 46 V37 M50 46 L57 50", fill: "none" },
     ],
     face: { y: 70 },
@@ -32,8 +31,8 @@ const SHAPES: Record<RoomKey, { parts: Part[]; details?: Part[]; face: { y: numb
   },
   money: {
     parts: [
-      { d: circle(43, 26, 6), fill: "body" },
-      { d: circle(57, 26, 6), fill: "body" },
+      { d: circleD(43, 26, 6), fill: "body" },
+      { d: circleD(57, 26, 6), fill: "body" },
       { d: "M20 52 C20 40 30 36 50 36 C70 36 80 40 80 52 L84 72 C85 83 74 88 50 88 C26 88 15 83 16 72 Z", fill: "body" },
     ],
     details: [{ d: "M30 41 Q50 31 70 41", fill: "none" }],
@@ -48,6 +47,22 @@ const SHAPES: Record<RoomKey, { parts: Part[]; details?: Part[]; face: { y: numb
   },
 };
 
+type Drawn = Part & { s: Sketch; hatch: string };
+const cache = new Map<RoomKey, { parts: Drawn[]; details: Drawn[] }>();
+
+function drawn(room: RoomKey) {
+  const hit = cache.get(room);
+  if (hit) return hit;
+  const make = (p: Part, i: number): Drawn => {
+    const s = sketch(p.d, seedFrom(room, i), { amp: 1.5, wave: 18, step: 2.5 });
+    return { ...p, s, hatch: p.fill === "body" ? scribble(s.box, seedFrom(room, "hatch", i), 9) : "" };
+  };
+  const shape = SHAPES[room];
+  const out = { parts: shape.parts.map(make), details: (shape.details ?? []).map((p, i) => make(p, i + 10)) };
+  cache.set(room, out);
+  return out;
+}
+
 export function Character({
   room,
   size = 72,
@@ -59,39 +74,63 @@ export function Character({
   expression?: Expression;
   outline?: boolean;
 }) {
-  const shape = SHAPES[room];
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const { parts, details } = drawn(room);
   const color = rooms[room].color;
-  const all = [...shape.parts];
-  const fy = shape.face.y;
-  const fx = shape.face.x ?? 50;
-  const fillOf = (p: Part) => (p.fill === "body" ? color : p.fill === "white" ? colors.white : "none");
+  const fy = SHAPES[room].face.y;
+  const fx = SHAPES[room].face.x ?? 50;
+  const solid = (p: Drawn) => (p.fill === "none" ? p.s.main : p.s.fill);
+  const fillOf = (p: Drawn) => (p.fill === "body" ? color : colors.white);
+  const ink = (p: Drawn, i: number) => (
+    <G key={i}>
+      <Path d={p.s.main} fill="none" stroke={colors.ink} strokeWidth={3.6} strokeLinejoin="round" strokeLinecap="round" />
+      <Path d={p.s.echo} fill="none" stroke={colors.ink} strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round" opacity={0.85} />
+    </G>
+  );
+  const colored = (p: Drawn, i: number) =>
+    p.fill === "none" ? null : (
+      <G key={i}>
+        <Path d={p.s.fill} fill={fillOf(p)} transform="translate(2.2 1.8)" />
+        {p.hatch ? (
+          <>
+            <Defs>
+              <ClipPath id={`${uid}c${i}`}>
+                <Path d={p.s.fill} transform="translate(2.2 1.8)" />
+              </ClipPath>
+            </Defs>
+            <Path d={p.hatch} clipPath={`url(#${uid}c${i})`} fill="none" stroke={colors.ink} strokeOpacity={0.13} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+          </>
+        ) : null}
+      </G>
+    );
   return (
     <Svg width={size} height={size} viewBox="-6 -2 112 106">
       {outline ? (
         <>
-          <G transform="translate(0 3)" opacity={0.16}>
-            {all.map((p, i) => (
-              <Path key={i} d={p.d} fill={p.fill === "none" ? "none" : colors.ink} stroke={colors.ink} strokeWidth={13} strokeLinejoin="round" strokeLinecap="round" />
+          <G transform="translate(0.5 3)" opacity={0.16}>
+            {parts.map((p, i) => (
+              <Path key={i} d={solid(p)} fill={p.fill === "none" ? "none" : colors.ink} stroke={colors.ink} strokeWidth={13} strokeLinejoin="round" strokeLinecap="round" />
             ))}
           </G>
-          {all.map((p, i) => (
-            <Path key={i} d={p.d} fill={p.fill === "none" ? "none" : colors.white} stroke={colors.white} strokeWidth={13} strokeLinejoin="round" strokeLinecap="round" />
+          {parts.map((p, i) => (
+            <Path key={i} d={solid(p)} fill={p.fill === "none" ? "none" : colors.white} stroke={colors.white} strokeWidth={13} strokeLinejoin="round" strokeLinecap="round" />
           ))}
         </>
       ) : null}
-      {[...all, ...(shape.details ?? [])].map((p, i) => (
-        <Path key={i} d={p.d} fill={fillOf(p)} stroke={colors.ink} strokeWidth={3.5} strokeLinejoin="round" strokeLinecap="round" />
-      ))}
+      {parts.map(colored)}
+      {parts.map(ink)}
+      {details.map((p, i) => colored(p, i + 10))}
+      {details.map((p, i) => ink(p, i + 10))}
       {expression === "happy" ? (
         <>
-          <Path d={`M${fx - 15} ${fy + 1} Q${fx - 11} ${fy - 5} ${fx - 7} ${fy + 1} M${fx + 7} ${fy + 1} Q${fx + 11} ${fy - 5} ${fx + 15} ${fy + 1}`} fill="none" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" />
-          <Path d={`M${fx - 6} ${fy + 5} Q${fx} ${fy + 13} ${fx + 6} ${fy + 5} Z`} fill={colors.ink} stroke={colors.ink} strokeWidth={2} strokeLinejoin="round" />
+          <Path d={`M${fx - 15} ${fy + 1} Q${fx - 11.5} ${fy - 5.5} ${fx - 7} ${fy + 0.5} M${fx + 7} ${fy} Q${fx + 10} ${fy - 4} ${fx + 14.5} ${fy + 1.5}`} fill="none" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" />
+          <Path d={`M${fx - 7} ${fy + 5} Q${fx - 1} ${fy + 14} ${fx + 6} ${fy + 4} Q${fx} ${fy + 6.5} ${fx - 7} ${fy + 5} Z`} fill={colors.ink} stroke={colors.ink} strokeWidth={2} strokeLinejoin="round" />
         </>
       ) : (
         <>
-          <Circle cx={fx - 11} cy={fy} r={3.4} fill={colors.ink} />
-          <Circle cx={fx + 11} cy={fy} r={3.4} fill={colors.ink} />
-          <Path d={`M${fx - 5} ${fy + 5} Q${fx} ${fy + 9} ${fx + 5} ${fy + 5}`} fill="none" stroke={colors.ink} strokeWidth={2.6} strokeLinecap="round" />
+          <Circle cx={fx - 11} cy={fy + 0.4} r={3.1} fill={colors.ink} />
+          <Circle cx={fx + 11.5} cy={fy - 0.6} r={3.9} fill={colors.ink} />
+          <Path d={`M${fx - 6} ${fy + 5.5} Q${fx - 1} ${fy + 10.5} ${fx + 6} ${fy + 4}`} fill="none" stroke={colors.ink} strokeWidth={2.7} strokeLinecap="round" />
         </>
       )}
     </Svg>
