@@ -16,7 +16,7 @@ export function Todos() {
     const clean = cleanTodoText(text);
     if (!clean) return;
     setText("");
-    await add({ text: clean }).catch(() => setText(clean));
+    await add({ text: clean }).catch(() => setText((current) => (current === "" ? clean : current)));
   }
 
   const { open, done } = splitTodos(items ?? []);
