@@ -66,6 +66,7 @@ export default defineSchema({
     retryAt: v.optional(v.number()),
     error: v.optional(v.string()),
     memoryStored: v.optional(v.boolean()),
+    readAt: v.optional(v.number()),
   })
     .index("by_status", ["status"])
     .index("by_user_category", ["userId", "category"])

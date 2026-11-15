@@ -90,6 +90,7 @@ export const complete = internalMutation({
       // The user's own move wins over the model's category.
       ...(row.userMoved ? { category: row.category } : {}),
       status: "ready",
+      readAt: Date.now(),
       error: undefined,
     });
     return true;

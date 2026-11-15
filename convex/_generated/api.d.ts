@@ -9,6 +9,7 @@
  */
 
 import type * as ask from "../ask.js";
+import type * as askData from "../askData.js";
 import type * as auth from "../auth.js";
 import type * as extract from "../extract.js";
 import type * as http from "../http.js";
@@ -16,6 +17,8 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_extraction from "../lib/extraction.js";
 import type * as lib_importPlan from "../lib/importPlan.js";
 import type * as lib_lines from "../lib/lines.js";
+import type * as lib_llm from "../lib/llm.js";
+import type * as lib_memoryClient from "../lib/memoryClient.js";
 import type * as lib_plan from "../lib/plan.js";
 import type * as lib_whop_signature from "../lib/whop_signature.js";
 import type * as memory from "../memory.js";
@@ -33,6 +36,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   ask: typeof ask;
+  askData: typeof askData;
   auth: typeof auth;
   extract: typeof extract;
   http: typeof http;
@@ -40,6 +44,8 @@ declare const fullApi: ApiFromModules<{
   "lib/extraction": typeof lib_extraction;
   "lib/importPlan": typeof lib_importPlan;
   "lib/lines": typeof lib_lines;
+  "lib/llm": typeof lib_llm;
+  "lib/memoryClient": typeof lib_memoryClient;
   "lib/plan": typeof lib_plan;
   "lib/whop_signature": typeof lib_whop_signature;
   memory: typeof memory;
