@@ -1,0 +1,43 @@
+import { Pressable, Text, View } from "react-native";
+import { KeeperFace, KeeperLine, PsstButton, text, usePalette } from "./kit";
+
+const TRY = "When is that due?";
+const MORE = ["What's the Wi-Fi password?", "What are my flight details?", "What was that recipe?"];
+
+export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | undefined; onPick: (q: string) => void; showSuggestions: boolean }) {
+  const p = usePalette();
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ gap: 8 }}>
+        <Text style={[text.headline, { color: p.ink }]}>Ask about anything you screenshotted.</Text>
+        <Text style={[text.lead, { color: p.ink2 }]}>Answers come only from your screenshots, with the screenshot underneath as proof.</Text>
+      </View>
+      {showSuggestions ? (
+        <View style={{ marginTop: 16 }}>
+          <PsstButton kind="filled" label={`Try: ${TRY}`} onPress={() => onPick(TRY)} />
+          {MORE.map((q, i) => (
+            <Pressable
+              key={q}
+              accessibilityRole="button"
+              onPress={() => onPick(q)}
+              style={{ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: i === 0 ? 0 : 1, borderBottomWidth: i === MORE.length - 1 ? 1 : 0, borderColor: p.hair }}
+            >
+              <Text style={[text.lead, { color: p.ink }]}>{q}</Text>
+              <Text accessibilityElementsHidden style={[text.lead, { color: p.ink3 }]}>›</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+      {showSuggestions && count !== undefined ? (
+        <View style={{ flex: 1, justifyContent: "flex-end", flexDirection: "row", alignItems: "flex-end", gap: 12, paddingBottom: 8 }}>
+          <KeeperLine id="murmur" style={{ flex: 1, paddingBottom: 12 }}>
+            {count === 0 ? "Nothing to ask about yet." : `Ask about any of your ${count} screenshots. I show my work.`}
+          </KeeperLine>
+          <View style={{ marginRight: -16, marginBottom: -8 }}>
+            <KeeperFace id="murmur" size={72} />
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}

@@ -1,0 +1,193 @@
+import { useQuery } from "convex/react";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
+import type { FunctionReturnType } from "convex/server";
+import { defaultReminder, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
+import { KEEPERS, KeeperFace, PsstButton, ShotSticker, text, usePalette, useKeeperColors, type KeeperId } from "./kit";
+
+export type AskSource = { screenshotId: Id<"screenshots">; title: string | null; imageUrl: string | null };
+export type AskResult = { answer: string; found: boolean; sources: AskSource[] };
+export type ShotDetail = NonNullable<FunctionReturnType<typeof api.shots.detail>>;
+// `shots` lets a caller hand in already-loaded details; otherwise each block subscribes to its own.
+export type Shots = Record<string, ShotDetail>;
+
+const tz = () => new Date().getTimezoneOffset();
+const ROOM_KEEPER: Record<string, KeeperId> = { deadlines: "tock", chats: "murmur", money: "penny", ideas: "mote" };
+const ROOM_NAME: Record<string, string> = { deadlines: "Deadlines", chats: "Chats", money: "Money", ideas: "Ideas", unsorted: "Unsorted" };
+const TRY_LINE: Record<KeeperId, string> = {
+  tock: "Try Deadlines. Dates live with me.",
+  murmur: "Try Chats. I saw nothing. Mostly.",
+  penny: "Try Money. Every cent has a home.",
+  mote: "Try Ideas. Saved for a someday.",
+};
+
+export function QuestionBubble({ question }: { question: string }) {
+  const p = usePalette();
+  return (
+    <View style={{ alignSelf: "flex-end", maxWidth: "85%", backgroundColor: p.fill2, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 }}>
+      <Text style={[text.body, { color: p.ink }]}>{question}</Text>
+    </View>
+  );
+}
+
+function useShot(id: Id<"screenshots"> | undefined, shots?: Shots) {
+  const given = id ? shots?.[id] : undefined;
+  const fetched = useQuery(api.shots.detail, id && !given ? { id } : "skip");
+  return given ?? fetched;
+}
+
+function SourceRow({ source, card, shots }: { source: AskSource; card: boolean; shots?: Shots }) {
+  const p = usePalette();
+  const shot = useShot(source.screenshotId, shots);
+  const [now] = useState(Date.now);
+  const date = shot ? nextConfidentDate(shot.dates, now, tz()) ?? shot.dates.find((d) => d.confident) ?? null : null;
+  const room = shot?.category ?? null;
+  const dot = room && ROOM_KEEPER[room] ? KEEPERS[ROOM_KEEPER[room]].main : p.hair2;
+  const subtitle = date ? `${date.what} ${whenLabel(date.when)}` : shot?.summary || null;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${source.title ?? "screenshot"}`}
+      onPress={() => router.push(`/shot/${source.screenshotId}`)}
+      style={{ minHeight: 64, flexDirection: "row", alignItems: "center", gap: 12, padding: card ? 8 : 0, paddingVertical: card ? 8 : 10, borderRadius: 16, borderWidth: card ? 1 : 0, borderColor: p.hair, backgroundColor: card ? p.white : "transparent" }}
+    >
+      <ShotSticker uri={source.imageUrl} title={source.title ?? "Screenshot"} size={card ? 44 : 40} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[text.bodyBold, { color: p.ink }]} numberOfLines={2}>{source.title ?? "Untitled screenshot"}</Text>
+        {subtitle ? <Text style={[text.caption, { color: p.ink2 }]} numberOfLines={2}>{subtitle}</Text> : null}
+        {card && room ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: dot, borderWidth: 1, borderColor: p.hair2 }} />
+            <Text style={[text.caption, { color: p.ink2 }]}>In {ROOM_NAME[room] ?? "Unsorted"}</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text accessibilityElementsHidden style={[text.lead, { color: p.ink3 }]}>›</Text>
+    </Pressable>
+  );
+}
+
+// Two-tone answer: the answer in ink, then the source in ink-2 in the same paragraph. No keeper in it.
+function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boolean; shots?: Shots }) {
+  const p = usePalette();
+  const source = result.sources[0];
+  const shot = useShot(source?.screenshotId, shots);
+  const [now] = useState(Date.now);
+  const reminder = shot ? defaultReminder(shot.dates, now, tz()) : null;
+  const existing = reminder ? shot?.dates.find((d) => d.when === reminder.date.when)?.reminder : null;
+  const isSet = existing?.state === "scheduled";
+  const closes = reminder ? /clos/i.test(reminder.date.what) : false;
+  return (
+    <View style={{ gap: 14 }}>
+      <Text style={[text.lead, { color: p.ink }]}>
+        {result.answer}
+        {shot ? <Text style={{ color: p.ink2 }}>{` · from a screenshot saved ${savedLabel(shot.takenAt, now, tz())}`}</Text> : null}
+      </Text>
+      {source ? (
+        <Pressable accessibilityRole="link" onPress={() => router.push(`/shot/${source.screenshotId}`)} style={{ minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }}>
+          <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Wrong date?</Text>
+        </Pressable>
+      ) : null}
+      {result.sources.map((s) => (
+        <SourceRow key={s.screenshotId} source={s} card shots={shots} />
+      ))}
+      {latest && source && reminder ? (
+        <View style={{ gap: 8 }}>
+          <PsstButton
+            kind={isSet ? "outline" : "filled"}
+            label={isSet ? `Reminder set for ${reminder.label}` : `Remind me ${reminder.label}`}
+            onPress={() => router.push(`/remind/${source.screenshotId}`)}
+          />
+          <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
+            {`The day before it ${closes ? "closes" : "happens"}. One reminder. Change it or turn it off later.`}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
+  const p = usePalette();
+  const first = result.sources[0];
+  const shot = useShot(first?.screenshotId, shots);
+  const room = shot?.category && shot.category !== "unsorted" ? shot.category : null;
+  const keeper = room ? ROOM_KEEPER[room] : undefined;
+  const colors = useKeeperColors(keeper ?? "tock");
+  return (
+    <View style={{ gap: 14 }}>
+      <Text style={[text.lead, { color: p.ink }]}>{result.answer}</Text>
+      {result.sources.length > 0 ? (
+        <View>
+          <Text style={[text.caption, { color: p.ink2, marginBottom: 4 }]}>Closest matches</Text>
+          {result.sources.map((s, i) => (
+            <View key={s.screenshotId} style={{ borderTopWidth: i === 0 ? 1 : 0, borderBottomWidth: 1, borderColor: p.hair }}>
+              <SourceRow source={s} card={false} shots={shots} />
+            </View>
+          ))}
+        </View>
+      ) : null}
+      {room && keeper ? (
+        <View style={{ gap: 12 }}>
+          <View style={{ backgroundColor: colors.tint, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <KeeperFace id={keeper} size={40} />
+            <Text style={[text.voice, { color: colors.deep, flex: 1 }]}>{TRY_LINE[keeper]}</Text>
+          </View>
+          <PsstButton kind="filled" keeper={keeper} label={`Look in ${ROOM_NAME[room]}`} onPress={() => router.push(`/room/${room}`)} />
+        </View>
+      ) : (
+        <PsstButton kind="outline" label="Look in Rooms" onPress={() => router.push("/rooms")} />
+      )}
+    </View>
+  );
+}
+
+export function AnswerBlock({ result, latest, shots }: { result: AskResult; latest: boolean; shots?: Shots }) {
+  return result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />;
+}
+
+export function LookingBlock({ count }: { count: number | undefined }) {
+  const p = usePalette();
+  const bar = (w: string | number, h = 14) => <View style={{ width: w as never, height: h, borderRadius: 7, backgroundColor: p.fill2 }} />;
+  return (
+    <View accessibilityState={{ busy: true }} accessibilityLabel="Looking through your screenshots" style={{ gap: 14 }}>
+      <Text style={[text.headline, { color: p.ink }]}>
+        {count === undefined ? "Looking through your screenshots." : `Looking through your ${count} screenshot${count === 1 ? "" : "s"}.`}
+      </Text>
+      <View style={{ gap: 10 }}>
+        {bar("92%")}
+        {bar("62%")}
+      </View>
+      <View style={{ flexDirection: "row", gap: 12, padding: 8, borderRadius: 16, borderWidth: 1, borderColor: p.hair }}>
+        <View style={{ width: 44, height: 66, borderRadius: 8, backgroundColor: p.fill2 }} />
+        <View style={{ flex: 1, gap: 10, justifyContent: "center" }}>
+          {bar("70%", 12)}
+          {bar("40%", 12)}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function FailedBlock({ onRetry }: { onRetry: () => void }) {
+  const p = usePalette();
+  const colors = useKeeperColors("murmur");
+  return (
+    <View style={{ gap: 14 }}>
+      <View style={{ backgroundColor: colors.tint, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <KeeperFace id="murmur" size={48} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={[text.bodyBold, { color: p.ink }]}>The server didn&apos;t answer.</Text>
+          <Text style={[text.caption, { color: p.ink2 }]}>Your question is saved above. Nothing was lost.</Text>
+        </View>
+      </View>
+      <PsstButton kind="filled" label="Try again" onPress={onRetry} />
+      <Pressable accessibilityRole="link" onPress={() => router.push("/rooms")} style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
+        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Or look in Rooms.</Text>
+      </Pressable>
+    </View>
+  );
+}
