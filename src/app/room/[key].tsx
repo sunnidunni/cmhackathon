@@ -15,8 +15,8 @@ import { runSync } from "@/lib/sync";
 const CATEGORIES: Category[] = ["deadlines", "chats", "money", "ideas", "unsorted"];
 
 const EMPTY: Record<RoomKey, { body: string; line: string }> = {
-  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Psst.", line: "No dates yet. I'm suspiciously relaxed." },
-  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Psst.", line: "Nothing to keep quiet about. Yet." },
+  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Psst.", line: "No dates found yet. All 3 of my alarms are bored." },
+  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Psst.", line: "Nothing in Chats yet. I'll never quote one back." },
   money: { body: "Receipts, bills, tickets and things to buy land here. New screenshots are read each time you open Psst.", line: "An empty pouch. Very tidy." },
   ideas: { body: "Recipes, places, quotes and saved answers land here. New screenshots are read each time you open Psst.", line: "The jar is open. Take your time." },
 };
@@ -88,7 +88,7 @@ function SingleRoom({ category }: { category: Category }) {
 
   const items = data?.items ?? null;
   const rows = items?.map((i) => ({ date: i.date, takenAt: i.takenAt }));
-  const headline = !isRoom && items ? `${countLabel(items.length)} didn't fit a room.` : roomHeadline(category);
+  const headline = !isRoom && items ? `${countLabel(items.length)} ${items.length === 1 ? 'was' : 'were'} too blurry to read.` : roomHeadline(category);
   const isEmpty = items !== null && items.length === 0;
 
   const wash = (
