@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 
@@ -46,13 +47,15 @@ export const create = mutation({
       await ctx.storage.delete(storageId);
       return existing._id;
     }
-    return await ctx.db.insert("screenshots", {
+    const id = await ctx.db.insert("screenshots", {
       userId,
       deviceAssetId,
       storageId,
       takenAt,
       status: "uploaded",
     });
+    await ctx.scheduler.runAfter(0, internal.extract.kick, {});
+    return id;
   },
 });
 

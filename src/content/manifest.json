@@ -1,0 +1,158 @@
+{
+  "generatedOn": "2026-11-15",
+  "note": "dates: ISO; confident=false when year missing, so no auto reminder expected",
+  "images": [
+    {
+      "file": "flyer_tomorrow.png",
+      "category": "deadlines",
+      "title": "Harvest Lantern Night",
+      "dates": [
+        {
+          "date": "2026-11-16",
+          "time": "18:30",
+          "confident": true,
+          "label": "event"
+        }
+      ],
+      "importance": 4,
+      "notes": "Dated tomorrow"
+    },
+    {
+      "file": "flyer_3days.png",
+      "category": "deadlines",
+      "title": "Harvest Lantern Night",
+      "dates": [
+        {
+          "date": "2026-11-18",
+          "time": "19:00",
+          "confident": true,
+          "label": "event"
+        }
+      ],
+      "importance": 4,
+      "notes": "Dated 3 days from today; same flyer layout, different date"
+    },
+    {
+      "file": "appointment.png",
+      "category": "deadlines",
+      "title": "Dental cleaning at Willow Creek Dental",
+      "dates": [
+        {
+          "date": "2026-11-19",
+          "time": "09:15",
+          "confident": true,
+          "label": "appointment"
+        }
+      ],
+      "importance": 4,
+      "notes": ""
+    },
+    {
+      "file": "bill.png",
+      "category": "money",
+      "title": "Brightside Power & Light bill, $142.37",
+      "dates": [
+        {
+          "date": "2026-11-16",
+          "time": null,
+          "confident": true,
+          "label": "payment due"
+        }
+      ],
+      "importance": 5,
+      "notes": "Amount $142.37; due tomorrow"
+    },
+    {
+      "file": "flight.png",
+      "category": "money",
+      "title": "Flight SEA to DEN, SW 482",
+      "dates": [
+        {
+          "date": "2026-12-04",
+          "time": "07:55",
+          "confident": true,
+          "label": "departure"
+        }
+      ],
+      "importance": 3,
+      "notes": "Confirmation code QZ7R4K; total $214.60"
+    },
+    {
+      "file": "product.png",
+      "category": "money",
+      "title": "NovaTone Drift Pro Wireless Headphones, $89.99",
+      "dates": [
+        {
+          "date": "2026-11-20",
+          "time": null,
+          "confident": true,
+          "label": "deal ends"
+        }
+      ],
+      "importance": 3,
+      "notes": "Price $89.99 (was $129.99); things to buy"
+    },
+    {
+      "file": "chat.png",
+      "category": "chats",
+      "title": "Hiking plan with Jamie",
+      "dates": [
+        {
+          "date": "2026-11-21",
+          "time": "08:30",
+          "confident": false,
+          "label": "hike (year missing)"
+        }
+      ],
+      "importance": 2,
+      "notes": "Year not shown, so confident must be false"
+    },
+    {
+      "file": "chat_plans.png",
+      "category": "chats",
+      "title": "Movie night with Sam and Dee",
+      "dates": [
+        {
+          "date": "2026-11-20",
+          "time": "19:00",
+          "confident": false,
+          "label": "movie night (year missing)"
+        }
+      ],
+      "importance": 2,
+      "notes": "Year not shown"
+    },
+    {
+      "file": "recipe.png",
+      "category": "ideas",
+      "title": "One-Pan Lemon Garlic Chicken Thighs",
+      "dates": [],
+      "importance": 1,
+      "notes": "No dates"
+    },
+    {
+      "file": "quote.png",
+      "category": "ideas",
+      "title": "Quote: take the first step",
+      "dates": [],
+      "importance": 1,
+      "notes": "No dates"
+    },
+    {
+      "file": "article.png",
+      "category": "ideas",
+      "title": "Why Naps Under 20 Minutes Work Better",
+      "dates": [],
+      "importance": 1,
+      "notes": "Publication date 2026-10-28 is not a reminder date; dates should be empty or past"
+    },
+    {
+      "file": "ai.png",
+      "category": "ideas",
+      "title": "AI answer: 4-week guitar plan",
+      "dates": [],
+      "importance": 1,
+      "notes": "No dates"
+    }
+  ]
+}
