@@ -35,7 +35,7 @@ describe("labels", () => {
   });
 
   test("headlines name the keeper and the noun", () => {
-    expect(headline(item({}), NOW, TZ)).toEqual({ name: "Tock", rest: "found your Tuesday\u2060\u2060booking.".replace("\u2060\u2060", " ") });
+    expect(headline(item({}), NOW, TZ)).toEqual({ name: "Tock", rest: "found your Tuesday booking." });
   });
 
   test("just in flyer", () => {
@@ -52,7 +52,7 @@ describe("actions", () => {
   test("remind carries its default time", () => {
     const a = actionsFor(item({}), NOW, TZ);
     expect(a.primary).toBe("Remind me Mon 9:00 AM");
-    expect(a.note).toBe("One reminder, the day before. Change it or turn it off later.");
+    expect(a.note).toBe("We'll remind you once, the day before. You can snooze or turn reminders off.");
     expect(a.secondary).toBe("Already done");
   });
   test("money never pays", () => {

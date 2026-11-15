@@ -82,6 +82,23 @@ export function headline(item: Item, now: number, tz: number): { name: string; r
   return { name, rest: "has one for you." };
 }
 
+export function toItem(c: Card, section: Section): Item {
+  return {
+    id: c._id,
+    section,
+    keeper: ROOM_KEEPER[c.category] ?? "mote",
+    roomName: ROOM_NAMES[c.category] ?? "Unsorted",
+    title: c.title,
+    imageUrl: c.imageUrl,
+    date: c.date,
+    line: lineFor(c.lineKey),
+    takenAt: c.takenAt,
+    reminder: c.reminder,
+    actions: c.actions,
+    handled: c.reminder?.state === "scheduled",
+  };
+}
+
 export function buildItems(today: TodayData): Item[] {
   const seen = new Set<string>();
   const out: Item[] = [];
@@ -89,20 +106,7 @@ export function buildItems(today: TodayData): Item[] {
     for (const c of cards) {
       if (seen.has(c._id)) continue;
       seen.add(c._id);
-      out.push({
-        id: c._id,
-        section,
-        keeper: ROOM_KEEPER[c.category] ?? "mote",
-        roomName: ROOM_NAMES[c.category] ?? "Unsorted",
-        title: c.title,
-        imageUrl: c.imageUrl,
-        date: c.date,
-        line: lineFor(c.lineKey),
-        takenAt: c.takenAt,
-        reminder: c.reminder,
-        actions: c.actions,
-        handled: c.reminder?.state === "scheduled",
-      });
+      out.push(toItem(c, section));
     }
   };
   add(today.justIn, "justIn");
@@ -144,14 +148,14 @@ export function actionsFor(item: Item, now: number, tz: number) {
   const sameDay = item.date ? localDay(computeDueAt(item.date.when, now, tz), tz) === item.date.when.slice(0, 10) : false;
   const when = sameDay ? "an hour before" : "the day before";
   const closes = item.section === "justIn" && noun(item.title) === "sign-up" ? " it closes" : "";
-  const tail = item.keeper === "penny" ? "Psst never pays or moves money." : "Change it or turn it off later.";
+  const tail = item.keeper === "penny" ? "Psst never pays or moves money." : "You can snooze or turn reminders off.";
   if (item.actions.primary === "remind" && label)
     return {
       primary: `Remind me ${label}`,
       primaryKind: "remind" as const,
       secondary: doneLabel,
       secondaryKind: "done" as const,
-      note: `One reminder, ${when}${closes}. ${tail}`,
+      note: `We'll remind you once, ${when}${closes}. ${tail}`,
     };
   if (item.actions.primary === "see")
     return { primary: "See it", primaryKind: "see" as const, secondary: doneLabel, secondaryKind: "done" as const, note: "Opens the screenshot. Nothing changes until you decide." };
@@ -171,6 +175,11 @@ export function actionsFor(item: Item, now: number, tz: number) {
     note: "No reminder, no second ping. It stays in its room.",
   };
 }
+
+export type ReminderRow = TodayData["reminders"][number];
+
+// Scheduled reminders already shown as a handled handful row are not listed twice.
+export const extraReminders = (today: TodayData, items: Item[]): ReminderRow[] => today.reminders.filter((r) => !items.some((i) => i.id === r.screenshotId));
 
 export const sourceLine = (item: Item): string => {
   if (item.section === "justIn") return "Read when you opened Psst.";

@@ -1,4 +1,7 @@
+import { Image } from "react-native";
 import type { TodayData } from "./model";
+
+const demo = (module: number) => Image.resolveAssetSource(module)?.uri ?? null;
 
 type Card = TodayData["handful"][number];
 
@@ -22,10 +25,11 @@ export function previewToday(kind: string, tz: number): { data: TodayData | unde
       ...over,
     }) as Card;
   const set = (dueAt: number): Partial<Card> => ({ reminder: { id: "r" as never, state: "scheduled", dueAt }, actions: { primary: "done", secondary: "detail" } });
-  const dentist = card("dentist", "Dentist booking", "deadlines", "2026-11-17T15:00", "appointment", 9);
-  const rent = card("rent", "Rent due Dec 1", "money", "2026-12-01", "rent due", 12);
-  const wifi = card("wifi", "Wi-Fi password from Mom", "chats", null, "", 5);
-  const flyer = card("flyer", "Pottery class sign-up", "deadlines", "2026-11-20", "sign-up closes", 15, { takenAt: local(2026, 11, 15, 9, 12, tz) });
+  const dentist = card("dentist", "Dentist booking", "deadlines", "2026-11-17T15:00", "appointment", 9, { imageUrl: demo(require("@/content/demo/appointment.png")) });
+  const rent = card("rent", "Rent due Dec 1", "money", "2026-12-01", "rent due", 12, { imageUrl: demo(require("@/content/demo/bill.png")) });
+  const wifi = card("wifi", "Wi-Fi password from Mom", "chats", null, "", 5, { imageUrl: demo(require("@/content/demo/chat.png")) });
+  const recipe = card("recipe", "Miso butter pasta", "ideas", null, "", 4, { importance: 2, imageUrl: demo(require("@/content/demo/recipe.png")) });
+  const flyer = card("flyer", "Pottery class sign-up", "deadlines", "2026-11-20", "sign-up closes", 15, { takenAt: local(2026, 11, 15, 9, 12, tz), imageUrl: demo(require("@/content/demo/flyer_3days.png")) });
   const reading = { read: 15, total: 16, pending: 0, failed: 0 };
   const base = { day: "2026-11-15", justIn: [], missed: [], handful: [], thin: null, reminders: [], resurfaced: null, cleared: false, reading };
   const out: Record<string, Partial<TodayData>> = {
@@ -34,6 +38,11 @@ export function previewToday(kind: string, tz: number): { data: TodayData | unde
     "td-3": { handful: [dentist, rent, wifi], reading: { ...reading, pending: 1 } },
     "td-4": { handful: [{ ...dentist, ...set(local(2026, 11, 16, 9, 0, tz)) }, rent, wifi] },
     "td-7": { handful: [{ ...dentist, ...set(local(2026, 11, 16, 9, 0, tz)) }, { ...rent, ...set(local(2026, 11, 30, 9, 0, tz)) }, { ...wifi, actions: { primary: "done", secondary: "detail" } }] },
+    extras: {
+      handful: [rent],
+      resurfaced: recipe,
+      reminders: [{ reminderId: "r1", screenshotId: "dentist", title: "Dentist booking", imageUrl: dentist.imageUrl, category: "deadlines", dueAt: local(2026, 11, 16, 9, 0, tz), when: "2026-11-17T15:00", what: "appointment" }],
+    } as Partial<TodayData>,
     "td-10": { reading: { read: 0, total: 0, pending: 0, failed: 0 } },
   };
   if (kind === "loading") return { data: undefined, now };

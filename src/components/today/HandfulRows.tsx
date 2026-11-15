@@ -27,6 +27,7 @@ export function HandfulRows({
   onOpen,
   onRemind,
   onSkip,
+  onMenu,
 }: {
   rows: Item[];
   now: number;
@@ -35,6 +36,7 @@ export function HandfulRows({
   onOpen: (item: Item) => void;
   onRemind: (item: Item) => void;
   onSkip: (item: Item) => void;
+  onMenu: (item: Item) => void;
 }) {
   const p = usePalette();
   if (rows.length === 0) return null;
@@ -43,7 +45,7 @@ export function HandfulRows({
       {title ? <Text style={[text.caption, { color: p.ink2, marginBottom: 8 }]}>{title}</Text> : null}
       {rows.map((item) => (
         <View key={item.id} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 68, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.hair }}>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Open ${item.title}`} onPress={() => onOpen(item)} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Open ${item.title}`} onPress={() => onOpen(item)} onLongPress={() => onMenu(item)} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
             <ShotSticker uri={item.imageUrl} title={item.title} size={44} />
             <View style={{ flex: 1, gap: 2 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>

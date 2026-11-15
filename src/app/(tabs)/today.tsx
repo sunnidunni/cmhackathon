@@ -1,18 +1,20 @@
 import { useMutation, useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { ReminderRows, RememberCard } from "@/components/today/Extras";
 import { FocusCard, Headline } from "@/components/today/FocusCard";
 import { HandfulRows } from "@/components/today/HandfulRows";
 import { FIXTURES, PsstButton, text, usePalette } from "@/components/today/kit";
-import { actionsFor, buildScreen, captionFor, type Item } from "@/components/today/model";
+import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
 import { previewToday } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
 import { DoneView, EmptyView, FailedCard, LoadingView, ReadingView } from "@/components/today/States";
+import { runSync } from "@/lib/sync";
 
 const asId = (id: string) => id as Id<"screenshots">;
 
@@ -58,7 +60,16 @@ export default function Today() {
   const retryAll = useMutation(api.extract.retryAllFailed);
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   const [failed, setFailed] = useState(false);
-  const { screen } = buildScreen(today, skipped);
+  const [refreshing, setRefreshing] = useState(false);
+  const { screen, items } = buildScreen(today, skipped);
+  const reminderRows = today ? extraReminders(today, items) : [];
+  const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin") : null;
+
+  const checkForNew = async () => {
+    setRefreshing(true);
+    await runSync().catch(() => setFailed(true));
+    setRefreshing(false);
+  };
 
   const run = async (work: () => Promise<unknown>) => {
     setFailed(false);
@@ -79,10 +90,17 @@ export default function Today() {
     if (kind === "keep") return run(() => keep({ id: asId(item.id) }));
     return run(() => done({ id: asId(item.id) }));
   };
-  const removeReading = (item: Item) =>
-    Alert.alert("Remove this reading?", "It's removed from Psst. The photo stays on your phone.", [
+  const confirmRemove = (item: Item, title: string) =>
+    Alert.alert(title, "It's removed from Psst. The photo stays on your phone.", [
       { text: "Keep it", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: () => run(() => remove({ id: asId(item.id) })) },
+    ]);
+  const menu = (item: Item) =>
+    Alert.alert(item.title, undefined, [
+      ...(item.actions.primary === "remind" ? [{ text: "Remind me", onPress: () => remind(item) }] : []),
+      { text: "Not today", onPress: () => skip(item) },
+      { text: "Delete from Psst", style: "destructive" as const, onPress: () => confirmRemove(item, "Delete from Psst?") },
+      { text: "Cancel", style: "cancel" as const },
     ]);
 
   const rows = screen.kind === "focus" || screen.kind === "reading" || screen.kind === "done" ? screen.rows : [];
@@ -93,20 +111,27 @@ export default function Today() {
     ) : screen.kind === "empty" ? (
       <View style={{ gap: 12 }}>
         <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-          We only read screenshots, never your other photos. Delete everything in Settings.
+          {"We only read your Screenshots album. Your other photos stay on your phone. Delete everything anytime in Settings."}
         </Text>
         <PsstButton kind="filled" label="Pick screenshots" onPress={() => router.push("/bring")} />
+        <PsstButton kind="text" label="Check for new screenshots" onPress={checkForNew} />
       </View>
     ) : null;
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
+      <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={checkForNew} />}
+        contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
         <View style={{ gap: 16 }}>
           <Header />
           {today && today.reading.failed > 0 ? <FailedCard count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
-          {screen.kind === "reading" ? <ReadingView pending={screen.pending} /> : null}
+          {screen.kind === "reading" ? (
+            <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
+              <ReadingView pending={screen.pending} />
+            </Pressable>
+          ) : null}
           {screen.kind === "empty" ? <EmptyView /> : null}
           {screen.kind === "focus" ? (
             <Rise key={screen.focus.id}>
@@ -121,12 +146,16 @@ export default function Today() {
                 onOpen={() => open(screen.focus)}
                 onPrimary={() => act(screen.focus, actionsFor(screen.focus, now, tz).primaryKind)}
                 onSecondary={() => act(screen.focus, actionsFor(screen.focus, now, tz).secondaryKind)}
-                onRemoveReading={() => removeReading(screen.focus)}
+                onRemoveReading={() => confirmRemove(screen.focus, "Remove this reading?")}
               />
             </Rise>
           ) : null}
           {screen.kind === "done" ? <DoneView /> : null}
-          <HandfulRows rows={rows} now={now} tz={tz} title={rowTitle} onOpen={open} onRemind={remind} onSkip={skip} />
+          <HandfulRows rows={rows} now={now} tz={tz} title={rowTitle} onOpen={open} onRemind={remind} onSkip={skip} onMenu={menu} />
+          <ReminderRows rows={reminderRows} now={now} tz={tz} onOpen={(id) => router.push(`/shot/${id}`)} />
+          {resurfaced ? (
+            <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
+          ) : null}
           {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
         </View>
         {footer}
