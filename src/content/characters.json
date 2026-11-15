@@ -1,0 +1,48 @@
+{
+  "characters": {
+    "deadlines": {
+      "name": "Tock",
+      "color": "#F59E0B",
+      "personality": "An anxious but helpful timekeeper who checks the calendar twice and then once more for luck.",
+      "look": {
+        "body": "Squat rounded square 120x120 (corner radius 36) in the room color, with a small 14px nub on top like a stopwatch button.",
+        "eyes": "Two white circles r=14 with dark #2B2118 pupils r=6, set wide and looking slightly upward; two small worried eyebrow strokes slanting inward.",
+        "feature": "A tiny cream clock face (r=16) on the belly with two hands (short hand at 3, long hand at 12); a small sweat drop (teardrop, #BDE3FF) beside the right eye.",
+        "mouth": "Small wobbly line, 24px wide, curving down at the left end."
+      }
+    },
+    "chats": {
+      "name": "Murmur",
+      "color": "#EC6FA3",
+      "personality": "A nosy friend who loves gossip but takes every secret to the grave.",
+      "look": {
+        "body": "Speech-bubble shape: rounded rectangle 130x104 (radius 44) in the room color with a small triangle tail at bottom-left pointing down.",
+        "eyes": "Two white ovals 18x24 with dark #3A1530 pupils r=7 shifted to the right, as if peeking sideways.",
+        "feature": "One oversized ear on the left: a pale pink (#F9C6DC) half-circle r=20 stuck to the body, and a tiny zipper line (dashed stroke) across the mouth.",
+        "mouth": "Short horizontal dashed line, 28px wide, centered under the eyes."
+      }
+    },
+    "money": {
+      "name": "Penny Pocket",
+      "color": "#2FA37A",
+      "personality": "A careful little accountant who sharpens pencils, rounds up, and never loses a receipt.",
+      "look": {
+        "body": "Tall rounded rectangle 100x130 (radius 30) in the room color, shaped like a little receipt with a zig-zag bottom edge (5 triangle teeth, 20px wide).",
+        "eyes": "Two round glasses: circles r=16 with white fill and a 4px dark #12382B outline, joined by a 6px bridge; pupils r=5.",
+        "feature": "A pencil tucked behind the right side: a yellow #F7D154 rotated rectangle 8x44 with a pink eraser tip and dark graphite point.",
+        "mouth": "Neat small smile, an arc 26px wide."
+      }
+    },
+    "ideas": {
+      "name": "Wisp",
+      "color": "#8B7CF6",
+      "personality": "A dreamy collector who keeps pockets full of good ideas and forgets where the car is parked.",
+      "look": {
+        "body": "Cloud: a cluster of three overlapping circles (r=34, r=40, r=34) in the room color on a flat bottom, about 150x100 total.",
+        "eyes": "Two dark #231B4D ovals 12x16 with a white star-shaped highlight (r=4) each, half-closed lids drawn as lighter arcs on top.",
+        "feature": "A small yellow #FFD966 four-point sparkle star (r=14) floating above the right side, plus two tiny sparkle dots; blush circles #C9C2FF under the eyes.",
+        "mouth": "Tiny open 'o' mouth, r=5."
+      }
+    }
+  }
+}
