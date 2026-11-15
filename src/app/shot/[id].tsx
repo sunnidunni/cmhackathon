@@ -48,7 +48,7 @@ export default function Detail() {
     return (
       <Screen>
         {back}
-        <Notice title="I can't find that one" body="It may have been deleted." actionLabel="Back to Today" onAction={() => router.replace("/today")} />
+        <Notice title="I can't find that one" body="It may have been deleted." actionLabel="Back to Home" onAction={() => router.replace("/today")} />
       </Screen>
     );
 
