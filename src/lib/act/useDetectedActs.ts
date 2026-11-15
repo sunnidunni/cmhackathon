@@ -9,7 +9,7 @@ import type { ActScenario } from "./types";
 
 type Detail = NonNullable<FunctionReturnType<typeof api.shots.detail>>;
 
-const MAX_ACTS = 2;
+const MAX_ACTS = 1;
 const LOOKBACK = 8;
 
 const seen = new Map<string, ActScenario>();
