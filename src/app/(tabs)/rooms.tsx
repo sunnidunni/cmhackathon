@@ -45,9 +45,9 @@ export default function Rooms() {
         {empty ? (
           <View style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>
             <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-              We only read your Screenshots album. Your other photos stay on your phone.
+              Screenshots are sent to our server and an AI model to be read. We only read your Screenshots album. Your other photos stay on your phone. Delete everything anytime in Settings.
             </Text>
-            <PsstButton kind="filled" label="Bring in screenshots" onPress={() => router.push("/bring")} />
+            <PsstButton kind="filled" label="Bring in my screenshots" onPress={() => router.push("/bring")} />
           </View>
         ) : null}
       </ScrollView>

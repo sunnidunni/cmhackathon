@@ -29,7 +29,6 @@ export default function KeepersCard() {
   const unsorted = counts?.unsorted ?? 0;
   const ready = GRID.reduce((n, id) => n + (countOf(id) ?? 0), 0) + unsorted;
   const useFixtures = FIXTURES && !hasReal;
-  const read = useFixtures ? DEMO_COUNTS.read : (progress?.read ?? ready);
   const total = useFixtures ? DEMO_COUNTS.total : (progress?.total ?? ready);
   const now = new Date();
   const day = now.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
@@ -59,7 +58,7 @@ export default function KeepersCard() {
           </View>
           {counts ? (
             <Text style={[text.caption, { color: p.ink2, textAlign: "center", marginTop: 16 }]}>
-              {`${read} read${unsorted > 0 ? ` · ${unsorted} in Unsorted` : ""}`}
+              {`${screenshotsIn(total)} brought in · ${total - unsorted} filed${unsorted > 0 ? ` · ${unsorted} in Unsorted` : ""}`}
             </Text>
           ) : (
             <Skeleton w={140} h={10} style={{ alignSelf: "center" }} />
@@ -68,7 +67,7 @@ export default function KeepersCard() {
       </ScrollView>
       <View style={styles.footer}>
         <PsstButton kind="filled" label="Continue" onPress={() => router.replace("/today")} />
-        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>The card shows your keepers and counts. Never your screenshots.</Text>
+        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>The card shows your keepers and their counts.</Text>
       </View>
     </SafeAreaView>
   );
