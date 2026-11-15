@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import { Button, colors, ScreenshotSticker, spacing, tiltFor, type } from "@/design";
 import { formatWhen, type CardActions } from "@/components/tabs/helpers";
+import { Todos } from "@/components/tabs/Todos";
 import { useReminders } from "@/components/tabs/reminders";
 import { InfoCard, Loading, Notice, Screen, TabHeader, tzOffset, useToast } from "@/components/tabs/ui";
 import { justInCaption, TodayCard, type TodayCardData } from "@/components/tabs/TodayCard";
@@ -39,7 +40,7 @@ export default function Home() {
       {today === undefined ? (
         <Loading label="Getting today's handful" />
       ) : (
-        <ScrollView contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.xxl }}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.xxl }}>
           {today.reading.pending > 0 ? (
             <Pressable accessibilityRole="button" onPress={() => router.push("/import")}>
               <InfoCard>
@@ -84,6 +85,7 @@ export default function Home() {
               <TodayCard card={today.thin} onAction={onAction} />
             </Section>
           ) : null}
+          <Todos />
           {today.reminders.length > 0 ? (
             <Section title="Reminders">
               {today.reminders.map((r) => (
