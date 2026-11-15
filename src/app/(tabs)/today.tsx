@@ -17,7 +17,9 @@ import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
 import { previewToday } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
-import { DoneView, EmptyView, FailedCard, LoadingView, ReadingView } from "@/components/today/States";
+import { DoneView, EmptyView, FailedLine, LoadingView, ReadingView } from "@/components/today/States";
+import { sameMemory } from "@/components/today/focus";
+import { useFocusMemory } from "@/components/today/focusMemory";
 import { runSync } from "@/lib/sync";
 
 // Fixtures fill a keeper line only when the card has none and FIXTURES is on.
@@ -96,7 +98,11 @@ export default function Today() {
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [removed, setRemoved] = useState(false);
-  const { screen } = buildScreen(today, skipped, fixtureLine);
+  const [focusMemory, saveFocus] = useFocusMemory();
+  const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory);
+  useEffect(() => {
+    if (!demo && memory && !sameMemory(memory, focusMemory)) saveFocus(memory);
+  }, [demo, memory, focusMemory, saveFocus]);
   const rendered = screen.kind === "focus" ? [screen.focus, ...screen.rows] : screen.kind === "reading" || screen.kind === "done" ? screen.rows : [];
   const reminderRows = today ? extraReminders(today, rendered) : [];
   const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin", fixtureLine) : null;
@@ -169,7 +175,6 @@ export default function Today() {
         contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
         <View style={{ gap: 16 }}>
           <Header />
-          {today && today.reading.failed > 0 ? <FailedCard count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
           <ActCards />
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
@@ -197,6 +202,7 @@ export default function Today() {
           ) : null}
           {screen.kind === "done" ? <DoneView /> : null}
           <HandfulRows rows={rows} now={now} tz={tz} title={rowTitle} onOpen={open} onRemind={remind} onSkip={skip} onMenu={menu} />
+          {today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
           <ReminderRows rows={reminderRows} now={now} tz={tz} onOpen={(id) => router.push(`/shot/${id}`)} />
           {resurfaced ? (
             <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
