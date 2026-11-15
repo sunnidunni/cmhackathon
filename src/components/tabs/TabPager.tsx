@@ -37,7 +37,7 @@ export function TabPager() {
 
   const onDragEnd = (dx: number, vx: number) => {
     const next = pageAfterDrag(index, dx, vx, width, TAB_ORDER.length);
-    if (next === index) x.value = withSpring(-index * width, SPRING);
+    if (next === index) x.set(withSpring(-index * width, SPRING));
     else router.navigate(`/${TAB_ORDER[next]}` as never);
   };
 
@@ -46,8 +46,8 @@ export function TabPager() {
     .activeOffsetX([-16, 16])
     .failOffsetY([-12, 12])
     .onUpdate((e) => {
-      const v = base.value + e.translationX;
-      x.value = v > 0 ? v / 3 : v < minX ? minX + (v - minX) / 3 : v;
+      const v = base.get() + e.translationX;
+      x.set(v > 0 ? v / 3 : v < minX ? minX + (v - minX) / 3 : v);
     })
     .onEnd((e) => {
       runOnJS(onDragEnd)(e.translationX, e.velocityX);
