@@ -68,6 +68,7 @@ export const complete = internalMutation({
   args: {
     screenshotId: v.id("screenshots"),
     title: v.string(),
+    amount: v.optional(v.string()),
     text: v.string(),
     summary: v.string(),
     category: v.union(

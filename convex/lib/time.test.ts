@@ -43,8 +43,8 @@ describe("notification text", () => {
     expect(t).not.toMatch(/Tock|Murmur|Penny|Wisp/);
   });
   test("money is plain, with no question", () => {
-    expect(notificationText({ ...base, title: "power bill, $142.37", category: "money", when: "2026-11-16" })).toBe(
-      "Psst: your power bill, $142.37 is due tomorrow.",
+    expect(notificationText({ ...base, title: "power bill", category: "money", when: "2026-11-16", amount: "$142.37" })).toBe(
+      "Psst: your power bill is due tomorrow. $142.37.",
     );
   });
   test("today includes the time", () => {
@@ -53,3 +53,23 @@ describe("notification text", () => {
     );
   });
 });
+
+describe("notification thing", () => {
+  const base = { at: now, tz: PST };
+  test("the exact bad bill title reads correctly", () => {
+    expect(
+      notificationText({ ...base, title: "Brightside Power & Light: $142.37 due", category: "money", when: "2026-11-16", amount: "$142.37" }),
+    ).toBe("Psst: your Brightside Power & Light is due tomorrow. $142.37.");
+  });
+  test("money without an extracted amount shows no amount", () => {
+    expect(notificationText({ ...base, title: "Brightside Power bill, $142.37", category: "money", when: "2026-11-16" })).toBe(
+      "Psst: your Brightside Power bill is due tomorrow.",
+    );
+  });
+  test("non-money never shows an amount", () => {
+    expect(
+      notificationText({ ...base, title: "Harvest Lantern Night", category: "deadlines", when: "2026-11-16T18:30", amount: "$5.00" }),
+    ).toBe("Psst: your Harvest Lantern Night is due tomorrow. Want to see it?");
+  });
+});
+

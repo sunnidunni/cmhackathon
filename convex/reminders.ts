@@ -27,7 +27,7 @@ async function dismissActive(ctx: MutationCtx, screenshotId: Id<"screenshots">) 
 }
 
 const text = (row: Doc<"screenshots">, when: string | null, at: number, tz: number) =>
-  notificationText({ title: row.title ?? "screenshot", category: row.category, when, at, tz });
+  notificationText({ title: row.title ?? "screenshot", category: row.category, when, at, tz, amount: row.amount });
 
 export const set = mutation({
   args: { screenshotId: v.id("screenshots"), tzOffsetMinutes: v.number(), when: v.optional(v.string()) },

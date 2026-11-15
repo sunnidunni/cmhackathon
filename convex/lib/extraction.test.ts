@@ -117,3 +117,28 @@ describe("extraction fixes", () => {
   });
 });
 
+
+describe("titles and amounts", () => {
+  const title = (t: string) => parseExtraction(JSON.stringify({ ...base, title: t })).title;
+  test("the exact bad bill title is cleaned", () => {
+    expect(title("Brightside Power & Light: $142.37 due")).toBe("Brightside Power & Light");
+  });
+  test("no price, date or trailing due, five words at most", () => {
+    expect(title("Brightside Power bill, $142.37")).toBe("Brightside Power bill");
+    expect(title("Dental cleaning Nov 19, 2026 at 9:15")).toBe("Dental cleaning");
+    expect(title("Harvest Lantern Night 2026-11-16")).toBe("Harvest Lantern Night");
+    expect(title("Rent payment due")).toBe("Rent payment");
+    expect(title("One two three four five six seven")).toBe("One two three four five");
+  });
+  test("an empty cleaned title falls back", () => {
+    expect(title("$142.37 due")).toBe("Untitled screenshot");
+  });
+  test("amount is kept only when it appears in the screenshot text", () => {
+    const withText = (amount: string) =>
+      parseExtraction(JSON.stringify({ ...base, text: "Amount due $142.37 by Nov 16", amount })).amount;
+    expect(withText("$142.37")).toBe("$142.37");
+    expect(withText("$99.00")).toBe("");
+    expect(withText("about 142")).toBe("");
+  });
+});
+
