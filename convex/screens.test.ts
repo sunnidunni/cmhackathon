@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { PLAYFUL_KEYS } from "./lib/lines";
 import schema from "./schema";
 
 const removeMemory = vi.fn();
@@ -132,6 +133,20 @@ describe("rooms, detail and mutations", () => {
     expect((await me.query(api.shots.detail, { id }))?.category).toBe("deadlines");
   });
 
+  test("a moved screenshot gets a line key from its new room", async () => {
+    const { me, seed, t } = await setup();
+    const id = await seed({ title: "x", category: "unsorted" });
+    await t.run((ctx) => ctx.db.patch(id, { reactionKey: "unsorted_03" }));
+    await me.mutation(api.shots.move, { id, category: "ideas" });
+    const d = await me.query(api.shots.detail, { id });
+    expect(PLAYFUL_KEYS.ideas).toContain(d?.lineKey);
+    const room = await me.query(api.rooms.get, { category: "ideas" });
+    expect(PLAYFUL_KEYS.ideas).toContain(room.items[0].lineKey);
+    expect(PLAYFUL_KEYS.ideas).toContain(room.newestLineKey);
+    await me.mutation(api.shots.move, { id, category: "money" });
+    expect(PLAYFUL_KEYS.money).toContain((await me.query(api.shots.detail, { id }))?.lineKey);
+  });
+
   test("detail and mutations are private to the owner", async () => {
     const { me, other, seed } = await setup();
     const id = await seed({ title: "mine" });
@@ -167,7 +182,7 @@ describe("reminders", () => {
   test("set stores a scheduled reminder with Psst text and replaces the old one", async () => {
     const { me, id, t, when } = await withDate();
     const r = await me.mutation(api.reminders.set, { screenshotId: id, tzOffsetMinutes: TZ });
-    expect(r.text).toBe("Psst: your Harvest Lantern Night is due tomorrow. Want to see it?");
+    expect(r.text).toBe("Psst: Harvest Lantern Night is tomorrow at 6:30 PM. Want to see it?");
     expect(r.dueAt).toBeGreaterThan(Date.now());
     const detail = await me.query(api.shots.detail, { id });
     expect(detail?.dates[0].reminder).toMatchObject({ state: "scheduled", dueAt: r.dueAt });
@@ -205,7 +220,7 @@ describe("reminders", () => {
   test("fire now marks it sent at once with the text, and works with no reminder set", async () => {
     const { me, id, t, seed } = await withDate();
     const first = await me.mutation(api.reminders.fireNow, { screenshotId: id, tzOffsetMinutes: TZ });
-    expect(first.text).toMatch(/^Psst: your Harvest Lantern Night is due tomorrow/);
+    expect(first.text).toMatch(/^Psst: Harvest Lantern Night is tomorrow at 6:30 PM/);
     expect((await t.run((ctx) => ctx.db.get(first.reminderId)))?.status).toBe("sent");
     expect((await me.query(api.today.get, { tzOffsetMinutes: TZ })).missed.map((c) => c._id)).toEqual([id]);
 

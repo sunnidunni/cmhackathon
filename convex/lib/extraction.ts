@@ -27,7 +27,7 @@ export function buildPrompt(todayIso: string) {
 - summary: one or two plain sentences.
 - category: deadlines (flyers, invitations, events, appointments, sign-ups, anything with a due date that is not a payment), chats (any screenshot of a messaging conversation, even when it mentions a plan, a date or a time), money (bills, prices, payments, receipts, tickets, flights), ideas (recipes, quotes, articles, AI answers, things to try or remember), or unsorted.
 - reason: one short sentence on why you chose that category.
-- dates: every date or time visibly shown. when is ISO 8601 (YYYY-MM-DD, or YYYY-MM-DDTHH:MM when a time is shown). what says what the date is for. Never guess a date, time, or price: only return what is visibly in the image. If the year or any other part is missing, write only what is visible (for example 11-21) and set confident to false. Use an empty array when there are no dates. Only return dates the user might need to act on or attend: skip publication dates, billing periods, order dates and other dates already in the past. The phone's own status bar (clock such as 9:41, battery, signal, carrier) is never a date; ignore it. A bare time with no day is not a date either.
+- dates: every date or time visibly shown. when is ISO 8601 (YYYY-MM-DD, or YYYY-MM-DDTHH:MM when a time is shown). what is a short label for the date, such as "RSVP deadline", "payment due", "event starts", "appointment", "flight departs", or "deal ends". Never guess a date, time, or price: only return what is visibly in the image. If the year or any other part is missing, write only what is visible (for example 11-21) and set confident to false. Use an empty array when there are no dates. Only return dates the user might need to act on or attend: skip publication dates, billing periods, order dates and other dates already in the past. The phone's own status bar (clock such as 9:41, battery, signal, carrier) is never a date; ignore it. A bare time with no day is not a date either.
 - importance: 1 to 5. Use 4 or 5 only for deadlines, payments due, codes or passwords the user will need, and anything with a date within 14 days of today. A booking, ticket or flight more than 14 days away is 3. A product, price or sale deal is 3 (a payment actually due is 4 or 5). A conversation is 1 or 2. Saved ideas, recipes, quotes and articles are 1.
 - If the image is not readable or does not fit a room, set category to unsorted and importance to 1.
 - reactionKey: pick exactly one key from the list for the category you chose. Do not write your own line.
@@ -71,7 +71,7 @@ const str = (value: unknown) => (typeof value === "string" ? value : "");
 const PARTIAL_DATE = /^(\d{4}-)?\d{2}-\d{2}(T\d{1,2}:\d{2}(:\d{2})?)?$/;
 const PHONE_CHROME = /status bar|battery|signal|carrier|wi-?fi|phone clock|lock screen/i;
 
-function hashPick(keys: string[], seed: string) {
+export function hashPick(keys: string[], seed: string) {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
   return keys[(h >>> 0) % keys.length];

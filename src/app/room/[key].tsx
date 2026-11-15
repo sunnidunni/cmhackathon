@@ -37,13 +37,13 @@ export default function RoomScreen() {
               body={EMPTY_BLURB[category]}
             />
           ) : (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.lg }}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.lg, justifyContent: "space-between" }}>
               {room.items.map((item) => (
                 <Pressable
                   key={item._id}
                   accessibilityRole="button"
                   onPress={() => router.push(`/shot/${item._id}`)}
-                  style={{ width: "46%", flexGrow: 1, gap: spacing.sm }}
+                  style={{ width: "46%", gap: spacing.sm }}
                 >
                   <ScreenshotSticker uri={item.imageUrl ?? undefined} width={120} tilt={tiltFor(item._id)} />
                   <Text style={type.bodyBold} numberOfLines={2}>{item.title}</Text>
