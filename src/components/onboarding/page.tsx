@@ -1,7 +1,9 @@
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { Keeper, KEEPER_IDS, text, usePalette } from "./kit";
+import { Keeper, KEEPER_IDS, text, usePalette } from "@/design/psst";
+
+const welcomeTitle = { ...text.headline, fontSize: 38, lineHeight: 41, letterSpacing: -0.76 };
 
 export function Page({ children }: { children: React.ReactNode }) {
   const p = usePalette();
@@ -11,7 +13,7 @@ export function Page({ children }: { children: React.ReactNode }) {
 export function Headline({ children, large }: { children: React.ReactNode; large?: boolean }) {
   const p = usePalette();
   return (
-    <Text accessibilityRole="header" style={[large ? text.largeTitle : text.headline, { color: p.ink }]}>
+    <Text accessibilityRole="header" style={[large ? welcomeTitle : text.headline, { color: p.ink }]}>
       {children}
     </Text>
   );

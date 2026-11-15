@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { Footnote, Headline, Lead, Page, Tick } from "@/components/onboarding/page";
-import { Keeper, KeeperLine, PsstButton, text, usePalette } from "@/components/onboarding/kit";
+import { Keeper, KeeperLine, PsstButton, text, usePalette } from "@/design/psst";
 import { hasPhotoAccess, usePhotoAccess } from "@/lib/photos";
 
 export default function Priming() {
@@ -27,50 +27,57 @@ export default function Priming() {
   if (denied)
     return (
       <Page>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", gap: 14 }}>
-          <Keeper id="murmur" size={128} />
+        <View style={{ flex: 1, justifyContent: "center", gap: 14 }}>
+          <View style={{ alignSelf: "center" }}>
+            <Keeper id="murmur" size={128} />
+          </View>
           <Headline>{"Psst can't see your screenshots yet."}</Headline>
-          <Lead>
-            {"Without the Screenshots album there's nothing for the keepers to keep. You can change this in iOS Settings, and take it away again any time."}
-          </Lead>
-          <KeeperLine id="murmur">{"No screenshots to read yet. I'll wait."}</KeeperLine>
+          <Lead>{"You chose Don't Allow, so Psst hasn't read anything. You can change this in iOS Settings."}</Lead>
+          <KeeperLine id="murmur">{"Fine by me. I'll wait by the door."}</KeeperLine>
         </View>
         <View style={{ gap: 4 }}>
-          <PsstButton label="Open iOS Settings" onPress={openSettings} />
+          <Footnote>Nothing was read. We only read your Screenshots album.</Footnote>
+          <PsstButton kind="filled" label="Open iOS Settings" onPress={openSettings} />
           <PsstButton kind="text" label="Not now" onPress={() => router.replace("/today")} />
         </View>
       </Page>
     );
 
-  const points = [
-    <Text key="a" style={[text.lead, { color: p.ink, flex: 1 }]}>
-      We <Text style={{ textDecorationLine: "underline" }}>only</Text> read your Screenshots album.
-    </Text>,
-    <Text key="b" style={[text.lead, { color: p.ink, flex: 1 }]}>Your other photos stay on your phone.</Text>,
-    <Text key="c" style={[text.lead, { color: p.ink, flex: 1 }]}>Screenshots are sent to our server and an AI model to be read.</Text>,
-    <Text key="d" style={[text.lead, { color: p.ink, flex: 1 }]}>{"We don't sell your data. Delete everything anytime in Settings."}</Text>,
-  ];
+  const choices = [
+    ["Allow Full Access", "New screenshots are read when you open Psst. Your other photos stay on your phone."],
+    ["Limit Access", "iOS shows all your photos: tap Collections › Screenshots and tick the ones you want. Add more any time."],
+  ] as const;
   return (
     <Page>
       <View style={{ flex: 1, paddingTop: 24, gap: 20 }}>
         <View style={{ alignSelf: "flex-start" }}>
           <Keeper id="murmur" size={88} />
         </View>
-        <Headline>Psst only needs your screenshots.</Headline>
-        <View style={{ gap: 14 }}>
-          {points.map((point, i) => (
-            <View key={i} style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
-              <View style={{ paddingTop: 1 }}>
-                <Tick />
-              </View>
-              {point}
+        <Headline>
+          We <Text style={{ textDecorationLine: "underline" }}>only</Text> read your Screenshots album.
+        </Headline>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 20, rowGap: 4, alignItems: "center" }}>
+          <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+            <Tick />
+            <Text style={[text.bodyBold, { color: p.ink }]}>Screenshots: read</Text>
+          </View>
+          <Text style={[text.body, { color: p.ink2 }]}>Photos: stay on your phone</Text>
+        </View>
+        <View>
+          <Text style={[text.body, { color: p.ink2, paddingBottom: 10 }]}>iOS asks next. Either choice works:</Text>
+          {choices.map(([title, body]) => (
+            <View key={title} style={{ borderTopWidth: 1, borderColor: p.hair, paddingVertical: 12, gap: 2 }}>
+              <Text style={[text.bodyBold, { color: p.ink }]}>{title}</Text>
+              <Text style={[text.body, { color: p.ink2 }]}>{body}</Text>
             </View>
           ))}
         </View>
       </View>
       <View style={{ gap: 8 }}>
-        <Footnote>Nothing is read until you tap Continue and choose in the iOS prompt.</Footnote>
-        <PsstButton label="Continue" onPress={ask} disabled={busy} />
+        <Footnote>
+          {"Screenshots are sent to our server and an AI model to be read. We don't sell your data. Delete everything anytime in Settings."}
+        </Footnote>
+        <PsstButton kind="filled" label="Continue" onPress={ask} disabled={busy} />
       </View>
     </Page>
   );

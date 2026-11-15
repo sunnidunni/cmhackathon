@@ -1,12 +1,10 @@
 import { useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
-import { DEV_TOOLS } from "@/lib/dev-flags";
+import { DEMO_COUNTS, FIXTURES } from "@/lib/fixtures";
 import { getReadAllPhotos, listCandidates } from "@/lib/photos";
 import { scanSize } from "@/lib/sync-plan";
 import { bringInCount } from "./format";
-
-const FIXTURE_COUNT = 16;
 
 // How many screenshots Bring in will read, from the phone's library and the plan's cap.
 // null until both are known. A dev build with no screenshots on the device shows the demo count.
@@ -29,5 +27,5 @@ export function useBringCount() {
 
   if (limit === undefined || found === null) return { count: null, limit: null };
   const count = bringInCount(found, limit);
-  return { count: count === 0 && DEV_TOOLS ? FIXTURE_COUNT : count, limit };
+  return { count: count === 0 && FIXTURES ? DEMO_COUNTS.total : count, limit };
 }

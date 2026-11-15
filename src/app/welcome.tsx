@@ -1,9 +1,49 @@
 import { router } from "expo-router";
-import { View } from "react-native";
+import { useState } from "react";
+import { Text, View } from "react-native";
 import { Footnote, Headline, KeeperRow, Lead, Page } from "@/components/onboarding/page";
-import { PsstButton } from "@/components/onboarding/kit";
+import { PsstButton, ShotSticker, text, usePalette } from "@/design/psst";
+import { DEMO_FLYER } from "@/lib/fixtures";
+
+const WHAT_WHEN_WHERE = [
+  ["What", DEMO_FLYER.title],
+  ["When", `Closes ${DEMO_FLYER.closes}`],
+  ["Where", "Eastside Community Center"],
+] as const;
 
 export default function Welcome() {
+  const p = usePalette();
+  const [step, setStep] = useState<"welcome" | "explainer">("welcome");
+  const toPriming = () => router.push("/priming");
+
+  if (step === "explainer")
+    return (
+      <Page>
+        <View style={{ alignItems: "flex-end" }}>
+          <PsstButton kind="text" label="Skip" onPress={toPriming} />
+        </View>
+        <View style={{ flex: 1, gap: 20, paddingTop: 8 }}>
+          <Headline>Psst pulls the date, price or place out of a screenshot.</Headline>
+          <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+            <ShotSticker uri={null} title={DEMO_FLYER.title} size={132} tilt />
+            <View style={{ flex: 1, gap: 8 }}>
+              {WHAT_WHEN_WHERE.map(([label, value]) => (
+                <View key={label} style={{ borderWidth: 1, borderColor: p.hair, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>
+                  <Text style={[text.caption, { color: p.ink2 }]}>{label}</Text>
+                  <Text style={[text.bodyBold, { color: p.ink }]}>{value}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+          <Lead>Dates, prices, plans and places, pulled out of the screenshot itself.</Lead>
+        </View>
+        <View style={{ gap: 8 }}>
+          <Footnote>Reading starts only after you choose in the iOS prompt.</Footnote>
+          <PsstButton kind="filled" label="Next" onPress={toPriming} />
+        </View>
+      </Page>
+    );
+
   return (
     <Page>
       <View style={{ flex: 1, justifyContent: "center", gap: 28 }}>
@@ -14,8 +54,8 @@ export default function Welcome() {
         </View>
       </View>
       <View style={{ gap: 8 }}>
-        <PsstButton label="Get started" onPress={() => router.push("/priming")} />
-        <Footnote>Takes about a minute. Nothing is read yet.</Footnote>
+        <Footnote>Nothing is read until you choose in the iOS prompt. About two minutes.</Footnote>
+        <PsstButton kind="filled" label="Show me how" onPress={() => setStep("explainer")} />
       </View>
     </Page>
   );

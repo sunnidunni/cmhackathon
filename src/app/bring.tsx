@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { bringInHeadline, howManyLine } from "@/components/onboarding/format";
-import { KeeperFace, PsstButton, SoftCard, Skeleton, text, usePalette } from "@/components/onboarding/kit";
+import { KeeperFace, PsstButton, SoftCard, Skeleton, text, usePalette } from "@/design/psst";
 import { Footnote, Headline, KeeperRow, Lead, Page } from "@/components/onboarding/page";
 import { useBringCount } from "@/components/onboarding/use-bring-count";
 import { usePhotoAccess } from "@/lib/photos";
@@ -39,9 +39,9 @@ export default function Bring() {
             <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
               <KeeperFace id="murmur" size={36} />
               <View style={{ flex: 1 }}>
-                <Text style={[text.bodyBold, { color: p.ink }]}>{`Psst sees the ${count} you picked. That works.`}</Text>
+                <Text style={[text.bodyBold, { color: p.ink }]}>{`We only read the ${count} you picked. Your other photos stay on your phone.`}</Text>
                 <Text style={[text.caption, { color: p.ink2 }]} onPress={openLimitedPicker} accessibilityRole="button">
-                  Give access to all screenshots
+                  Add more
                 </Text>
               </View>
             </View>
@@ -61,7 +61,7 @@ export default function Bring() {
       </View>
       <View style={{ gap: 8 }}>
         <Footnote>Screenshots are sent to our server and an AI model to be read.</Footnote>
-        <PsstButton label="Bring in my screenshots" onPress={start} disabled={busy} />
+        <PsstButton kind="filled" label="Bring in my screenshots" onPress={start} disabled={busy} />
       </View>
     </Page>
   );
