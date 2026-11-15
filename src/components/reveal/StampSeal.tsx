@@ -1,7 +1,7 @@
 import Svg, { Circle, Defs, Path, Text as SvgText, TextPath } from "react-native-svg";
-import { fonts } from "@/design/psst";
+import { SHOT_ART, fonts } from "@/design/psst";
 
-const RUST = "#C2643A";
+const RUST = SHOT_ART.clay;
 
 export function StampSeal({ count, label, size = 88 }: { count: number; label: string; size?: number }) {
   const c = 50;
@@ -11,7 +11,7 @@ export function StampSeal({ count, label, size = 88 }: { count: number; label: s
       <Defs>
         <Path id="stamp-ring" d={`M ${c - r} ${c} a ${r} ${r} 0 1 1 ${2 * r} 0 a ${r} ${r} 0 1 1 ${-2 * r} 0`} />
       </Defs>
-      <Circle cx={c} cy={c} r={47} fill="#FFFFFF" stroke={RUST} strokeWidth={2} />
+      <Circle cx={c} cy={c} r={47} fill={SHOT_ART.white} stroke={RUST} strokeWidth={2} />
       <Circle cx={c} cy={c} r={26} fill="none" stroke={RUST} strokeWidth={1.5} />
       <SvgText fill={RUST} fontSize={8.5} fontFamily={fonts.uiBold} fontWeight="700" letterSpacing={1.1}>
         <TextPath href="#stamp-ring" startOffset="0%">{label}</TextPath>

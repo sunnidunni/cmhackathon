@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../convex/_generated/api";
-import { KEEPERS, Keeper, PsstButton, Skeleton, text, usePalette, type KeeperId } from "@/design/psst";
+import { KEEPERS, SHOT_ART, Keeper, PsstButton, Skeleton, text, usePalette, type KeeperId } from "@/design/psst";
 import { ROOM_FOR, screenshotsIn, stampLabel } from "@/components/reveal/model";
 import { StampSeal } from "@/components/reveal/StampSeal";
 import { DEMO_COUNTS, FIXTURES } from "@/lib/fixtures";
@@ -35,7 +35,7 @@ export default function KeepersCard() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={[styles.card, { backgroundColor: dark ? p.white : "#FFF8EC", borderColor: p.hair }]}>
+        <View style={[styles.card, { backgroundColor: dark ? p.white : SHOT_ART.cream, borderColor: p.hair }]}>
           <Text style={[text.caption, { color: p.ink2, letterSpacing: 1.2 }]}>{`PSST · ${day}`}</Text>
           <Text accessibilityRole="header" style={[text.headline, { color: p.ink, fontSize: 38, lineHeight: 41, marginTop: 8, width: 160 }]}>
             Your keepers.
