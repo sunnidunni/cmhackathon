@@ -21,9 +21,12 @@ export function PhotoGrid({ items, header }: { items: GridItem[]; header?: React
   const cell = Math.floor((width - PAD * 2 - GAP * (cols - 1)) / cols);
   const groups = groupByLevel(items, level, tzOffset(), Date.now());
 
+  const onPinchEnd = (scale: number) => {
+    if (scale > 1.15) setLevel((l) => stepLevel(l, "out"));
+    else if (scale < 0.87) setLevel((l) => stepLevel(l, "in"));
+  };
   const pinch = Gesture.Pinch().onEnd((e) => {
-    if (e.scale > 1.15) runOnJS(setLevel)(stepLevel(level, "out"));
-    else if (e.scale < 0.87) runOnJS(setLevel)(stepLevel(level, "in"));
+    runOnJS(onPinchEnd)(e.scale);
   });
 
   return (
