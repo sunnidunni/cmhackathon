@@ -3,13 +3,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../convex/_generated/api";
-import { KEEPERS, Keeper, PsstButton, Skeleton, text, usePalette, type KeeperId } from "@/components/reveal/kit";
+import { KEEPERS, Keeper, PsstButton, Skeleton, text, usePalette, type KeeperId } from "@/design/psst";
 import { ROOM_FOR, screenshotsIn, stampLabel } from "@/components/reveal/model";
 import { StampSeal } from "@/components/reveal/StampSeal";
-import { DEV_TOOLS as FIXTURES } from "@/lib/dev-flags";
+import { DEMO_COUNTS, FIXTURES } from "@/lib/fixtures";
 
 const GRID: KeeperId[] = ["tock", "murmur", "penny", "mote"];
-const FIXTURE_COUNTS = { tock: 3, murmur: 4, penny: 4, mote: 4, unsorted: 1 };
+const FIXTURE_COUNTS = { deadlines: DEMO_COUNTS.tock, chats: DEMO_COUNTS.murmur, money: DEMO_COUNTS.penny, ideas: DEMO_COUNTS.mote, unsorted: DEMO_COUNTS.unsorted };
 
 export default function KeepersCard() {
   const p = usePalette();
@@ -56,7 +56,7 @@ export default function KeepersCard() {
             })}
           </View>
           {counts ? (
-            <Text style={[text.caption, { color: p.ink2, textAlign: "center", marginTop: 4 }]}>
+            <Text style={[text.caption, { color: p.ink2, textAlign: "center", marginTop: 16 }]}>
               {`${read} read${unsorted > 0 ? ` · ${unsorted} in Unsorted` : ""}`}
             </Text>
           ) : (
@@ -65,7 +65,7 @@ export default function KeepersCard() {
         </View>
       </ScrollView>
       <View style={styles.footer}>
-        <PsstButton label="Continue" onPress={() => router.replace("/today")} />
+        <PsstButton kind="filled" label="Continue" onPress={() => router.replace("/today")} />
         <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>The card shows your keepers and counts. Never your screenshots.</Text>
       </View>
     </SafeAreaView>

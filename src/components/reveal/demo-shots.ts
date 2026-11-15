@@ -1,7 +1,14 @@
-// Fixture screenshots for the reveal, from the demo set. Used only when FIXTURES is on and a room has no real screenshot yet.
-export const FIXTURE_SHOT = {
-  tock: { uri: require("../../content/demo/flyer_tomorrow.png") as number, title: "Pottery class sign-up" },
-  penny: { uri: require("../../content/demo/bill.png") as number, title: "Greenleaf grocery receipt" },
-  murmur: { uri: require("../../content/demo/chat_plans.png") as number, title: "Dinner Saturday" },
-  mote: { uri: require("../../content/demo/recipe.png") as number, title: "Olive butter pasta" },
-} as const;
+import { Asset } from "expo-asset";
+import type { KeeperId } from "@/design/psst";
+import manifest from "../../../demo-screenshots/manifest.json";
+
+const uriOf = (source: number) => Asset.fromModule(source).uri;
+const titleOf = (file: string) => manifest.find((m) => m.file === file)?.title ?? "";
+
+// Fixture thumbnails for the reveal, used only when FIXTURES is on and a room has no real screenshot yet.
+export const FIXTURE_SHOT: Record<KeeperId, { uri: string | null; title: string }> = {
+  tock: { uri: uriOf(require("../../../demo-screenshots/png/01-pottery-flyer.png")), title: titleOf("png/01-pottery-flyer.png") },
+  penny: { uri: uriOf(require("../../../demo-screenshots/png/17-refund.png")), title: titleOf("png/17-refund.png") },
+  murmur: { uri: uriOf(require("../../../demo-screenshots/png/07-dinner-chat.png")), title: titleOf("png/07-dinner-chat.png") },
+  mote: { uri: uriOf(require("../../../demo-screenshots/png/18-miso-pasta.png")), title: titleOf("png/18-miso-pasta.png") },
+};

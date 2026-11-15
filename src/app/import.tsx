@@ -7,27 +7,27 @@ import { api } from "../../convex/_generated/api";
 import { bringInState, failedLabel, type BringInResult } from "@/components/onboarding/format";
 import { KeeperRow, SkeletonKeeperRow, type RowShot } from "@/components/reveal/KeeperRow";
 import { RefundCard } from "@/components/reveal/RefundCard";
-import { PsstButton, KEEPERS, text, usePalette, type KeeperId } from "@/components/reveal/kit";
+import { PsstButton, KEEPERS, text, usePalette, type KeeperId } from "@/design/psst";
 import { FIXTURE_SHOT } from "@/components/reveal/demo-shots";
 import { ROOM_FOR, REACTION_GAP_MS, REVEAL_ORDER, keepersDue, screenshotsIn } from "@/components/reveal/model";
-import { DEV_TOOLS as FIXTURES } from "@/lib/dev-flags";
+import { DEMO_COUNTS, FIXTURES } from "@/lib/fixtures";
 import { useSync } from "@/lib/sync";
 
 
-const FIXTURE_COUNTS = { deadlines: 3, money: 4, chats: 4, ideas: 4, unsorted: 1 };
+const FIXTURE_COUNTS = { deadlines: DEMO_COUNTS.tock, money: DEMO_COUNTS.penny, chats: DEMO_COUNTS.murmur, ideas: DEMO_COUNTS.mote, unsorted: DEMO_COUNTS.unsorted };
 
 export default function BringIn() {
   const p = usePalette();
   // Dev preview: /import?demo=<0..16> drives the reveal from fixtures, only when FIXTURES is on.
   const { demo } = useLocalSearchParams<{ demo?: string }>();
-  const demoRead = FIXTURES && demo !== undefined ? Math.min(16, Math.max(0, Number(demo) || 0)) : null;
+  const demoRead = FIXTURES && demo !== undefined ? Math.min(DEMO_COUNTS.total, Math.max(0, Number(demo) || 0)) : null;
   const liveProgress = useQuery(api.sync.progress, demoRead === null ? {} : "skip");
   const liveRooms = useQuery(api.rooms.list, demoRead === null ? {} : "skip");
-  const progress = demoRead === null ? liveProgress : { total: 16, read: demoRead, failed: 0, pending: 16 - demoRead, uploaded: 16 };
+  const progress = demoRead === null ? liveProgress : { total: DEMO_COUNTS.total, read: demoRead, failed: 0, pending: DEMO_COUNTS.total - demoRead, uploaded: DEMO_COUNTS.total };
   const rooms =
     demoRead === null
       ? liveRooms
-      : (Object.entries(FIXTURE_COUNTS).map(([category, count]) => ({ category, count, newest: null })) as NonNullable<typeof liveRooms>);
+      : (Object.entries(FIXTURE_COUNTS).map(([category, count]) => ({ category, count: Math.ceil((count * demoRead) / DEMO_COUNTS.total), newest: null })) as NonNullable<typeof liveRooms>);
   const { syncNow } = useSync();
   const [result, setResult] = useState<BringInResult | null>(null);
   const [error, setError] = useState(false);
@@ -45,7 +45,7 @@ export default function BringIn() {
     run();
   }, [run, demoRead]);
 
-  const state = demoRead === null ? bringInState(result, error) : ({ kind: demoRead >= 16 ? "done" : "working" } as const);
+  const state = demoRead === null ? bringInState(result, error) : ({ kind: demoRead >= DEMO_COUNTS.total ? "done" : "working" } as const);
   const total = progress?.total ?? 0;
   const read = progress?.read ?? 0;
   const done = state.kind === "done" && progress !== undefined && progress.pending === 0 && total > 0;
@@ -82,7 +82,7 @@ export default function BringIn() {
           <Text style={[text.body, { color: p.ink2 }]}>Check your connection and try again. The ones already in are safe.</Text>
         </View>
         <View style={styles.footer}>
-          <PsstButton label="Try again" onPress={run} />
+          <PsstButton kind="filled" label="Try again" onPress={run} />
           <PsstButton kind="text" label="Go to Today" onPress={() => router.replace("/today")} />
         </View>
       </SafeAreaView>
@@ -98,7 +98,7 @@ export default function BringIn() {
           <Text style={[text.body, { color: p.ink2 }]}>Take a screenshot and Psst reads it.</Text>
         </View>
         <View style={styles.footer}>
-          <PsstButton label="Continue" onPress={() => router.replace("/today")} />
+          <PsstButton kind="filled" label="Continue" onPress={() => router.replace("/today")} />
         </View>
       </SafeAreaView>
     );
@@ -137,11 +137,11 @@ export default function BringIn() {
         <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
           {done
             ? unsorted > 0
-              ? `${unsorted} ${unsorted === 1 ? "waits" : "wait"} in Unsorted. You can meet the keepers again in Rooms.`
+              ? `${screenshotsIn(unsorted)} ${unsorted === 1 ? "waits" : "wait"} in Unsorted. You can meet the keepers again in Rooms.`
               : "You can meet the keepers again in Rooms."
             : "Stay, or skip ahead and they keep reading."}
         </Text>
-        <PsstButton
+        <PsstButton kind="filled"
           label={done ? "Continue" : "Skip ahead"}
           onPress={() => router.replace(done ? "/keepers-card" : "/today")}
         />

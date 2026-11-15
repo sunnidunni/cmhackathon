@@ -1,5 +1,5 @@
 import Svg, { Circle, Defs, Path, Text as SvgText, TextPath } from "react-native-svg";
-import { fonts } from "./kit";
+import { fonts } from "@/design/psst";
 
 const RUST = "#C2643A";
 

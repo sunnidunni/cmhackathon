@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Enter } from "./Enter";
-import { KEEPERS, Keeper, KeeperLine, ShotSticker, Skeleton, Wash, usePalette, text, type KeeperId } from "./kit";
-import { INTRO, ROOM_LABEL, screenshotsIn } from "./model";
+import { KEEPERS, Keeper, KeeperLine, ShotSticker, Skeleton, Wash, psstLine, usePalette, text, type KeeperId } from "@/design/psst";
+import { ROOM_LABEL, screenshotsIn } from "./model";
 
-export type RowShot = { uri: string | number | null; title: string };
+export type RowShot = { uri: string | null; title: string };
 
 export function SkeletonKeeperRow() {
   const p = usePalette();
@@ -29,15 +29,17 @@ export function KeeperRow({ id, count, done, active, shot }: { id: KeeperId; cou
           {KEEPERS[id].name}
           <Text style={[text.caption, { color: p.ink2, fontWeight: "400" }]}>{` · ${meta}`}</Text>
         </Text>
-        <KeeperLine id={id}>{INTRO[id]}</KeeperLine>
+        <KeeperLine id={id} row>
+          {psstLine(`${id}.intro`)}
+        </KeeperLine>
       </View>
       {shot ? <ShotSticker uri={shot.uri} title={shot.title} size={46} /> : null}
     </View>
   );
   return (
     <Enter>
-      <View accessible accessibilityLabel={`${KEEPERS[id].name}. ${ROOM_LABEL[id]}. ${count === null ? "" : screenshotsIn(count)}. ${INTRO[id]}`}>
-        {active ? <Wash keeper={id}>{content}</Wash> : content}
+      <View accessible accessibilityLabel={`${KEEPERS[id].name}. ${ROOM_LABEL[id]}. ${count === null ? "" : screenshotsIn(count)}. ${psstLine(`${id}.intro`)}`}>
+        {active ? <Wash keeper={id} style={{ padding: 0 }}>{content}</Wash> : content}
       </View>
     </Enter>
   );

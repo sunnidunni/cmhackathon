@@ -1,4 +1,4 @@
-import type { KeeperId } from "./kit";
+import type { KeeperId } from "@/design/psst";
 
 export const REVEAL_ORDER: KeeperId[] = ["tock", "penny", "murmur", "mote"];
 const POP_AT: Record<KeeperId, number> = { tock: 1, penny: 4, murmur: 8, mote: 12 };
@@ -11,13 +11,6 @@ export const ROOM_FOR: Record<KeeperId, "deadlines" | "chats" | "money" | "ideas
 };
 
 export const ROOM_LABEL: Record<KeeperId, string> = { tock: "Deadlines", murmur: "Chats", penny: "Money", mote: "Ideas" };
-
-export const INTRO: Record<KeeperId, string> = {
-  tock: "I keep dates. One reminder each, never a second ping.",
-  penny: "I keep prices and receipts. I never guess an amount.",
-  murmur: "I keep chats. I read them and repeat nothing.",
-  mote: "I keep ideas for later. Quiet unless you ask.",
-};
 
 export const REACTION_GAP_MS = 260;
 

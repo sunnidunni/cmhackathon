@@ -1,23 +1,24 @@
 import { StyleSheet, Text, View } from "react-native";
+import { KeeperLine, ShotSticker, Wash, text, usePalette, useKeeperColors } from "@/design/psst";
+import { DEMO_RECEIPT } from "@/lib/fixtures";
 import { Enter } from "./Enter";
-import { FIXTURE_SHOT } from "./demo-shots";
-import { KeeperLine, ShotSticker, Wash, text, usePalette, useKeeperColors } from "./kit";
 
 // Fixture only: the backend has no refund field yet (see Backend asks in the PR).
-export const REFUND_FIXTURE = { amount: "$6.49", merchant: "Greenleaf", date: "Nov 8", title: "Greenleaf grocery receipt" };
-
 export function RefundCard() {
   const p = usePalette();
   const { deep } = useKeeperColors("penny");
   return (
     <Enter>
       <Wash keeper="penny" style={styles.card}>
-        <ShotSticker uri={FIXTURE_SHOT.penny.uri} title={REFUND_FIXTURE.title} size={52} />
+        <ShotSticker uri={null} title={DEMO_RECEIPT.title} size={72} variant="receipt" />
         <View style={styles.body}>
           <Text style={[text.bodyBold, { color: p.ink }]}>Penny Pocket found a refund still marked pending.</Text>
-          <Text style={[text.bodyBold, { color: deep }]}>{`${REFUND_FIXTURE.amount} at ${REFUND_FIXTURE.merchant}, ${REFUND_FIXTURE.date}`}</Text>
-          <Text style={[text.caption, { color: p.ink2 }]}>From the receipt.</Text>
-          <KeeperLine id="penny">Pending since Nov 8. Worth a look.</KeeperLine>
+          <Text style={[text.bodyBold, { color: deep }]}>
+            {DEMO_RECEIPT.refund.amount} at {DEMO_RECEIPT.merchant}, {DEMO_RECEIPT.date} · {DEMO_RECEIPT.source}
+          </Text>
+          <KeeperLine id="penny" row>
+            {DEMO_RECEIPT.pennyLine}
+          </KeeperLine>
         </View>
       </Wash>
     </Enter>
@@ -25,6 +26,6 @@ export function RefundCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: "row", gap: 14, padding: 14, alignItems: "flex-start" },
+  card: { flexDirection: "row", gap: 14, alignItems: "flex-start" },
   body: { flex: 1, gap: 3 },
 });
