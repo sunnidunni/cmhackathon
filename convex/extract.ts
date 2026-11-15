@@ -141,6 +141,22 @@ export const retry = mutation({
   },
 });
 
+// "Try again" on every failed screenshot.
+export const retryAllFailed = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const failed = await ctx.db
+      .query("screenshots")
+      .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
+      .collect();
+    for (const row of failed.filter((r) => r.status === "failed"))
+      await ctx.db.patch(row._id, { status: "uploaded", attempts: 0, retryAt: undefined, error: undefined });
+    await ctx.scheduler.runAfter(0, internal.extract.kick, {});
+    return null;
+  },
+});
+
 async function callVision(imageUrl: string) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const res = await fetch("https://api.openai.com/v1/responses", {
@@ -183,7 +199,7 @@ export const run = internalAction({
       const target = await ctx.runQuery(internal.extract.getForExtract, { screenshotId });
       if (target === null) return;
       if (target.url === null) throw new Error("Image missing from storage");
-      const result = parseExtraction(await callVision(target.url));
+      const result = parseExtraction(await callVision(target.url), screenshotId);
       const saved = await ctx.runMutation(internal.extract.complete, { screenshotId, ...result });
       if (saved) {
         await ctx.runAction(internal.memory.store, {

@@ -12,6 +12,11 @@ export async function addMemory(
   await client().add(userId, { ...doc, dreaming: "instant" });
 }
 
+export async function removeMemory(userId: string, screenshotId?: string) {
+  if (screenshotId) await client().documents.delete(userId, { ids: [screenshotId] });
+  else await client().namespaces.delete(userId);
+}
+
 export async function searchMemory(userId: string, query: string): Promise<MemoryHit[]> {
   const res = await client().search(userId, { query, limit: 8 });
   return res.results.map((r) => {

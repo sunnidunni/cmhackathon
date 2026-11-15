@@ -17,10 +17,10 @@ export type RoomKey = "deadlines" | "chats" | "money" | "ideas";
 export const ROOM_KEYS: RoomKey[] = ["deadlines", "chats", "money", "ideas"];
 
 export const rooms: Record<RoomKey, { label: string; character: string; color: string; tint: string }> = {
-  deadlines: { label: "Deadlines", character: "Tock", color: "#F59E0B", tint: "#FEF0D2" },
-  chats: { label: "Chats", character: "Murmur", color: "#EC6FA3", tint: "#FCE4EE" },
-  money: { label: "Money", character: "Penny Pocket", color: "#2FA37A", tint: "#DDF2EA" },
-  ideas: { label: "Ideas", character: "Wisp", color: "#8B7CF6", tint: "#ECE9FE" },
+  deadlines: { label: "Deadlines", character: "Psst", color: "#F59E0B", tint: "#FEF0D2" },
+  chats: { label: "Chats", character: "Psst", color: "#EC6FA3", tint: "#FCE4EE" },
+  money: { label: "Money", character: "Psst", color: "#2FA37A", tint: "#DDF2EA" },
+  ideas: { label: "Ideas", character: "Psst", color: "#8B7CF6", tint: "#ECE9FE" },
 };
 
 export const UNSORTED_ROOM: RoomKey = "ideas";
@@ -34,16 +34,18 @@ export const fonts = {
   bold: "Nunito_700Bold",
   heavy: "Nunito_800ExtraBold",
   black: "Nunito_900Black",
+  hand: "PatrickHand_400Regular",
 } as const;
 
 export const type = {
-  display: { fontFamily: fonts.black, fontSize: 34, lineHeight: 38, color: colors.ink },
-  title: { fontFamily: fonts.heavy, fontSize: 24, lineHeight: 28, color: colors.ink },
-  heading: { fontFamily: fonts.heavy, fontSize: 18, lineHeight: 22, color: colors.ink },
+  display: { fontFamily: fonts.hand, fontSize: 42, lineHeight: 46, color: colors.ink },
+  title: { fontFamily: fonts.hand, fontSize: 29, lineHeight: 33, color: colors.ink },
+  heading: { fontFamily: fonts.hand, fontSize: 22, lineHeight: 26, color: colors.ink },
+  say: { fontFamily: fonts.hand, fontSize: 19, lineHeight: 23, color: colors.ink },
   body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: colors.ink },
   bodyBold: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 22, color: colors.ink },
   caption: { fontFamily: fonts.bold, fontSize: 13, lineHeight: 17, color: colors.inkSoft },
-  label: { fontFamily: fonts.heavy, fontSize: 12, lineHeight: 14, letterSpacing: 0.4, color: colors.ink },
+  label: { fontFamily: fonts.hand, fontSize: 16, lineHeight: 18, color: colors.ink },
 } as const;
 
 export const stickerShadow = "0px 3px 6px rgba(43, 29, 20, 0.18)";

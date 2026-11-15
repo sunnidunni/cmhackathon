@@ -12,6 +12,8 @@ import {
   rooms,
   ScreenHeader,
   ScreenshotSticker,
+  Doodle,
+  SketchFrame,
   SpeechBubble,
   spacing,
   Sticker,
@@ -68,6 +70,7 @@ function MissedRow({ room, index }: { room: RoomKey; index: number }) {
         <View style={{ flexDirection: flip ? "row-reverse" : "row", alignItems: "center", gap: spacing.sm }}>
           <Character room={room} size={64} expression={index === 0 ? "happy" : "neutral"} />
           <Text style={type.caption}>{index + 2} days ago</Text>
+          {index === 0 ? <Doodle kind="star" size={30} color={colors.sun} strokeWidth={3} /> : null}
         </View>
       </View>
     </View>
@@ -100,15 +103,21 @@ export default function DesignGallery() {
       </Section>
 
       <Section title="Type">
-        <Text style={type.display}>Display 34</Text>
-        <Text style={type.title}>Title 24</Text>
-        <Text style={type.heading}>Heading 18</Text>
+        <Text style={type.display}>Display 42</Text>
+        <Text style={type.title}>Title 29</Text>
+        <Text style={type.heading}>Heading 22</Text>
         <Text style={type.body}>Body 16. Screenshots you forgot about, sorted for you.</Text>
         <Text style={type.caption}>Caption 13</Text>
-        <Text style={type.label}>LABEL 12</Text>
+        <Text style={type.say}>Say 19, for speech bubbles</Text>
+        <Text style={type.label}>Label 16</Text>
       </Section>
 
-      <Section title="Characters">
+      <Section title="Psst, the mascot">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+          <Character size={96} />
+          <Character size={96} expression="happy" />
+          <Text style={[type.caption, { flex: 1 }]}>No room: the plain bubble, for app-level lines.</Text>
+        </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: spacing.lg }}>
           {ROOM_KEYS.map((r) => (
             <View key={r} style={{ width: "48%", alignItems: "center", gap: spacing.xs }}>
@@ -116,11 +125,19 @@ export default function DesignGallery() {
                 <Character room={r} size={84} />
                 <Character room={r} size={84} expression="happy" />
               </View>
-              <Text style={type.heading}>{rooms[r].character}</Text>
-              <Text style={type.caption}>{rooms[r].label}</Text>
+              <Text style={type.heading}>{rooms[r].label}</Text>
             </View>
           ))}
         </View>
+        <Text style={type.caption}>At list size (28, 34, 40)</Text>
+        {[28, 34, 40].map((s) => (
+          <View key={s} style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+            <Character size={s} />
+            {ROOM_KEYS.map((r) => (
+              <Character key={r} room={r} size={s} />
+            ))}
+          </View>
+        ))}
       </Section>
 
       <Section title="Sticker">
@@ -141,7 +158,7 @@ export default function DesignGallery() {
         </View>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Character room="chats" size={56} />
-          <SpeechBubble tail="left" style={{ marginBottom: 0 }}>Tail on the left, next to a character.</SpeechBubble>
+          <SpeechBubble tail="left" style={{ marginBottom: 0 }}>Tail on the left, next to Psst.</SpeechBubble>
         </View>
       </Section>
 
@@ -163,13 +180,22 @@ export default function DesignGallery() {
         </View>
       </Section>
 
+      <Section title="Doodles">
+        <View style={{ flexDirection: "row", gap: spacing.xl, alignItems: "center" }}>
+          <Doodle kind="star" size={44} color={colors.sun} strokeWidth={3.5} />
+          <Doodle kind="arrow" size={48} />
+          <Doodle kind="swirl" size={44} color={rooms.chats.color} />
+          <Doodle kind="underline" width={90} color={colors.sun} strokeWidth={7} />
+        </View>
+      </Section>
+
       <Section title="Button">
         <Button label="Remind me tomorrow" />
         <Button label="Not now" variant="secondary" />
       </Section>
 
       <Section title="Mock: Missed inbox">
-        <View style={{ backgroundColor: colors.paper, borderRadius: radii.xl, borderWidth: 2, borderColor: colors.ink, overflow: "hidden", paddingBottom: spacing.xl }}>
+        <SketchFrame fill={colors.paper} radius={radii.xl} strokeWidth={2.2} seed="missed" style={{ paddingBottom: spacing.xl }}>
           <ScreenHeader title="Missed" subtitle="4 screenshots you forgot about" room="ideas" line="Psst. A few of these still matter." />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, paddingHorizontal: spacing.xl, paddingBottom: spacing.lg }}>
             {ROOM_KEYS.map((r, i) => (
@@ -182,9 +208,12 @@ export default function DesignGallery() {
             ))}
           </View>
           <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.xxl }}>
+            <View style={{ position: "absolute", left: spacing.sm, top: -4, transform: [{ rotate: "20deg" }] }}>
+              <Doodle kind="arrow" size={40} />
+            </View>
             <Button label="Catch up on all 4" />
           </View>
-        </View>
+        </SketchFrame>
       </Section>
     </ScrollView>
   );

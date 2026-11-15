@@ -1,10 +1,22 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
-import { addMemory } from "./lib/memoryClient";
+import { addMemory, removeMemory } from "./lib/memoryClient";
 
 // Stores what we read in the user's namespace (the bare Convex user id), the same one the
 // chat turns use. Never throws: the screenshot is already ready, and a memory failure must not change that.
+// Removes one screenshot's memory, or the whole namespace when no screenshot is given. Never throws.
+export const forget = internalAction({
+  args: { userId: v.id("users"), screenshotId: v.optional(v.id("screenshots")) },
+  handler: async (_ctx, { userId, screenshotId }) => {
+    try {
+      await removeMemory(userId, screenshotId);
+    } catch (e) {
+      console.error("Supermemory forget failed", e instanceof Error ? e.message : String(e));
+    }
+  },
+});
+
 export const store = internalAction({
   args: {
     screenshotId: v.id("screenshots"),
