@@ -1,5 +1,6 @@
 import { StyleProp, View, ViewStyle } from "react-native";
-import { colors, radii, stickerShadow } from "./theme";
+import { SketchFrame } from "./SketchFrame";
+import { colors, radii } from "./theme";
 
 export function Sticker({
   children,
@@ -15,22 +16,15 @@ export function Sticker({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <View
-      style={[
-        {
-          backgroundColor: colors.white,
-          padding: border,
-          borderRadius: radius,
-          borderWidth: 1.5,
-          borderColor: colors.ink,
-          boxShadow: stickerShadow,
-          transform: [{ rotate: `${tilt}deg` }],
-          alignSelf: "flex-start",
-        },
-        style,
-      ]}
+    <SketchFrame
+      fill={colors.white}
+      radius={radius}
+      strokeWidth={1.9}
+      shadow={{ color: colors.ink, opacity: 0.15, dy: 3 }}
+      seed={tilt}
+      style={[{ padding: border, transform: [{ rotate: `${tilt}deg` }], alignSelf: "flex-start" }, style]}
     >
       <View style={{ borderRadius: Math.max(radius - border, 4), overflow: "hidden" }}>{children}</View>
-    </View>
+    </SketchFrame>
   );
 }
