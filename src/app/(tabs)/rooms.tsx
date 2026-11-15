@@ -26,10 +26,10 @@ export default function Rooms() {
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, paddingBottom: 24, gap: 16, flexGrow: 1 }}>
-        <Text accessibilityRole="header" style={[text.largeTitle, { color: p.ink }]}>
+        <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.largeTitle, { color: p.ink }]}>
           Rooms
         </Text>
-        <Text style={[text.headline, { color: p.ink }]}>{empty ? "Your rooms are empty for now." : "Your screenshots live in four rooms."}</Text>
+        <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>{empty ? "Your rooms are empty for now." : "Your screenshots live in four rooms."}</Text>
         {access === "limited" ? <LimitedAccessCard onPress={() => openLimitedPicker()} /> : null}
         {[ROOM_KEYS.slice(0, 2), ROOM_KEYS.slice(2)].map((pair) => (
           <View key={pair[0]} style={{ flexDirection: "row", gap: 12 }}>
@@ -45,9 +45,9 @@ export default function Rooms() {
         {empty ? (
           <View style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>
             <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-              We only read your Screenshots album. Your other photos stay on your phone.
+              Screenshots are sent to our server and an AI model to be read. We only read your Screenshots album. Your other photos stay on your phone. Delete everything anytime in Settings.
             </Text>
-            <PsstButton kind="filled" label="Bring in screenshots" onPress={() => router.push("/bring")} />
+            <PsstButton kind="filled" label="Bring in my screenshots" onPress={() => router.push("/bring")} />
           </View>
         ) : null}
       </ScrollView>

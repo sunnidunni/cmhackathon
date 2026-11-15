@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { usePalette } from "@/design/psst";
+import { fixtureShot } from "@/components/remind/fixture";
+import { isConvexId } from "@/components/remind/ids";
 import { defaultReminder } from "@/components/remind/plan";
 import { RemindBody } from "@/components/remind/RemindBody";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
@@ -18,7 +20,9 @@ export default function Remind() {
   const p = usePalette();
   const { id } = useLocalSearchParams<{ id: string }>();
   const shotId = id as Id<"screenshots">;
-  const shot = useQuery(api.shots.detail, { id: shotId });
+  const real = isConvexId(id);
+  const fetched = useQuery(api.shots.detail, real ? { id: shotId } : "skip");
+  const shot = real ? fetched : (fixtureShot(id) ?? null);
   const actions = useReminderActions();
   const [now] = useState(Date.now);
   const [notifOn, setNotifOn] = useState<boolean | null>(null);
@@ -41,8 +45,12 @@ export default function Remind() {
     setFailed(false);
     setSaving(true);
     try {
-      const r = await actions.remind(shotId, plan.date.when);
-      setNotifOn(r.notified);
+      if (real) {
+        const r = await actions.remind(shotId, plan.date.when);
+        setNotifOn(r.notified);
+      } else {
+        setNotifOn(await hasNotificationPermission());
+      }
       setSaved(true);
     } catch {
       setFailed(true);
@@ -68,13 +76,14 @@ export default function Remind() {
         notifOn={notifOn}
         saved={saved}
         failed={failed}
+        demo={!real}
         cancelFailed={cancelFailed}
         saving={saving}
         priming={priming}
         onConfirm={confirm}
         onRetry={save}
         onClose={close}
-        onFireNow={FIXTURES ? () => void actions.fireNow(shotId).catch(() => undefined) : undefined}
+        onFireNow={FIXTURES && real ? () => void actions.fireNow(shotId).catch(() => undefined) : undefined}
         onAllow={async () => {
           setPriming(false);
           await ensureNotificationPermission().catch(() => false);

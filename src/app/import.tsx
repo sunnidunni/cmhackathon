@@ -83,8 +83,8 @@ export default function BringIn() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
         <View style={styles.center}>
-          <Text style={[text.headline, { color: p.ink }]}>{failedLabel(state.failed)}.</Text>
-          <Text style={[text.body, { color: p.ink2 }]}>Check your connection and try again. The ones already in are safe.</Text>
+          <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>{failedLabel(state.failed)}.</Text>
+          <Text style={[text.body, { color: p.ink2 }]}>Check your connection and try again. The ones already in are still here.</Text>
         </View>
         <View style={styles.footer}>
           <PsstButton kind="filled" label="Try again" onPress={run} />
@@ -99,7 +99,7 @@ export default function BringIn() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
         <View style={styles.center}>
-          <Text style={[text.headline, { color: p.ink }]}>No screenshots to read yet.</Text>
+          <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>No screenshots to read yet.</Text>
           <Text style={[text.body, { color: p.ink2 }]}>Take a screenshot and Psst reads it.</Text>
         </View>
         <View style={styles.footer}>
@@ -112,7 +112,7 @@ export default function BringIn() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+        <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
           {done ? `${screenshotsIn(total)} in.\nMeet your keepers.` : "Reading your screenshots."}
         </Text>
         {done ? null : (
@@ -142,12 +142,12 @@ export default function BringIn() {
         <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
           {done
             ? unsorted > 0
-              ? `${screenshotsIn(unsorted)} ${unsorted === 1 ? "waits" : "wait"} in Unsorted. You can meet the keepers again in Rooms.`
+              ? unsorted === 1 ? "1 couldn't be read. It's in Unsorted, and you decide where it goes." : `${unsorted} couldn't be read. They're in Unsorted, and you decide where they go.`
               : "You can meet the keepers again in Rooms."
-            : "Stay, or skip ahead and they keep reading."}
+            : "About a minute left. You can go to Today while they read. No notification is sent when it finishes."}
         </Text>
         <PsstButton kind="filled"
-          label={done ? "Continue" : "Skip ahead"}
+          label={done ? "See your keepers card" : "Skip to Today"}
           onPress={() => router.replace(done ? "/keepers-card" : "/today")}
         />
       </View>

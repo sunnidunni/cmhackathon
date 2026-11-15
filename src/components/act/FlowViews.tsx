@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { fonts, Keeper, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
-import { willBe, confirmFor } from "./pages";
+import { confirmFor, demoLine } from "./pages";
 import { Fade, TypingDots } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
@@ -47,7 +47,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
     return (
       <SoftCard style={{ gap: 12 }}>
         <Row label="To">
-          <Text style={[text.bodyBold, { color: p.ink }]}>{`${step.to} · ${step.via}`}</Text>
+          <Text style={[text.bodyBold, { color: p.ink }]}>{`${step.to} · Messages`}</Text>
         </Row>
         <Row label="Message, exactly as it will go">
           <Text style={[text.lead, { color: p.ink }]}>{edit.body}</Text>
@@ -128,7 +128,7 @@ export function MovePage({ scenario, step, moved, onToggle, onNext }: { scenario
         {moved ? `Tock moved your airport reminder from ${step.from} to ${step.to}.` : `Your airport reminder is back at ${step.from}.`}
       </Text>
       <WhyRow scenario={scenario} />
-      <Text style={[text.body, { color: p.ink2 }]}>This stays on your phone and you can change it back any time.</Text>
+      <Text style={[text.body, { color: p.ink2 }]}>You can change it back any time.</Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label="Next: text to Sam" onPress={onNext} />
       <PsstButton kind="text" label={moved ? `Undo · back to ${step.from}` : `Move it to ${step.to}`} onPress={onToggle} />
     </View>
@@ -181,7 +181,7 @@ export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: 
       {c.lines.map((l) => (
         <Text key={l} style={[text.body, { color: p.ink2 }]}>{l}</Text>
       ))}
-      <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{willBe(scenario.done)}</Text>
+      <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{demoLine(step, "will")}</Text>
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}
@@ -207,7 +207,7 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
   }, []);
   return (
     <View style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{scenario.done}</Text>
+      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{demoLine(step, "was")}</Text>
       <View style={{ gap: 8 }}>
         <Bubble mine keeper={scenario.keeper}>
           <Text style={[text.lead, { color: p.kl }]}>{edit.body}</Text>

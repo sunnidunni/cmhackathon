@@ -4,14 +4,14 @@ import { DEV_TOOLS } from "@/lib/dev-flags";
 import { Keeper, KeeperLine, PsstButton, text, usePalette } from "@/design/psst";
 
 const TRY = DEV_TOOLS ? "When does pottery sign-up close?" : "When is that due?";
-const MORE = ["What's the Wi-Fi password?", "What are my flight details?", "What was that recipe?"];
+const MORE = ["What's the Wi-Fi password from Mom?", "What are my flight details?", "What was that recipe?"];
 
 export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | undefined; onPick: (q: string) => void; showSuggestions: boolean }) {
   const p = usePalette();
   return (
     <View style={{ flex: 1 }}>
       <View style={{ gap: 8 }}>
-        <Text style={[text.headline, { color: p.ink }]}>Ask about screenshots Psst has read.</Text>
+        <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>Ask about screenshots Psst has read.</Text>
         <Text style={[text.lead, { color: p.ink2 }]}>Each answer comes with its source screenshot. Open it to check the details.</Text>
       </View>
       {showSuggestions ? (
@@ -33,7 +33,7 @@ export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | u
       {showSuggestions && count !== undefined ? (
         <View style={{ flex: 1, justifyContent: "flex-end", flexDirection: "row", alignItems: "flex-end", gap: 12, paddingBottom: 8 }}>
           <KeeperLine id="murmur" style={{ flex: 1, paddingBottom: 12 }}>
-            {count === 0 ? "Nothing to ask about yet." : `Ask about any of your ${count} screenshots. I show my work.`}
+            {count === 0 ? "Nothing to ask about yet." : `${count} ${count === 1 ? "screenshot" : "screenshots"} brought in. Answers come ${count === 1 ? "only from it" : "only from these"}.`}
           </KeeperLine>
           <View style={{ marginRight: -24, marginBottom: -24 }}>
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">

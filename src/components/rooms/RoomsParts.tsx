@@ -50,7 +50,7 @@ export function UnsortedRow({ count, newest, onPress }: { count: number; newest:
       <View style={{ flex: 1 }}>
         <Text style={[text.bodyBold, { color: p.ink }]}>Unsorted</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>
-          {count === 1 ? "1 screenshot Psst couldn't place. You decide." : `${count} screenshots didn't fit a room. You decide where they go.`}
+          {count === 1 ? "1 screenshot couldn't be read. You decide where it goes." : `${count} screenshots couldn't be read. You decide where they go.`}
         </Text>
       </View>
       <Text style={[text.body, { color: p.ink3 }]}>›</Text>
@@ -80,9 +80,9 @@ export function LimitedAccessCard({ onPress }: { onPress: () => void }) {
     <SoftCard style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
       <KeeperFace id="murmur" size={40} />
       <View style={{ flex: 1, gap: 4 }}>
-        <Text style={[text.bodyBold, { color: p.ink }]}>Psst can see only the screenshots you picked. That works.</Text>
+        <Text style={[text.bodyBold, { color: p.ink }]}>Psst reads only the ones you picked. Your rooms work with those.</Text>
         <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, justifyContent: "center" }}>
-          <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Give access to all screenshots</Text>
+          <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Pick more screenshots</Text>
         </Pressable>
         <Text style={[text.caption, { color: p.ink2 }]}>We only read your Screenshots album.</Text>
       </View>

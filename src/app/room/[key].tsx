@@ -15,8 +15,8 @@ import { runSync } from "@/lib/sync";
 const CATEGORIES: Category[] = ["deadlines", "chats", "money", "ideas", "unsorted"];
 
 const EMPTY: Record<RoomKey, { body: string; line: string }> = {
-  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Psst.", line: "No dates yet. I'm suspiciously relaxed." },
-  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Psst.", line: "Nothing to keep quiet about. Yet." },
+  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Psst.", line: "No dates found yet. All 3 of my alarms are bored." },
+  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Psst.", line: "Nothing in Chats yet. I'll never quote one back." },
   money: { body: "Receipts, bills, tickets and things to buy land here. New screenshots are read each time you open Psst.", line: "An empty pouch. Very tidy." },
   ideas: { body: "Recipes, places, quotes and saved answers land here. New screenshots are read each time you open Psst.", line: "The jar is open. Take your time." },
 };
@@ -44,7 +44,7 @@ function AllScreen() {
       : realAll;
   const header = (
     <View style={{ gap: 4 }}>
-      <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+      <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
         All screenshots
       </Text>
       {all ? <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(all.count)}</Text> : <Skeleton w={96} h={14} />}
@@ -88,13 +88,13 @@ function SingleRoom({ category }: { category: Category }) {
 
   const items = data?.items ?? null;
   const rows = items?.map((i) => ({ date: i.date, takenAt: i.takenAt }));
-  const headline = !isRoom && items ? `${countLabel(items.length)} didn't fit a room.` : roomHeadline(category);
+  const headline = !isRoom && items ? `${countLabel(items.length)} couldn't be read.` : roomHeadline(category);
   const isEmpty = items !== null && items.length === 0;
 
   const wash = (
     <RoomWash keeper={keeper} muted={!isRoom} style={{ padding: 16, flexDirection: "row", alignItems: "center", gap: 8 }}>
       <View style={{ flex: 1, gap: 6 }}>
-        <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
+        <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
           {headline}
         </Text>
         {rows ? <KeeperLine id={keeper}>{roomLine(category, rows)}</KeeperLine> : <Skeleton w={160} h={14} />}
@@ -128,7 +128,7 @@ function SingleRoom({ category }: { category: Category }) {
         {isEmpty && isRoom ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 8 }}>
             <Keeper id={keeper} size={128} />
-            <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
+            <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
               Nothing in {ROOM_LABEL[category]} yet.
             </Text>
             <Text style={[text.lead, { color: p.ink2, textAlign: "center" }]}>{EMPTY[category].body}</Text>
