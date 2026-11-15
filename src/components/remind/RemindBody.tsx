@@ -12,6 +12,7 @@ export type RemindState = {
   saved: boolean;
   failed: boolean;
   cancelFailed?: boolean;
+  demo?: boolean;
   saving: boolean;
   priming: boolean;
 };
@@ -26,7 +27,7 @@ export type RemindActions = {
   onFireNow?: () => void;
 };
 
-export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed, saving, priming, onConfirm, onRetry, onTurnOff, onAllow, onSkip, onClose, onFireNow }: RemindState & RemindActions) {
+export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed, demo, saving, priming, onConfirm, onRetry, onTurnOff, onAllow, onSkip, onClose, onFireNow }: RemindState & RemindActions) {
   const p = usePalette();
   const fresh = shot ? defaultReminder(shot.dates, now, tz) : null;
   const existing = fresh && shot ? shot.dates.find((d) => d.when === fresh.date.when)?.reminder : null;
@@ -54,6 +55,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
           <>
             <Text style={[text.lead, { color: p.ink2 }]}>{`${plan.date.what} ${whenLabel(plan.date.when)}.`}</Text>
             {failed ? <Banner kind="error" title="Couldn't set the reminder." body="Nothing changed, and your pick is still selected. Check your connection, then try again." /> : null}
+            {demo && isSet ? <Text style={[text.caption, { color: p.ink2 }]}>Demo: reminder not saved to the server.</Text> : null}
             {cancelFailed ? <Banner kind="error" title="Couldn't turn off the reminder." body="It's still on. Try again." /> : null}
             {off ? <Banner kind="off" title="Saved, no notification." body={`Notifications are off. Your reminder will show at the top of Today on ${plan.day} at ${plan.clock}.`} /> : null}
             {isSet && notifOn ? <Text style={[text.bodyBold, { color: p.ink }]}>{`Reminder set for ${plan.day} at ${plan.clock}.`}</Text> : null}
