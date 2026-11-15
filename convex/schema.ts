@@ -61,7 +61,13 @@ export default defineSchema({
     reactionKey: v.optional(v.string()),
     userMoved: v.optional(v.boolean()),
     hidden: v.optional(v.boolean()),
+    attempts: v.optional(v.number()),
+    startedAt: v.optional(v.number()),
+    retryAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+    memoryStored: v.optional(v.boolean()),
   })
+    .index("by_status", ["status"])
     .index("by_user_category", ["userId", "category"])
     .index("by_user_deviceAssetId", ["userId", "deviceAssetId"])
     .index("by_user_importance", ["userId", "importance"])
@@ -86,6 +92,7 @@ export default defineSchema({
     question: v.string(),
     answer: v.string(),
     sourceScreenshotIds: v.array(v.id("screenshots")),
+    found: v.optional(v.boolean()),
     createdAt: v.number(),
   }).index("by_user_createdAt", ["userId", "createdAt"]),
 });
