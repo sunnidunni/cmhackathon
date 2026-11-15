@@ -61,13 +61,13 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, prim
             ) : (
               <>
                 <Preview label="What you'll get" body={preview} time={when} />
-                <Text style={[text.caption, { color: p.ink2 }]}>For this screenshot, one notification with its name and date. Change or turn it off anytime.</Text>
+                <Text style={[text.caption, { color: p.ink2 }]}>We&apos;ll remind you once per item. You can snooze or turn reminders off.</Text>
               </>
             )}
           </>
         ) : null}
       </ScrollView>
-      <View style={{ padding: 16, paddingBottom: 28, gap: 4 }}>
+      <View style={{ padding: 16, paddingBottom: 42, gap: 4 }}>
         {plan ? (
           <PsstButton kind="filled" label={failed ? "Try again" : isSet ? "Done" : "Set reminder"} onPress={failed ? onRetry : onConfirm} disabled={saving} />
         ) : (

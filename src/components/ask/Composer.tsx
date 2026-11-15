@@ -1,4 +1,4 @@
-import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
 import { SymbolView } from "expo-symbols";
 import { Pressable, Text, TextInput } from "react-native";
 import { text, usePalette } from "./kit";
@@ -6,9 +6,11 @@ import { text, usePalette } from "./kit";
 export function Composer({ value, onChange, onSend, busy }: { value: string; onChange: (v: string) => void; onSend: () => void; busy: boolean }) {
   const p = usePalette();
   const ready = value.trim().length > 0 && !busy;
-  const glass = isLiquidGlassAvailable();
+  const glass = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
   return (
     <GlassView
+      glassEffectStyle="regular"
+      isInteractive
       style={{ marginHorizontal: 16, marginBottom: 8, minHeight: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", paddingLeft: 18, paddingRight: 6, gap: 8, backgroundColor: glass ? undefined : p.white, borderWidth: glass ? 0 : 1, borderColor: p.hair }}
     >
       <TextInput

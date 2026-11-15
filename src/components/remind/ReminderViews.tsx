@@ -1,3 +1,4 @@
+import { SymbolView } from "expo-symbols";
 import { Text, View } from "react-native";
 import { KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette } from "@/components/ask/kit";
 
@@ -24,7 +25,7 @@ export function Options({ rows }: { rows: OptionRow[] }) {
         <View
           key={r.key}
           accessible
-          accessibilityRole="radio"
+          accessibilityRole="menuitem"
           accessibilityState={{ selected: r.selected, disabled: !r.available }}
           style={{ minHeight: 60, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderColor: p.hair, opacity: r.available ? 1 : 0.45 }}
         >
@@ -35,9 +36,7 @@ export function Options({ rows }: { rows: OptionRow[] }) {
             </Text>
             <Text style={[text.caption, { color: p.ink2 }]}>{r.available ? r.sub : `${r.sub} · not available yet`}</Text>
           </View>
-          <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: r.selected ? p.ink : p.hair2, alignItems: "center", justifyContent: "center" }}>
-            {r.selected ? <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: p.ink }} /> : null}
-          </View>
+          {r.selected ? <SymbolView name="checkmark" size={18} tintColor={p.ink} fallback={<Text style={{ color: p.ink, fontWeight: "700" }}>✓</Text>} /> : null}
         </View>
       ))}
     </View>
@@ -95,13 +94,13 @@ export function Priming({ preview, onAllow, onSkip }: { preview: { body: string;
   const p = usePalette();
   return (
     <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0, justifyContent: "flex-end", backgroundColor: "rgba(33,29,43,0.35)" }}>
-      <View accessibilityViewIsModal style={{ backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 28, gap: 14 }}>
+      <View accessibilityViewIsModal style={{ backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 42, gap: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <KeeperFace id="tock" size={56} />
           <Text style={[text.headline, { color: p.ink, flex: 1 }]}>Tock can tap you on the shoulder.</Text>
         </View>
         <Preview label="What you'll get" body={preview.body} time={preview.time} />
-        <Text style={[text.caption, { color: p.ink2 }]}>Reminders you set. Never marketing.</Text>
+        <Text style={[text.caption, { color: p.ink2 }]}>{"We'll remind you once per item. You can snooze or turn reminders off."}</Text>
         <PsstButton kind="filled" keeper="tock" label="Turn on notifications" onPress={onAllow} />
         <PsstButton kind="text" label="Not now, keep it in Today" onPress={onSkip} />
       </View>

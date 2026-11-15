@@ -82,7 +82,7 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
   const closes = reminder ? /clos/i.test(reminder.date.what) : false;
   return (
     <View style={{ gap: 14 }}>
-      <Text style={[text.lead, { color: p.ink }]}>
+      <Text selectable style={[text.lead, { color: p.ink }]}>
         {result.answer}
         {shot ? <Text style={{ color: p.ink2 }}>{` · from a screenshot saved ${savedLabel(shot.takenAt, now, tz())}`}</Text> : null}
       </Text>

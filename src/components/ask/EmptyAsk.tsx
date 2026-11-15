@@ -1,7 +1,8 @@
 import { Pressable, Text, View } from "react-native";
+import { DEV_TOOLS } from "@/lib/dev-flags";
 import { KeeperFace, KeeperLine, PsstButton, text, usePalette } from "./kit";
 
-const TRY = "When is that due?";
+const TRY = DEV_TOOLS ? "When does pottery sign-up close?" : "When is that due?";
 const MORE = ["What's the Wi-Fi password?", "What are my flight details?", "What was that recipe?"];
 
 export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | undefined; onPick: (q: string) => void; showSuggestions: boolean }) {
@@ -9,8 +10,8 @@ export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | u
   return (
     <View style={{ flex: 1 }}>
       <View style={{ gap: 8 }}>
-        <Text style={[text.headline, { color: p.ink }]}>Ask about anything you screenshotted.</Text>
-        <Text style={[text.lead, { color: p.ink2 }]}>Answers come only from your screenshots, with the screenshot underneath as proof.</Text>
+        <Text style={[text.headline, { color: p.ink }]}>Ask about screenshots Psst has read.</Text>
+        <Text style={[text.lead, { color: p.ink2 }]}>Each answer comes with its source screenshot. Open it to check the details.</Text>
       </View>
       {showSuggestions ? (
         <View style={{ marginTop: 16 }}>
