@@ -2,9 +2,12 @@ import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
 import { Stack } from "expo-router";
 import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
-import { convex } from "@/lib/convex";
-import { secureStorage } from "@/lib/secure-storage";
 import { LoadingView, MessageView } from "@/components/state-views";
+import { convex } from "@/lib/convex";
+import { DEV_TOOLS } from "@/lib/dev-flags";
+import { secureStorage, storageError } from "@/lib/secure-storage";
+
+const SIGN_IN_TIMEOUT_MS = 20000;
 
 // No sign-up: the first launch silently creates an anonymous Convex Auth user and the
 // session token is kept in the keychain, so every later launch is the same user.
@@ -16,15 +19,25 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading || isAuthenticated) return;
-    signIn("anonymous").catch((e: unknown) => setError(String(e)));
+    signIn("anonymous").catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   }, [isLoading, isAuthenticated, signIn, attempt]);
+
+  useEffect(() => {
+    if (isAuthenticated || error) return;
+    const timer = setTimeout(() => setError("Timed out while signing in"), SIGN_IN_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, error, attempt]);
 
   if (isAuthenticated) return <>{children}</>;
   if (error)
     return (
       <MessageView
         title="Couldn't connect"
-        body="Check your connection and try again."
+        body={
+          DEV_TOOLS
+            ? `${error} (loading: ${isLoading}, keychain: ${storageError ?? "ok"})`
+            : "Check your connection and try again."
+        }
         actionLabel="Try again"
         onAction={() => {
           setError(null);
