@@ -25,7 +25,7 @@ export const createCheckout = action({
       body: JSON.stringify({
         account_id: accountId,
         metadata: { convexUserId: userId },
-        ...(redirectUrl ? { redirect_url: redirectUrl } : {}),
+        redirect_url: redirectUrl ?? `${process.env.CONVEX_SITE_URL}/whop/done`,
         variant: { billing_type: "one_time", initial_price: PRICE_USD, currency: "usd", title: "Rooms Full Library" },
       }),
     });
@@ -34,6 +34,11 @@ export const createCheckout = action({
     if (!body.purchase_url) throw new Error("Checkout failed");
     return { purchaseUrl: body.purchase_url };
   },
+});
+
+export const done = httpAction(async () => {
+  const html = `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Psst</title><body style="font-family:-apple-system,sans-serif;background:#FAF6EE;color:#2B1D14;text-align:center;padding:72px 24px"><h1>Payment received</h1><p>Close this window to go back to Psst.</p></body>`;
+  return new Response(html, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } });
 });
 
 export const webhook = httpAction(async (ctx, request) => {
