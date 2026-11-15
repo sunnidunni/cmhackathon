@@ -3,7 +3,7 @@ import { convexTest } from "convex-test";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { PLAYFUL_KEYS } from "./lib/lines";
+import { PLAYFUL_KEYS, SERIOUS_KEYS } from "./lib/lines";
 import schema from "./schema";
 
 const removeMemory = vi.fn();
@@ -68,6 +68,42 @@ describe("today", () => {
     const after = await me.query(api.today.get, { tzOffsetMinutes: TZ });
     expect(after.handful.map((c) => c.title)).toEqual(["chat", "second deadline"]);
     expect([a, idea]).toHaveLength(2);
+  });
+
+  test("a pick made on an empty library gives way once ready screenshots exist", async () => {
+    const { me, seed, t, userId } = await setup();
+    await me.mutation(api.today.appOpened, { tzOffsetMinutes: TZ });
+    expect((await me.query(api.today.get, { tzOffsetMinutes: TZ })).handful).toEqual([]);
+    const flyer = await seed({ title: "flyer", category: "deadlines", importance: 4, readAt: 2000 });
+    await t.run((ctx) => ctx.db.patch(userId, { lastOpenedAt: 3000 }));
+    const read = await me.query(api.today.get, { tzOffsetMinutes: TZ });
+    expect(read.handful.map((c) => c._id)).toEqual([flyer]);
+    await me.mutation(api.today.appOpened, { tzOffsetMinutes: TZ });
+    const stored = await t.run((ctx) => ctx.db.query("dailyPicks").collect());
+    expect(stored).toHaveLength(1);
+    expect(stored[0].ids).toEqual([flyer]);
+  });
+
+  test("a stored pick with items stays stable for the day", async () => {
+    const { me, seed, t, userId } = await setup();
+    const first = await seed({ title: "first", category: "deadlines", importance: 4, readAt: 1 });
+    await t.run((ctx) => ctx.db.patch(userId, { lastOpenedAt: 3000 }));
+    await me.mutation(api.today.appOpened, { tzOffsetMinutes: TZ });
+    await seed({ title: "better", category: "money", importance: 5, readAt: 1 });
+    await me.mutation(api.today.appOpened, { tzOffsetMinutes: TZ });
+    expect((await me.query(api.today.get, { tzOffsetMinutes: TZ })).handful.map((c) => c._id)).toEqual([first]);
+  });
+
+  test("a quiet thin pick gives way when an important screenshot arrives", async () => {
+    const { me, seed, t, userId } = await setup();
+    await seed({ title: "recipe", category: "ideas", importance: 1, takenAt: 10, readAt: 1 });
+    await me.mutation(api.today.appOpened, { tzOffsetMinutes: TZ });
+    expect((await me.query(api.today.get, { tzOffsetMinutes: TZ })).thin?.title).toBe("recipe");
+    const flyer = await seed({ title: "flyer", category: "deadlines", importance: 4, readAt: 1 });
+    await t.run((ctx) => ctx.db.patch(userId, { lastOpenedAt: 3000 }));
+    const r = await me.query(api.today.get, { tzOffsetMinutes: TZ });
+    expect(r.handful.map((c) => c._id)).toEqual([flyer]);
+    expect(r.thin).toBeNull();
   });
 
   test("thin day shows one quiet ideas item, cleared when nothing", async () => {
@@ -166,6 +202,17 @@ describe("rooms, detail and mutations", () => {
     expect(PLAYFUL_KEYS.ideas).toContain(room.newestLineKey);
     await me.mutation(api.shots.move, { id, category: "money" });
     expect(PLAYFUL_KEYS.money).toContain((await me.query(api.shots.detail, { id }))?.lineKey);
+  });
+
+  test("a moved urgent screenshot gets a serious line key of the new room", async () => {
+    const { me, seed } = await setup();
+    const soon = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+    const id = await seed({ title: "x", category: "unsorted", importance: 5, dates: [{ when: soon, what: "due", confident: true }] });
+    await me.mutation(api.shots.move, { id, category: "money" });
+    expect(SERIOUS_KEYS.money).toContain((await me.query(api.shots.detail, { id }))?.lineKey);
+    const calm = await seed({ title: "y", category: "unsorted", importance: 2 });
+    await me.mutation(api.shots.move, { id: calm, category: "money" });
+    expect(PLAYFUL_KEYS.money).toContain((await me.query(api.shots.detail, { id: calm }))?.lineKey);
   });
 
   test("detail and mutations are private to the owner", async () => {

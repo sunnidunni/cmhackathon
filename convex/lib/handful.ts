@@ -11,6 +11,15 @@ export function nextConfidentDate(row: Doc<"screenshots">, now: number, tz: numb
   return future[0] ?? null;
 }
 
+// A stored pick gives way when it is empty, or a quiet thin pick while real candidates now exist.
+export function pickIsStale(
+  stored: { ids: unknown[]; thin: boolean },
+  fresh: { ids: unknown[]; thin: boolean },
+) {
+  if (stored.ids.length === 0) return fresh.ids.length > 0;
+  return stored.thin && !fresh.thin && fresh.ids.length > 0;
+}
+
 // Picks today's handful: at most 3, one per room, soonest confident future date first, then importance.
 // When nothing qualifies, one quiet Ideas or Money item (importance 1 to 2, oldest saved first).
 export function computePick(rows: Doc<"screenshots">[], now: number, tz: number) {

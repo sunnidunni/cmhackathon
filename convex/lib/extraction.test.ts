@@ -1,9 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { parseExtraction } from "./extraction";
 import { pickToImport } from "./importPlan";
-import { PLAYFUL_KEYS } from "./lines";
+import { PLAYFUL_KEYS, SERIOUS_KEYS } from "./lines";
 import manifest from "../../src/content/manifest.json";
 
+const LONG_AGO = Date.UTC(2020, 0, 1);
 const base = {
   title: "Harvest Lantern Night",
   text: "Harvest Lantern Night Nov 16 6:30pm",
@@ -104,8 +105,8 @@ describe("extraction fixes", () => {
     const keys = new Set<string>();
     for (let i = 0; i < 40; i++) {
       const raw = JSON.stringify({ ...base, reactionKey: "deadlines_01" });
-      const a = parseExtraction(raw, `id${i}`).reactionKey;
-      expect(parseExtraction(raw, `id${i}`).reactionKey).toBe(a);
+      const a = parseExtraction(raw, `id${i}`, LONG_AGO).reactionKey;
+      expect(parseExtraction(raw, `id${i}`, LONG_AGO).reactionKey).toBe(a);
       expect(PLAYFUL_KEYS.deadlines).toContain(a);
       keys.add(a);
     }
@@ -142,3 +143,22 @@ describe("titles and amounts", () => {
   });
 });
 
+
+describe("serious lines", () => {
+  const NOW = Date.UTC(2026, 10, 15, 20, 0);
+  const keyFor = (over: object) => parseExtraction(JSON.stringify({ ...base, ...over }), "shot1", NOW).reactionKey;
+  test("importance 4 or 5 with a confident date within 14 days gets the room's serious key", () => {
+    expect(SERIOUS_KEYS.deadlines).toContain(keyFor({}));
+    expect(SERIOUS_KEYS.money).toContain(
+      keyFor({ category: "money", importance: 5, dates: [{ when: "2026-11-16", what: "due", confident: true }] }),
+    );
+  });
+  test("a date more than 14 days away, an unsure date, or low importance stays playful", () => {
+    expect(PLAYFUL_KEYS.deadlines).toContain(keyFor({ dates: [{ when: "2026-12-30", what: "x", confident: true }] }));
+    expect(PLAYFUL_KEYS.deadlines).toContain(keyFor({ dates: [{ when: "11-21", what: "x", confident: false }] }));
+    expect(PLAYFUL_KEYS.deadlines).toContain(keyFor({ importance: 3 }));
+  });
+  test("unsorted has no serious keys", () => {
+    expect(PLAYFUL_KEYS.unsorted).toContain(keyFor({ category: "unsorted" }));
+  });
+});

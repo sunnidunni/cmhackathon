@@ -11,6 +11,19 @@ function playfulKeys(category: Category): string[] {
   return Object.keys(group).filter((key) => /_\d\d$/.test(key));
 }
 
+function seriousKeys(category: Category): string[] {
+  if (category === "unsorted") return [];
+  return Object.keys(lines.rooms[category].lines).filter((key) => /_s\d\d$/.test(key));
+}
+
+export const SERIOUS_KEYS: Record<Category, string[]> = {
+  deadlines: seriousKeys("deadlines"),
+  chats: seriousKeys("chats"),
+  money: seriousKeys("money"),
+  ideas: seriousKeys("ideas"),
+  unsorted: [],
+};
+
 export const PLAYFUL_KEYS: Record<Category, string[]> = {
   deadlines: playfulKeys("deadlines"),
   chats: playfulKeys("chats"),

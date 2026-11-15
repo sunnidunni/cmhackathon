@@ -2,7 +2,7 @@
 import { convexTest } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
-import { PLAYFUL_KEYS } from "./lib/lines";
+import { PLAYFUL_KEYS, SERIOUS_KEYS } from "./lib/lines";
 import schema from "./schema";
 
 const add = vi.fn();
@@ -47,7 +47,7 @@ test("a read screenshot is stored in memory under the user id and flagged", asyn
   await t.action(internal.extract.run, { screenshotId: id });
   const row = await t.run((ctx) => ctx.db.get(id));
   expect(row).toMatchObject({ status: "ready", memoryStored: true });
-  expect(PLAYFUL_KEYS.money).toContain(row?.reactionKey);
+  expect([...PLAYFUL_KEYS.money, ...SERIOUS_KEYS.money]).toContain(row?.reactionKey);
   expect(add).toHaveBeenCalledTimes(1);
   expect(add.mock.calls[0][0]).toBe(userId);
   expect(add.mock.calls[0][1]).toMatchObject({ id, metadata: { screenshotId: id, kind: "screenshot" } });

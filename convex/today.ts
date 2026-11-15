@@ -3,7 +3,7 @@ import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 import { toCard } from "./lib/cards";
-import { computePick } from "./lib/handful";
+import { computePick, pickIsStale } from "./lib/handful";
 import { localDay } from "./lib/time";
 
 export const get = query({
@@ -42,7 +42,8 @@ export const get = query({
       .query("dailyPicks")
       .withIndex("by_user_day", (q) => q.eq("userId", userId).eq("day", day))
       .first();
-    const pick = stored ?? computePick(rows, now, tz);
+    const fresh = computePick(rows, now, tz);
+    const pick = stored && !pickIsStale(stored, fresh) ? stored : fresh;
     const shown = new Set([...justRows, ...missedRows].map((r) => r._id as string));
     const pickRows = pick.ids
       .map((id) => byId.get(id as string))
@@ -85,12 +86,13 @@ export const appOpened = mutation({
       .query("dailyPicks")
       .withIndex("by_user_day", (q) => q.eq("userId", userId).eq("day", day))
       .first();
-    if (existing) return null;
     const rows = await ctx.db
       .query("screenshots")
       .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
       .collect();
-    await ctx.db.insert("dailyPicks", { userId, day, ...computePick(rows, now, tz) });
+    const fresh = computePick(rows, now, tz);
+    if (!existing) await ctx.db.insert("dailyPicks", { userId, day, ...fresh });
+    else if (pickIsStale(existing, fresh)) await ctx.db.patch(existing._id, fresh);
     return null;
   },
 });

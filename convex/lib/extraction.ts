@@ -1,4 +1,5 @@
-import { CATEGORIES, PLAYFUL_KEYS, type Category } from "./lines";
+import { CATEGORIES, PLAYFUL_KEYS, SERIOUS_KEYS, type Category } from "./lines";
+import { isFutureWhen, localDay } from "./time";
 import { cleanTitle } from "./titles";
 
 export type ExtractedDate = { when: string; what: string; confident: boolean };
@@ -71,13 +72,26 @@ const str = (value: unknown) => (typeof value === "string" ? value : "");
 const PARTIAL_DATE = /^(\d{4}-)?\d{2}-\d{2}(T\d{1,2}:\d{2}(:\d{2})?)?$/;
 const PHONE_CHROME = /status bar|battery|signal|carrier|wi-?fi|phone clock|lock screen/i;
 
+// Serious items (importance 4 or 5 with a confident date in the next 14 days) get a serious line.
+export function isUrgent(importance: number, dates: ExtractedDate[], now: number) {
+  if (importance < 4) return false;
+  const limit = localDay(now + 14 * 86400000, 0);
+  return dates.some((d) => d.confident && isFutureWhen(d.when, now, 0) && d.when.slice(0, 10) <= limit);
+}
+
+// The line key for a screenshot in a room: serious when urgent, playful otherwise; stable per screenshot id.
+export function pickLineKey(category: Category, id: string, urgent: boolean) {
+  const serious = urgent ? SERIOUS_KEYS[category] : [];
+  return hashPick(serious.length > 0 ? serious : PLAYFUL_KEYS[category], id);
+}
+
 export function hashPick(keys: string[], seed: string) {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
   return keys[(h >>> 0) % keys.length];
 }
 
-export function parseExtraction(raw: string, screenshotId?: string): Extraction {
+export function parseExtraction(raw: string, screenshotId?: string, now: number = Date.now()): Extraction {
   const json = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
   let data: unknown;
   try {
@@ -97,11 +111,6 @@ export function parseExtraction(raw: string, screenshotId?: string): Extraction 
     ? Math.min(5, Math.max(1, Math.round(rawImportance)))
     : 1;
   const importance = category === "unsorted" ? 1 : category === "chats" ? Math.min(2, clamped) : clamped;
-  const reactionKey = screenshotId
-    ? hashPick(PLAYFUL_KEYS[category], screenshotId)
-    : PLAYFUL_KEYS[category].includes(str(o.reactionKey))
-      ? str(o.reactionKey)
-      : PLAYFUL_KEYS[category][0];
   const dates: ExtractedDate[] = (Array.isArray(o.dates) ? o.dates : []).flatMap((d) => {
     if (typeof d !== "object" || d === null) return [];
     const item = d as Record<string, unknown>;
@@ -115,6 +124,12 @@ export function parseExtraction(raw: string, screenshotId?: string): Extraction 
       },
     ];
   });
+
+  const reactionKey = screenshotId
+    ? pickLineKey(category, screenshotId, isUrgent(importance, dates, now))
+    : PLAYFUL_KEYS[category].includes(str(o.reactionKey))
+      ? str(o.reactionKey)
+      : PLAYFUL_KEYS[category][0];
 
   const text = str(o.text);
   const amount = str(o.amount).trim();
