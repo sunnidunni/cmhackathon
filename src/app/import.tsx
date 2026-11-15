@@ -44,7 +44,7 @@ export default function BringIn() {
         {state.kind === "working" ? (
           <Stack>
             <Heading>Bringing in your screenshots</Heading>
-            <Body>{broughtInLine(progress?.total ?? 0)}</Body>
+            <Body>{broughtInLine(progress?.uploaded ?? 0)}</Body>
             <ActivityIndicator color={colors.ink} />
           </Stack>
         ) : null}

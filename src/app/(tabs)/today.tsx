@@ -2,8 +2,8 @@ import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
-import { Button, colors, spacing, type } from "@/design";
-import { type CardActions } from "@/components/tabs/helpers";
+import { Button, colors, ScreenshotSticker, spacing, tiltFor, type } from "@/design";
+import { formatWhen, type CardActions } from "@/components/tabs/helpers";
 import { useReminders } from "@/components/tabs/reminders";
 import { InfoCard, Loading, Notice, Screen, TabHeader, tzOffset, useToast } from "@/components/tabs/ui";
 import { justInCaption, TodayCard, type TodayCardData } from "@/components/tabs/TodayCard";
@@ -82,6 +82,35 @@ export default function Home() {
           {today.thin ? (
             <Section title="Nothing urgent today">
               <TodayCard card={today.thin} onAction={onAction} />
+            </Section>
+          ) : null}
+          {today.reminders.length > 0 ? (
+            <Section title="Reminders">
+              {today.reminders.map((r) => (
+                <Pressable
+                  key={r.reminderId}
+                  accessibilityRole="button"
+                  onPress={() => router.push(`/shot/${r.screenshotId}`)}
+                  style={{ minHeight: 64 }}
+                >
+                  <InfoCard>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+                      <ScreenshotSticker uri={r.imageUrl ?? undefined} width={40} tilt={tiltFor(r.screenshotId)} />
+                      <View style={{ flex: 1, gap: spacing.xs }}>
+                        <Text style={type.heading} numberOfLines={2}>{r.title}</Text>
+                        {r.when ? (
+                          <Text style={type.caption}>{[formatWhen(r.when), r.what].filter(Boolean).join(", ")}</Text>
+                        ) : null}
+                      </View>
+                    </View>
+                  </InfoCard>
+                </Pressable>
+              ))}
+            </Section>
+          ) : null}
+          {today.resurfaced ? (
+            <Section title="Remember this?">
+              <TodayCard card={today.resurfaced} onAction={onAction} />
             </Section>
           ) : null}
           {today.cleared ? (
