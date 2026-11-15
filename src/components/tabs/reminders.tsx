@@ -1,33 +1,22 @@
-import { useMutation } from "convex/react";
 import * as SecureStore from "expo-secure-store";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Text } from "react-native";
-import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button, colors, SpeechBubble, spacing, type } from "@/design";
-import { Sheet, tzOffset } from "./ui";
+import { ensureNotificationPermission } from "@/lib/notifications";
+import { useReminderActions } from "@/lib/reminders";
+import { Sheet } from "./ui";
 
 const ASKED_KEY = "psst.nudgeAsked";
 
-// Thin adapter over the reminder mutations. Phone-side scheduling and the system
-// permission prompt belong to src/lib (CMHA-5); wire them in at the two marked spots.
-export function useReminders(onSaved?: (text: string) => void) {
-  const setMutation = useMutation(api.reminders.set);
-  const cancelMutation = useMutation(api.reminders.cancel);
-  const fireMutation = useMutation(api.reminders.fireNow);
+// The first "Remind me" opens the nudge sheet. Declining still saves the reminder.
+export function useReminders() {
+  const actions = useReminderActions();
   const [pending, setPending] = useState<{ id: Id<"screenshots">; when?: string } | null>(null);
-  const resolve = useRef<() => void>(() => undefined);
-
-  async function save(id: Id<"screenshots">, when?: string) {
-    const res = await setMutation({ screenshotId: id, tzOffsetMinutes: tzOffset(), when });
-    // wire-in point 1: schedule the local notification for res.dueAt with res.text
-    onSaved?.(res.text);
-    return res;
-  }
 
   async function remind(id: Id<"screenshots">, when?: string) {
     const asked = await SecureStore.getItemAsync(ASKED_KEY).catch(() => "1");
-    if (asked) return save(id, when);
+    if (asked) return actions.remind(id, when);
     setPending({ id, when });
   }
 
@@ -35,11 +24,8 @@ export function useReminders(onSaved?: (text: string) => void) {
     const p = pending;
     setPending(null);
     await SecureStore.setItemAsync(ASKED_KEY, "1").catch(() => undefined);
-    if (allow) {
-      // wire-in point 2: request notification permission here
-    }
-    if (p) await save(p.id, p.when);
-    resolve.current();
+    if (allow) await ensureNotificationPermission().catch(() => false);
+    if (p) await actions.remind(p.id, p.when);
   }
 
   const sheet = (
@@ -52,10 +38,5 @@ export function useReminders(onSaved?: (text: string) => void) {
     </Sheet>
   );
 
-  return {
-    remind,
-    cancel: (reminderId: Id<"reminders">) => cancelMutation({ reminderId }),
-    fireNow: (screenshotId: Id<"screenshots">) => fireMutation({ screenshotId, tzOffsetMinutes: tzOffset() }),
-    sheet,
-  };
+  return { remind, cancel: actions.cancel, fireNow: actions.fireNow, sheet };
 }

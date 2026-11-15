@@ -6,6 +6,7 @@ import { LoadingView, MessageView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
 import { convex } from "@/lib/convex";
 import { DEV_TOOLS } from "@/lib/dev-flags";
+import { AppLifecycle } from "@/lib/lifecycle";
 import { secureStorage, storageError } from "@/lib/secure-storage";
 
 const SIGN_IN_TIMEOUT_MS = 20000;
@@ -54,6 +55,7 @@ export default function RootLayout() {
   return (
     <ConvexAuthProvider client={convex} storage={secureStorage}>
       <AnonymousSession>
+        <AppLifecycle />
         <Stack screenOptions={{ headerShown: false }} />
       </AnonymousSession>
     </ConvexAuthProvider>

@@ -1,21 +1,17 @@
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
-import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import { Button, Character, colors, radii, rooms as roomTokens, SketchFrame, spacing, tiltFor, type } from "@/design";
 import { roomName, type Room } from "@/components/tabs/helpers";
 import { designRoom, InfoCard, Loading, Screen, TabHeader } from "@/components/tabs/ui";
-import { getPhotoAccess, type PhotoAccess } from "@/lib/photos";
+import { usePhotoAccess } from "@/lib/photos";
 
 type Entry = NonNullable<ReturnType<typeof useQuery<typeof api.rooms.list>>>[number];
 
 export default function Rooms() {
   const list = useQuery(api.rooms.list, {});
-  const [access, setAccess] = useState<PhotoAccess | null>(null);
-  useEffect(() => {
-    getPhotoAccess().then(setAccess, () => setAccess(null));
-  }, []);
+  const { access, openLimitedPicker } = usePhotoAccess();
 
   const four = list?.filter((r) => r.category !== "unsorted") ?? [];
   const unsorted = list?.find((r) => r.category === "unsorted");
@@ -30,7 +26,7 @@ export default function Rooms() {
           {access === "limited" ? (
             <InfoCard>
               <Text style={type.heading}>Psst can only see some of your screenshots</Text>
-              <Button label="Give access to all screenshots" onPress={() => Linking.openSettings()} />
+              <Button label="Give access to all screenshots" onPress={() => openLimitedPicker()} />
             </InfoCard>
           ) : null}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
