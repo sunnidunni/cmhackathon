@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../convex/_generated/api";
 import { bringInState, failedLabel, type BringInResult } from "@/components/onboarding/format";
 import { KeeperRow, SkeletonKeeperRow, type RowShot } from "@/components/reveal/KeeperRow";
-import { RefundCard } from "@/components/reveal/RefundCard";
+import { FoundCard } from "@/components/reveal/FoundCard";
 import { PsstButton, KEEPERS, text, usePalette, type KeeperId } from "@/design/psst";
 import { FIXTURE_SHOT } from "@/components/reveal/demo-shots";
 import { ROOM_FOR, REACTION_GAP_MS, REVEAL_ORDER, keepersDue, screenshotsIn } from "@/components/reveal/model";
@@ -120,7 +120,7 @@ export default function BringIn() {
         )}
         {done && allShown && FIXTURES ? (
           <View style={{ marginTop: 20 }}>
-            <RefundCard />
+            <FoundCard />
           </View>
         ) : null}
         <View style={{ marginTop: done ? 20 : 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: p.hair }}>
