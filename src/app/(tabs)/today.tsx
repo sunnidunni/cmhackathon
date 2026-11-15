@@ -87,7 +87,7 @@ export default function Today() {
           {today.cleared ? (
             <View style={{ gap: spacing.lg }}>
               <Notice title="That's today's handful" body="Nothing else needs you right now." />
-              <Button label="Browse your rooms" onPress={() => router.navigate("/(tabs)/rooms")} />
+              <Button label="Browse your rooms" onPress={() => router.navigate("/rooms")} />
             </View>
           ) : null}
         </ScrollView>

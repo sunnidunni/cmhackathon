@@ -30,7 +30,7 @@ export default function Detail() {
   const back = (
     <Pressable
       accessibilityRole="button"
-      onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+      onPress={() => (router.canGoBack() ? router.back() : router.replace("/today"))}
       style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: spacing.xl }}
     >
       <Text style={type.label}>Back</Text>
@@ -48,7 +48,7 @@ export default function Detail() {
     return (
       <Screen>
         {back}
-        <Notice title="I can't find that one" body="It may have been deleted." actionLabel="Back to Today" onAction={() => router.replace("/(tabs)")} />
+        <Notice title="I can't find that one" body="It may have been deleted." actionLabel="Back to Today" onAction={() => router.replace("/today")} />
       </Screen>
     );
 
