@@ -19,9 +19,9 @@ const FIXTURE_COUNTS = { deadlines: DEMO_COUNTS.tock, money: DEMO_COUNTS.penny, 
 
 export default function BringIn() {
   const p = usePalette();
-  // Dev preview: /import?demo=<0..16> drives the reveal from fixtures, only when FIXTURES is on.
+  // Dev preview: /import?demo=<0..24> drives the reveal from fixtures, only when FIXTURES is on.
   const { demo } = useLocalSearchParams<{ demo?: string }>();
-  // /import?demo=play counts 0 to 16 on its own, about 0.7s per screenshot, for the onboarding replay.
+  // /import?demo=play counts 0 to 24 on its own, about 0.7s per screenshot, for the onboarding replay.
   const [played, setPlayed] = useState(0);
   const playing = FIXTURES && demo === "play";
   useEffect(() => {
@@ -152,7 +152,7 @@ export default function BringIn() {
             ? unsorted > 0
               ? unsorted === 1 ? "1 couldn't be read. It's in Unsorted, and you decide where it goes." : `${unsorted} couldn't be read. They're in Unsorted, and you decide where they go.`
               : "You can meet the keepers again in Rooms."
-            : "About a minute left. You can go to Today while they read. No notification is sent when it finishes."}
+            : "You can go to Today while they read. No notification is sent when it finishes."}
         </Text>
         <PsstButton kind="filled"
           label={done ? "See your keepers card" : "Skip to Today"}
