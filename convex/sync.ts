@@ -9,7 +9,8 @@ export const importInfo = query({
   handler: async (ctx) => {
     const userId = await requireUserId(ctx);
     const plan = await getPlan(ctx, userId);
-    return { plan, limit: plan === "paid" ? null : FREE_IMPORT_LIMIT };
+    const unlimited = plan === "paid" || process.env.DEV_UNLIMITED_IMPORT === "1";
+    return { plan, limit: unlimited ? null : FREE_IMPORT_LIMIT };
   },
 });
 
@@ -29,6 +30,7 @@ export const progress = query({
       read: count("ready"),
       failed: count("failed"),
       pending: count("uploaded") + count("processing"),
+      uploaded: visible.length,
     };
   },
 });

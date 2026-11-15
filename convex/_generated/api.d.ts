@@ -17,6 +17,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_cards from "../lib/cards.js";
 import type * as lib_extraction from "../lib/extraction.js";
 import type * as lib_handful from "../lib/handful.js";
+import type * as lib_headline from "../lib/headline.js";
 import type * as lib_importPlan from "../lib/importPlan.js";
 import type * as lib_lines from "../lib/lines.js";
 import type * as lib_llm from "../lib/llm.js";
@@ -36,6 +37,7 @@ import type * as sync from "../sync.js";
 import type * as today from "../today.js";
 import type * as users from "../users.js";
 import type * as whop from "../whop.js";
+import type * as you from "../you.js";
 
 import type {
   ApiFromModules,
@@ -53,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   "lib/cards": typeof lib_cards;
   "lib/extraction": typeof lib_extraction;
   "lib/handful": typeof lib_handful;
+  "lib/headline": typeof lib_headline;
   "lib/importPlan": typeof lib_importPlan;
   "lib/lines": typeof lib_lines;
   "lib/llm": typeof lib_llm;
@@ -72,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   today: typeof today;
   users: typeof users;
   whop: typeof whop;
+  you: typeof you;
 }>;
 
 /**

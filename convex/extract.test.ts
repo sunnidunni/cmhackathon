@@ -85,7 +85,7 @@ describe("status transitions", () => {
     const { t, ids, me } = await setup(3);
     await t.run((ctx) => ctx.db.patch(ids[0], { status: "processing" }));
     await t.mutation(internal.extract.complete, { screenshotId: ids[0], ...result });
-    expect(await me.query(api.sync.progress, {})).toEqual({ total: 3, read: 1, failed: 0, pending: 2 });
+    expect(await me.query(api.sync.progress, {})).toEqual({ total: 3, read: 1, failed: 0, pending: 2, uploaded: 3 });
   });
 });
 
