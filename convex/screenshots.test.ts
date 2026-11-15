@@ -92,4 +92,27 @@ describe("screenshots", () => {
     await expect(t.mutation(api.screenshots.generateUploadUrl, {})).rejects.toThrow("Not signed in");
     await expect(t.query(api.screenshots.list, {})).rejects.toThrow("Not signed in");
   });
+
+  test("repeating create with the same storageId keeps the row's own image", async () => {
+    const { me, storeBlob, t } = await setup();
+    const storageId = await storeBlob();
+    const id = await me.mutation(api.screenshots.create, { deviceAssetId: "dup", storageId, takenAt: 1 });
+    const again = await me.mutation(api.screenshots.create, { deviceAssetId: "dup", storageId, takenAt: 1 });
+    expect(again).toBe(id);
+    expect(await t.run((ctx) => ctx.storage.getUrl(storageId))).not.toBeNull();
+  });
+
+  test("a duplicate create deletes only its own distinct, unreferenced upload", async () => {
+    const { me, storeBlob, t } = await setup();
+    const first = await storeBlob();
+    await me.mutation(api.screenshots.create, { deviceAssetId: "dup", storageId: first, takenAt: 1 });
+    const extra = await storeBlob();
+    await me.mutation(api.screenshots.create, { deviceAssetId: "dup", storageId: extra, takenAt: 1 });
+    expect(await t.run((ctx) => ctx.storage.getUrl(extra))).toBeNull();
+    expect(await t.run((ctx) => ctx.storage.getUrl(first))).not.toBeNull();
+    const other = await storeBlob();
+    await me.mutation(api.screenshots.create, { deviceAssetId: "other", storageId: other, takenAt: 2 });
+    await me.mutation(api.screenshots.create, { deviceAssetId: "dup", storageId: other, takenAt: 1 });
+    expect(await t.run((ctx) => ctx.storage.getUrl(other))).not.toBeNull();
+  });
 });

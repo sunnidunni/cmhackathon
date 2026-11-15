@@ -86,3 +86,26 @@ describe("status transitions", () => {
     expect(await me.query(api.sync.progress, {})).toEqual({ total: 3, read: 1, failed: 0, pending: 2 });
   });
 });
+
+describe("timeout recovery", () => {
+  test("claiming a row schedules a recovery kick after the stale window", async () => {
+    const { t, ids } = await setup();
+    await t.mutation(internal.extract.kick, {});
+    const jobs = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    const recovery = jobs.filter(
+      (j) => j.name === "extract:kick" && j.scheduledTime > Date.now() + 2 * 60 * 1000,
+    );
+    expect(recovery.length).toBeGreaterThan(0);
+    expect(ids).toHaveLength(1);
+  });
+
+  test("a row stuck in processing is retried by the next kick, then failed after three tries", async () => {
+    const { t, ids } = await setup();
+    await t.run((ctx) => ctx.db.patch(ids[0], { status: "processing", startedAt: Date.now() - 10 * 60 * 1000 }));
+    await t.mutation(internal.extract.kick, {});
+    expect((await t.run((ctx) => ctx.db.get(ids[0])))?.status).toBe("uploaded");
+    await t.run((ctx) => ctx.db.patch(ids[0], { status: "processing", startedAt: Date.now() - 10 * 60 * 1000, attempts: 2 }));
+    await t.mutation(internal.extract.kick, {});
+    expect((await t.run((ctx) => ctx.db.get(ids[0])))?.status).toBe("failed");
+  });
+});

@@ -46,6 +46,8 @@ export const kick = internalMutation({
     for (const row of due.slice(0, Math.max(0, MAX_PARALLEL - active))) {
       await ctx.db.patch(row._id, { status: "processing", startedAt: now });
       await ctx.scheduler.runAfter(0, internal.extract.run, { screenshotId: row._id });
+      // If the action is killed by a timeout, this kick reclaims the row.
+      await ctx.scheduler.runAfter(STALE_MS + 1000, internal.extract.kick, {});
     }
     const later = waiting.filter((r) => (r.retryAt ?? 0) > now);
     if (later.length > 0) {

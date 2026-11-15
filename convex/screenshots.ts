@@ -44,7 +44,13 @@ export const create = mutation({
       )
       .first();
     if (existing !== null) {
-      await ctx.storage.delete(storageId);
+      if (existing.storageId !== storageId) {
+        const mine = await ctx.db
+          .query("screenshots")
+          .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
+          .collect();
+        if (!mine.some((row) => row.storageId === storageId)) await ctx.storage.delete(storageId);
+      }
       return existing._id;
     }
     const id = await ctx.db.insert("screenshots", {
