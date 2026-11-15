@@ -15,6 +15,13 @@ import {
   type PhotoAccess,
 } from "@/lib/photos";
 
+const STATUS_LABEL = {
+  uploaded: "Reading",
+  processing: "Reading",
+  ready: "Ready",
+  failed: "Failed",
+} as const;
+
 type ImportState =
   | { kind: "idle" }
   | { kind: "working" }
@@ -56,9 +63,14 @@ export default function Library() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.row}>
         <Text style={styles.header}>Your screenshots</Text>
-        <Text style={styles.link} onPress={() => router.push("/upgrade")} accessibilityRole="button">
-          Upgrade
-        </Text>
+        <View style={styles.links}>
+          <Text style={styles.link} onPress={() => router.push("/ask")} accessibilityRole="button">
+            Ask
+          </Text>
+          <Text style={styles.link} onPress={() => router.push("/upgrade")} accessibilityRole="button">
+            Upgrade
+          </Text>
+        </View>
       </View>
 
       {access === "limited" ? (
@@ -115,7 +127,13 @@ export default function Library() {
                 <View style={[styles.thumb, styles.missing]} />
               )}
               <View style={styles.meta}>
-                <Text style={styles.status}>{item.status}</Text>
+                <Text style={styles.status} numberOfLines={2}>
+                  {item.title ?? (item.status === "failed" ? "Couldn't read this one" : "Reading…")}
+                </Text>
+                <Text style={styles.muted}>
+                  {STATUS_LABEL[item.status]}
+                  {item.category ? ` · ${item.category}` : ""}
+                </Text>
                 <Text style={styles.muted}>{new Date(item.takenAt).toLocaleString()}</Text>
               </View>
             </View>
@@ -141,7 +159,8 @@ const styles = StyleSheet.create({
   item: { flexDirection: "row", gap: 12, alignItems: "center" },
   thumb: { width: 90, height: 160, borderRadius: 10, backgroundColor: "#EEE" },
   missing: { borderWidth: 1, borderColor: "#DDD" },
-  meta: { gap: 4 },
+  meta: { gap: 4, flex: 1 },
+  links: { flexDirection: "row", gap: 16 },
   status: { fontSize: 16, fontWeight: "600" },
   muted: { fontSize: 13, color: "#777" },
 });
