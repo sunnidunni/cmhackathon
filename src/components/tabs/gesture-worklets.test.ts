@@ -1,7 +1,7 @@
 // @vitest-environment node
 /// <reference types="node" />
-import { transformFileSync } from "@babel/core";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
@@ -10,6 +10,9 @@ import { describe, expect, test } from "vitest";
 // This compiles each gesture file the way Metro does and checks every local helper a worklet
 // captures is itself marked "worklet". Anything else must go through runOnJS.
 const ROOT = resolve(__dirname, "../../..");
+const { transformFileSync } = createRequire(__filename)("@babel/core") as {
+  transformFileSync: (file: string, options: object) => { code?: string | null } | null;
+};
 const FILES = ["PhotoGrid.tsx", "ZoomViewer.tsx", "SwipeTabs.tsx"].map((f) => resolve(__dirname, f));
 
 function compile(file: string) {
