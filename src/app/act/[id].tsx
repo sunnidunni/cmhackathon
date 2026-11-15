@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
 import { buildPages, isReminderStep, nextLabel } from "@/components/act/pages";
@@ -15,6 +15,7 @@ const close = () => (router.canGoBack() ? router.back() : router.replace("/today
 
 export default function Act() {
   const p = usePalette();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const scenario = (FIXTURES ? DEMO_ACTS : []).find((a) => a.id === id);
   const { undone } = useActState();
@@ -96,7 +97,7 @@ export default function Act() {
     <>
       {sheet}
       <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: p.paper }}>
-        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, gap: 16 }}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, gap: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <KeeperFace id={scenario.keeper} size={32} />
