@@ -26,9 +26,13 @@ export function PhotoGrid({ items, keeper, header, onOpen }: { items: GridItem[]
   const [now] = useState(() => Date.now());
   const groups = groupByLevel(items, level, new Date().getTimezoneOffset(), now);
 
+  // The gesture callback is a worklet on the UI thread, so the decision runs on JS through runOnJS.
+  const onPinchEnd = (scale: number) => {
+    if (scale > 1.15) setLevel((l) => stepLevel(l, "out"));
+    else if (scale < 0.87) setLevel((l) => stepLevel(l, "in"));
+  };
   const pinch = Gesture.Pinch().onEnd((e) => {
-    if (e.scale > 1.15) runOnJS(setLevel)(stepLevel(level, "out"));
-    else if (e.scale < 0.87) runOnJS(setLevel)(stepLevel(level, "in"));
+    runOnJS(onPinchEnd)(e.scale);
   });
 
   return (

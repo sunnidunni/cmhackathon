@@ -73,11 +73,13 @@ function AllScreen() {
 function SingleRoom({ category }: { category: Category }) {
   const p = usePalette();
   const realData = useQuery(api.rooms.get, { category });
+  const list = useQuery(api.rooms.list, {});
+  const libraryEmpty = list !== undefined && list.every((r) => r.count === 0);
   const demoOn = useDemoFallback();
   const demoItems = demoRoom(category);
   type Data = { items: { _id: string; title: string; date: string | null; imageUrl: string | null; takenAt: number; sub?: string | null }[] };
   const data: Data | undefined =
-    realData && realData.items.length === 0 && demoOn && demoItems.length > 0
+    realData && realData.items.length === 0 && libraryEmpty && demoOn && demoItems.length > 0
       ? { items: demoItems.map((r) => ({ _id: r.id, title: r.title, date: r.date, imageUrl: r.imageUrl, takenAt: r.takenAt, sub: r.sub })) }
       : realData;
   const [checking, setChecking] = useState(false);

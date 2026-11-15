@@ -10,6 +10,8 @@ import { ZoomViewer } from "@/components/tabs/ZoomViewer";
 import { dateLabel, defaultReminder, monthDay, reminderLabel } from "@/components/rooms/format";
 import { KeeperFace, KeeperLine, PsstButton, ShotSticker, Skeleton, SoftCard, text, useKeeperColors, usePalette, keeperForRoom, type KeeperId } from "@/design/psst";
 import { RoomWash } from "@/components/rooms/RoomWash";
+import { useReminders } from "@/components/tabs/reminders";
+import { FIXTURES } from "@/lib/fixtures";
 import { demoById, isDemoId, useDemoFallback, type DemoRow } from "@/components/rooms/demo";
 import { MoveSheet } from "@/components/rooms/MoveSheet";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
@@ -51,6 +53,7 @@ export default function Detail() {
   const markDone = useMutation(api.shots.done);
   const move = useMutation(api.shots.move);
   const retry = useMutation(api.extract.retry);
+  const reminders = useReminders();
   const [moveOpen, setMoveOpen] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -179,7 +182,15 @@ export default function Detail() {
               {dates.map((d) => (
                 <Row key={d.when + d.what} label={d.what} value={dateLabel(d.when)} />
               ))}
-              <Row label="Reminder" value={reminderRow} onPress={() => router.push(`/remind/${shotId}` as never)} chevron />
+              <Row
+                label="Reminder"
+                value={reminderRow}
+                action={withReminder?.reminder ? "Turn off" : undefined}
+                onAction={() => {
+                  const id = withReminder?.reminder?.id;
+                  if (id && !isDemo) reminders.cancel(id).catch(() => setError("That didn't save. Try again in a moment."));
+                }}
+              />
               <Row
                 label={`Filed in ${roomLabel}`}
                 value={shot.reason ? `Because ${shot.reason.charAt(0).toLowerCase()}${shot.reason.slice(1)}`.replace(/\.?$/, ".") : shot.userMoved ? "Moved by you." : null}
@@ -197,6 +208,9 @@ export default function Detail() {
             </View>
 
             {!finished ? <PsstButton kind="text" label="Mark as done" onPress={() => beginDone()} /> : null}
+            {FIXTURES && withReminder && !isDemo ? (
+              <PsstButton kind="text" label="Fire reminder now (dev)" onPress={() => reminders.fireNow(shotId).catch(() => setError("That didn't work. Try again in a moment."))} />
+            ) : null}
           </>
         ) : null}
       </ScrollView>
@@ -238,10 +252,15 @@ export default function Detail() {
               <PsstButton kind="filled"
                 keeper={keeper}
                 label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Set a reminder"}
-                onPress={() => router.push(`/remind/${shotId}` as never)}
+                disabled={!primary}
+                onPress={() => {
+                  if (!primary || isDemo) return;
+                  setError(null);
+                  reminders.remind(shotId, primary.when, shot.title || undefined).catch(() => setError("That didn't save. Try again in a moment."));
+                }}
               />
               <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-                {suggestion ? `One reminder, ${suggestion.long}. Change it later.` : primary ? "You pick the day and time." : "No reminder unless you set one. You pick the day and time."}
+                {suggestion ? `One reminder, ${suggestion.long}. Change it later.` : primary ? "One reminder, then quiet. Turn it off any time." : "No date found on this one, so there is nothing to remind you about yet."}
               </Text>
             </>
           )}
@@ -259,6 +278,7 @@ export default function Detail() {
           move({ id: shotId, category: room }).catch(() => setError("That didn't save. Try again in a moment."));
         }}
       />
+      {reminders.sheet}
       {shot.imageUrl ? <ZoomViewer uri={shot.imageUrl} visible={zoomOpen} onClose={() => setZoomOpen(false)} /> : null}
     </View>
   );
@@ -279,27 +299,23 @@ function AmountText({ keeper, amount }: { keeper: KeeperId; amount: string }) {
   return <Text style={[text.bodyBold, { color: deep, fontVariant: ["tabular-nums"] }]}>{amount}</Text>;
 }
 
-function Row({ label, value, action, onAction, onPress, chevron }: { label: string; value: string | null; action?: string; onAction?: () => void; onPress?: () => void; chevron?: boolean }) {
+function Row({ label, value, action, onAction }: { label: string; value: string | null; action?: string; onAction?: () => void }) {
   const p = usePalette();
-  const content = (
+  return (
     <View style={{ flexDirection: "row", alignItems: "center", minHeight: 60, paddingVertical: 10, borderTopWidth: 1, borderColor: p.hair, gap: 12 }}>
       <View style={{ flex: 1 }}>
         <Text style={[text.bodyBold, { color: p.ink }]}>{label}</Text>
-        {value ? <Text selectable={!onPress && !action} style={[text.caption, { color: p.ink2 }]}>{value}</Text> : null}
+        {value ? (
+          <Text selectable style={[text.caption, { color: p.ink2 }]}>
+            {value}
+          </Text>
+        ) : null}
       </View>
       {action ? (
         <Pressable accessibilityRole="button" onPress={onAction} hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>
           <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>{action}</Text>
         </Pressable>
       ) : null}
-      {chevron ? <Text style={[text.body, { color: p.ink3 }]}>›</Text> : null}
     </View>
-  );
-  return onPress ? (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${label}, ${value ?? ""}`} onPress={onPress}>
-      {content}
-    </Pressable>
-  ) : (
-    content
   );
 }
