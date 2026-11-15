@@ -1,26 +1,50 @@
-import { Tabs } from "expo-router";
-import { SwipeTabs } from "@/components/tabs/SwipeTabs";
-import { colors, fonts } from "@/design";
+import { TabList, Tabs, TabTrigger, type TabTriggerSlotProps } from "expo-router/ui";
+import { Pressable, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TabPager } from "@/components/tabs/TabPager";
+import { colors, spacing, type } from "@/design";
+
+function TabButton({ label, isFocused, onPress, onLongPress }: Pick<TabTriggerSlotProps, "isFocused" | "onPress" | "onLongPress"> & { label: string }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: isFocused }}
+      style={{ flex: 1, minHeight: 49, alignItems: "center", justifyContent: "center" }}
+    >
+      <Text style={[type.heading, { color: isFocused ? colors.ink : colors.inkFaint }]}>{label}</Text>
+    </Pressable>
+  );
+}
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
   return (
-    <Tabs
-      screenLayout={({ route, children }) => <SwipeTabs name={route.name}>{children}</SwipeTabs>}
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.ink,
-        tabBarInactiveTintColor: colors.inkFaint,
-        tabBarStyle: { backgroundColor: colors.paper, borderTopColor: colors.line },
-        tabBarLabelStyle: { fontFamily: fonts.hand, fontSize: 20, lineHeight: 26 },
-        tabBarLabelPosition: "beside-icon",
-        tabBarIcon: () => null,
-        tabBarIconStyle: { display: "none" },
-      }}
-    >
-      <Tabs.Screen name="today" options={{ title: "Home" }} />
-      <Tabs.Screen name="rooms" options={{ title: "Rooms" }} />
-      <Tabs.Screen name="ask" options={{ title: "Ask" }} />
-      <Tabs.Screen name="you" options={{ title: "You" }} />
+    <Tabs style={{ flex: 1, backgroundColor: colors.paper }}>
+      <TabPager />
+      <TabList
+        style={{
+          backgroundColor: colors.paper,
+          borderTopWidth: 1,
+          borderTopColor: colors.line,
+          paddingBottom: insets.bottom,
+          paddingHorizontal: spacing.sm,
+        }}
+      >
+        <TabTrigger name="today" href="/today" asChild>
+          <TabButton label="Home" />
+        </TabTrigger>
+        <TabTrigger name="rooms" href="/rooms" asChild>
+          <TabButton label="Rooms" />
+        </TabTrigger>
+        <TabTrigger name="ask" href="/ask" asChild>
+          <TabButton label="Ask" />
+        </TabTrigger>
+        <TabTrigger name="you" href="/you" asChild>
+          <TabButton label="You" />
+        </TabTrigger>
+      </TabList>
     </Tabs>
   );
 }

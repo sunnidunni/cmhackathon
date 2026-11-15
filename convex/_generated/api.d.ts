@@ -35,6 +35,7 @@ import type * as screenshots from "../screenshots.js";
 import type * as shots from "../shots.js";
 import type * as sync from "../sync.js";
 import type * as today from "../today.js";
+import type * as todos from "../todos.js";
 import type * as users from "../users.js";
 import type * as whop from "../whop.js";
 import type * as you from "../you.js";
@@ -73,6 +74,7 @@ declare const fullApi: ApiFromModules<{
   shots: typeof shots;
   sync: typeof sync;
   today: typeof today;
+  todos: typeof todos;
   users: typeof users;
   whop: typeof whop;
   you: typeof you;
