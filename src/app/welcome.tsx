@@ -37,7 +37,7 @@ export default function Welcome() {
             <ShotSticker uri={null} title={DEMO_FLYER.title} size={132} tilt />
             <View style={{ flex: 1, gap: 8 }}>
               {WHAT_WHEN_WHERE.map(([label, value]) => (
-                <View key={label} style={{ borderWidth: 1, borderColor: p.hair, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>
+                <View key={label} style={{ backgroundColor: p.fill, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>
                   <Text style={[text.caption, { color: p.ink2 }]}>{label}</Text>
                   <Text style={[text.bodyBold, { color: p.ink }]}>{value}</Text>
                 </View>
