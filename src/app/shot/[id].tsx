@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button, Character, colors, radii, SpeechBubble, spacing, Sticker, type } from "@/design";
@@ -128,10 +128,7 @@ export default function Detail() {
                       <Button
                         variant="secondary"
                         label="Fire now"
-                        onPress={async () => {
-                          const res = await reminders.fireNow(shotId);
-                          Alert.alert("Psst", res.text);
-                        }}
+                        onPress={() => reminders.fireNow(shotId).catch(() => toast.show("That didn't work. Try again in a moment."))}
                       />
                     ) : null}
                   </InfoCard>
