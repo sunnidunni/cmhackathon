@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as ask from "../ask.js";
 import type * as auth from "../auth.js";
 import type * as extract from "../extract.js";
 import type * as http from "../http.js";
@@ -16,10 +17,13 @@ import type * as lib_extraction from "../lib/extraction.js";
 import type * as lib_importPlan from "../lib/importPlan.js";
 import type * as lib_lines from "../lib/lines.js";
 import type * as lib_plan from "../lib/plan.js";
+import type * as lib_whop_signature from "../lib/whop_signature.js";
 import type * as memory from "../memory.js";
+import type * as plan from "../plan.js";
 import type * as screenshots from "../screenshots.js";
 import type * as sync from "../sync.js";
 import type * as users from "../users.js";
+import type * as whop from "../whop.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +32,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  ask: typeof ask;
   auth: typeof auth;
   extract: typeof extract;
   http: typeof http;
@@ -36,10 +41,13 @@ declare const fullApi: ApiFromModules<{
   "lib/importPlan": typeof lib_importPlan;
   "lib/lines": typeof lib_lines;
   "lib/plan": typeof lib_plan;
+  "lib/whop_signature": typeof lib_whop_signature;
   memory: typeof memory;
+  plan: typeof plan;
   screenshots: typeof screenshots;
   sync: typeof sync;
   users: typeof users;
+  whop: typeof whop;
 }>;
 
 /**

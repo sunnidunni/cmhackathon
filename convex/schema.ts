@@ -92,6 +92,7 @@ export default defineSchema({
     question: v.string(),
     answer: v.string(),
     sourceScreenshotIds: v.array(v.id("screenshots")),
+    found: v.optional(v.boolean()),
     createdAt: v.number(),
   }).index("by_user_createdAt", ["userId", "createdAt"]),
 });

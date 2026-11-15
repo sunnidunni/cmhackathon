@@ -2,6 +2,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -38,7 +39,7 @@ const result = {
   importance: 5,
   reactionKey: "money_01",
 };
-const status = (t: Awaited<ReturnType<typeof setup>>["t"], id: any) =>
+const status = (t: Awaited<ReturnType<typeof setup>>["t"], id: Id<"screenshots">) =>
   t.run(async (ctx) => (await ctx.db.get(id))?.status);
 
 describe("status transitions", () => {
