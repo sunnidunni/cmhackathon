@@ -120,6 +120,27 @@ describe("rooms, detail and mutations", () => {
     expect(room.items.map((i) => i.title)).toEqual(["y", "x"]);
   });
 
+  test("rooms.all lists every ready screenshot across rooms, newest first, with category", async () => {
+    const { me, other, seed, t } = await setup();
+    await seed({ title: "old idea", category: "ideas", takenAt: 5 });
+    const noCat = await seed({ title: "no category", takenAt: 20 });
+    await t.run((ctx) => ctx.db.patch(noCat, { category: undefined }));
+    await seed({ title: "bill", category: "money", takenAt: 10, dates: [{ when: "2026-11-16", what: "due", confident: true }] });
+    await seed({ title: "failed", category: "money", takenAt: 30, status: "failed" });
+    const hidden = await seed({ title: "hidden", category: "chats", takenAt: 40 });
+    await t.run((ctx) => ctx.db.patch(hidden, { hidden: true }));
+    const all = await me.query(api.rooms.all, {});
+    expect(all.count).toBe(3);
+    expect(all.items.map((i) => [i.title, i.category])).toEqual([
+      ["no category", "unsorted"],
+      ["bill", "money"],
+      ["old idea", "ideas"],
+    ]);
+    expect(all.items[1]).toMatchObject({ date: "2026-11-16", lineKey: "ideas_01" });
+    expect(all.items[1].imageUrl).toBeTypeOf("string");
+    expect(await other.query(api.rooms.all, {})).toEqual({ count: 0, items: [] });
+  });
+
   test("move sets userMoved and extraction never moves it again", async () => {
     const { me, seed, t } = await setup();
     const id = await seed({ title: "x", category: "ideas" });

@@ -35,6 +35,33 @@ export const list = query({
   },
 });
 
+export const all = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const rows = await ctx.db
+      .query("screenshots")
+      .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
+    const mine = rows.filter((r) => r.status === "ready" && r.hidden !== true);
+    return {
+      count: mine.length,
+      items: await Promise.all(
+        mine.map(async (r) => ({
+          _id: r._id,
+          title: r.title ?? "",
+          date: (r.dates ?? []).find((d) => d.confident)?.when ?? null,
+          imageUrl: await ctx.storage.getUrl(r.storageId),
+          lineKey: r.reactionKey ?? null,
+          takenAt: r.takenAt,
+          category: r.category ?? "unsorted",
+        })),
+      ),
+    };
+  },
+});
+
 export const get = query({
   args: { category },
   handler: async (ctx, { category: room }) => {
