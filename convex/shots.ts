@@ -95,6 +95,11 @@ export const remove = mutation({
   handler: async (ctx, { id }) => {
     const row = await mine(ctx, id);
     await deleteRow(ctx, row);
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_createdAt", (q) => q.eq("userId", row.userId))
+      .collect();
+    for (const todo of todos.filter((x) => x.screenshotId === id)) await ctx.db.patch(todo._id, { screenshotId: undefined });
     await ctx.scheduler.runAfter(0, internal.memory.forget, { userId: row.userId, screenshotId: id });
     return null;
   },
@@ -111,6 +116,8 @@ export const removeAll = mutation({
     for (const row of rows) await deleteRow(ctx, row);
     for (const q of await ctx.db.query("questions").withIndex("by_user_createdAt", (x) => x.eq("userId", userId)).collect())
       await ctx.db.delete(q._id);
+    for (const todo of await ctx.db.query("todos").withIndex("by_user_createdAt", (x) => x.eq("userId", userId)).collect())
+      await ctx.db.delete(todo._id);
     for (const p of await ctx.db.query("dailyPicks").withIndex("by_user_day", (x) => x.eq("userId", userId)).collect())
       await ctx.db.delete(p._id);
     await ctx.scheduler.runAfter(0, internal.memory.forget, { userId });
