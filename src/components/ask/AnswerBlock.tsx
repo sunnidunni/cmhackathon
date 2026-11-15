@@ -40,10 +40,10 @@ const useGo = () => {
 const ROOM_KEEPER: Record<string, KeeperId> = { deadlines: "tock", chats: "murmur", money: "penny", ideas: "mote" };
 const ROOM_NAME: Record<string, string> = { deadlines: "Deadlines", chats: "Chats", money: "Money", ideas: "Ideas", unsorted: "Unsorted" };
 const TRY_LINE: Record<KeeperId, string> = {
-  tock: "Try Deadlines. Dates live with me.",
-  murmur: "Try Chats. I saw nothing. Mostly.",
-  penny: "Try Money. Every cent has a home.",
-  mote: "Try Ideas. Saved for a someday.",
+  tock: "Dates live with Tock. Look in Deadlines.",
+  murmur: "Chats live with Murmur. Look in Chats.",
+  penny: "Money lives with Penny Pocket. Look in Money.",
+  mote: "Ideas live with Mote. Look in Ideas.",
 };
 
 export function QuestionBubble({ question }: { question: string }) {
@@ -104,7 +104,6 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
   const existing = fresh ? shot?.dates.find((d) => d.when === fresh.date.when)?.reminder : null;
   const reminder = fresh && existing?.state === "scheduled" ? { ...fresh, ...dueParts(existing.dueAt, tz()) } : fresh;
   const isSet = existing?.state === "scheduled";
-  const closes = reminder ? /clos/i.test(reminder.date.what) : false;
   return (
     <View style={{ gap: 14 }}>
       <Text selectable style={[text.lead, { color: p.ink }]}>
@@ -113,7 +112,7 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
       </Text>
       {source ? (
         <Pressable accessibilityRole="link" onPress={() => go(`/shot/${source.screenshotId}`)} style={{ minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }}>
-          <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Wrong date?</Text>
+          <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Fix the date</Text>
         </Pressable>
       ) : null}
       {result.sources.map((s) => (
@@ -127,7 +126,7 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
             onPress={() => go(`/remind/${source.screenshotId}`)}
           />
           <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-            {`The day before it ${closes ? "closes" : "happens"}. One reminder. Change it or turn it off later.`}
+            {"One reminder, the day before. Change it or turn it off later."}
           </Text>
         </View>
       ) : null}
@@ -148,7 +147,7 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
       <Text style={[text.lead, { color: p.ink }]}>{result.answer}</Text>
       {result.sources.length > 0 ? (
         <View>
-          <Text style={[text.caption, { color: p.ink2, marginBottom: 4 }]}>Closest matches</Text>
+          <Text style={[text.caption, { color: p.ink2, marginBottom: 4 }]}>Closest screenshots</Text>
           {result.sources.map((s, i) => (
             <View key={s.screenshotId} style={{ borderTopWidth: i === 0 ? 1 : 0, borderBottomWidth: 1, borderColor: p.hair }}>
               <SourceRow source={s} card={false} shots={shots} />
@@ -162,10 +161,10 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
             <Decor><KeeperFace id={keeper} size={40} /></Decor>
             <Text style={[text.voice, { color: colors.deep, flex: 1 }]}>{TRY_LINE[keeper]}</Text>
           </View>
-          <PsstButton kind="filled" keeper={keeper} label={`Look in ${ROOM_NAME[room]}`} onPress={() => go(`/room/${room}`)} />
+          <PsstButton kind="filled" keeper={keeper} label={`Open ${ROOM_NAME[room]}`} onPress={() => go(`/room/${room}`)} />
         </View>
       ) : (
-        <PsstButton kind="outline" label="Look in Rooms" onPress={() => router.push("/rooms")} />
+        <PsstButton kind="outline" label="Open Rooms" onPress={() => router.push("/rooms")} />
       )}
     </View>
   );
@@ -212,13 +211,13 @@ export function FailedBlock({ onRetry }: { onRetry: () => void }) {
       <View style={{ backgroundColor: colors.tint, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
         <Decor><KeeperFace id="murmur" size={48} /></Decor>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={[text.bodyBold, { color: p.ink }]}>The server didn&apos;t answer.</Text>
-          <Text style={[text.caption, { color: p.ink2 }]}>Your question is saved above. Nothing was lost.</Text>
+          <Text style={[text.bodyBold, { color: p.ink }]}>Couldn&apos;t get an answer.</Text>
+          <Text style={[text.caption, { color: p.ink2 }]}>The server didn&apos;t reply. Your question is kept above. Try again when you&apos;re connected.</Text>
         </View>
       </View>
       <PsstButton kind="filled" label="Try again" onPress={onRetry} />
       <Pressable accessibilityRole="link" onPress={() => router.push("/rooms")} style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
-        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Or look in Rooms.</Text>
+        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Open Rooms.</Text>
       </Pressable>
     </View>
   );

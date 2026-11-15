@@ -29,9 +29,9 @@ export default function Priming() {
       <Page
         footer={
           <View style={{ gap: 4 }}>
-            <Footnote>Nothing was read. We only read your Screenshots album.</Footnote>
+            <Footnote>We only read your Screenshots album.</Footnote>
             <PsstButton kind="filled" label="Open iOS Settings" onPress={openSettings} />
-            <PsstButton kind="text" label="Not now" onPress={() => router.replace("/today")} />
+            <PsstButton kind="text" label="Go to Today" onPress={() => router.replace("/today")} />
           </View>
         }
       >
@@ -40,7 +40,7 @@ export default function Priming() {
             <Keeper id="murmur" size={128} />
           </View>
           <Headline>{"Psst can't see your screenshots yet."}</Headline>
-          <Lead>{"You chose Don't Allow, so Psst hasn't read anything. You can change this in iOS Settings."}</Lead>
+          <Lead>{"Nothing has been brought in. You can choose screenshots later. You can pick a few screenshots instead, or change photo access in iOS Settings → Psst → Photos."}</Lead>
           <KeeperLine id="murmur">{"Fine by me. I'll wait by the door."}</KeeperLine>
         </View>
       </Page>
@@ -76,7 +76,7 @@ export default function Priming() {
           <Text style={[text.body, { color: p.ink2 }]}>Photos: stay on your phone</Text>
         </View>
         <View>
-          <Text style={[text.body, { color: p.ink2, paddingBottom: 10 }]}>iOS asks next. Either choice works:</Text>
+          <Text style={[text.body, { color: p.ink2, paddingBottom: 10 }]}>iOS calls this Full Access, which covers your whole photo library. You can pick a few screenshots instead.</Text>
           {choices.map(([title, body]) => (
             <View key={title} style={{ borderTopWidth: 1, borderColor: p.hair, paddingVertical: 12, gap: 2 }}>
               <Text style={[text.bodyBold, { color: p.ink }]}>{title}</Text>

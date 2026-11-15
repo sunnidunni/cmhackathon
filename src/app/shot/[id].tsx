@@ -221,7 +221,7 @@ export default function Detail() {
           {finished ? (
             <>
               <UndoToast
-                message="Marked done."
+                message={`Marked done. ${withReminder ? "Reminder off. " : ""}Kept in ${roomLabel}.`}
                 onUndo={
                   phase === "pending"
                     ? () => {
@@ -248,7 +248,7 @@ export default function Detail() {
             <>
               <PsstButton kind="filled"
                 keeper={keeper}
-                label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Set a reminder"}
+                label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Choose a reminder time"}
                 disabled={!primary}
                 onPress={() => {
                   if (!primary || isDemo) return;
@@ -257,7 +257,7 @@ export default function Detail() {
                 }}
               />
               <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-                {suggestion ? `One reminder, ${suggestion.long}. Change it later.` : primary ? "One reminder, then quiet. Turn it off any time." : "No date found on this one, so there is nothing to remind you about yet."}
+                {suggestion ? `One reminder, ${suggestion.long}. Change it or turn it off later.` : primary ? "One reminder. Change it or turn it off later." : "No date found on this one, so there is nothing to remind you about yet."}
               </Text>
             </>
           )}
