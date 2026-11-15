@@ -66,6 +66,13 @@ describe("getAutoRead", () => {
     const { getAutoRead } = await import("./auto-read");
     expect(await getAutoRead()).toBe(false);
   });
+  test("says so when the device can't save a change, and still applies it this session", async () => {
+    store.get.mockResolvedValue(null);
+    store.set.mockRejectedValue(new Error("no keychain"));
+    const { getAutoRead, setAutoRead } = await import("./auto-read");
+    expect(await setAutoRead(false)).toBe(false);
+    expect(await getAutoRead()).toBe(false);
+  });
   test("remembers a change and writes it to the device", async () => {
     store.get.mockResolvedValue(null);
     const { getAutoRead, setAutoRead } = await import("./auto-read");

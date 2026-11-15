@@ -74,11 +74,17 @@ export default function Settings() {
     if (!ok) Linking.openSettings();
   }
 
+  async function setAutoReadSaved(on: boolean) {
+    if (await setAutoRead(on)) return;
+    Alert.alert("Couldn't save this", "Psst will use your choice until it closes, then it may switch back. Try again.");
+  }
+
   async function checkNow() {
     setChecked(null);
     try {
-      const { uploaded } = await syncNow();
-      setChecked(uploaded === 0 ? "Nothing new." : uploaded === 1 ? "Read 1 new screenshot." : `Read ${uploaded} new screenshots.`);
+      const { uploaded, failed } = await syncNow();
+      if (failed > 0) setChecked(`${failed} didn't go through. Check again to retry.`);
+      else setChecked(uploaded === 0 ? "Nothing new." : uploaded === 1 ? "Read 1 new screenshot." : `Read ${uploaded} new screenshots.`);
     } catch {
       setChecked(null);
     }
@@ -94,7 +100,7 @@ export default function Settings() {
           text: "Delete everything",
           style: "destructive",
           onPress: () => {
-            void setAutoRead(false);
+            void setAutoReadSaved(false);
             void removeAll({});
           },
         },
@@ -138,7 +144,7 @@ export default function Settings() {
               title="Read new screenshots automatically"
               detail={autoRead ? "On. When you open Psst, each new one is sent to be read." : "Off. New screenshots wait until you check."}
               value={autoRead}
-              onValueChange={setAutoRead}
+              onValueChange={setAutoReadSaved}
               testID="auto-read-switch"
             />
             <ActionRow

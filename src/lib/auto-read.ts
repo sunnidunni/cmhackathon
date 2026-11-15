@@ -27,10 +27,15 @@ export function getAutoRead(): Promise<boolean> {
   return loading;
 }
 
-export async function setAutoRead(on: boolean) {
+// Applies the change for this session at once. Resolves false when the device could not save it, so
+// the caller can say the choice may not survive a restart.
+export async function setAutoRead(on: boolean): Promise<boolean> {
   autoRead = on;
   listeners.forEach((l) => l());
-  await SecureStore.setItemAsync(AUTO_READ_KEY, on ? "1" : "0").catch(() => undefined);
+  return SecureStore.setItemAsync(AUTO_READ_KEY, on ? "1" : "0").then(
+    () => true,
+    () => false,
+  );
 }
 
 // Device asset ids of screenshots the person removed from Psst. Removing deletes the server row, so the
