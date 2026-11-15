@@ -1,5 +1,6 @@
 import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
 import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { LoadingView, MessageView } from "@/components/state-views";
@@ -56,11 +57,13 @@ export default function RootLayout() {
   usePsstFonts();
   const pal = usePalette();
   return (
-    <ConvexAuthProvider client={convex} storage={secureStorage}>
-      <AnonymousSession>
-        <AppLifecycle />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
-      </AnonymousSession>
-    </ConvexAuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ConvexAuthProvider client={convex} storage={secureStorage}>
+        <AnonymousSession>
+          <AppLifecycle />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
+        </AnonymousSession>
+      </ConvexAuthProvider>
+    </GestureHandlerRootView>
   );
 }
