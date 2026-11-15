@@ -27,8 +27,10 @@ export default function KeepersCard() {
   const counts = real && (hasReal || !FIXTURES) ? real : real ? fixtureCounts : null;
   const countOf = (id: KeeperId) => (counts ? (counts[ROOM_FOR[id]] ?? 0) : null);
   const unsorted = counts?.unsorted ?? 0;
-  const read = GRID.reduce((n, id) => n + (countOf(id) ?? 0), 0);
-  const total = hasReal ? (progress?.total ?? read + unsorted) : read + unsorted;
+  const ready = GRID.reduce((n, id) => n + (countOf(id) ?? 0), 0) + unsorted;
+  const useFixtures = FIXTURES && !hasReal;
+  const read = useFixtures ? DEMO_COUNTS.read : (progress?.read ?? ready);
+  const total = useFixtures ? DEMO_COUNTS.total : (progress?.total ?? ready);
   const now = new Date();
   const day = now.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
 
