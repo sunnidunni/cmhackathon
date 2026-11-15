@@ -100,7 +100,7 @@ export function Banner({ kind, title, body }: { kind: "off" | "error"; title: st
 export function Priming({ preview, onAllow, onSkip }: { preview: { body: string; time: string }; onAllow: () => void; onSkip: () => void }) {
   const p = usePalette();
   return (
-    <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0, justifyContent: "flex-end", backgroundColor: "rgba(33,29,43,0.35)" }}>
+    <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0, justifyContent: "flex-end", backgroundColor: p.scrim }}>
       <View accessibilityViewIsModal style={{ backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 42, gap: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Decor><Keeper id="tock" size={72} /></Decor>

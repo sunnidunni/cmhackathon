@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
@@ -86,7 +87,7 @@ function SourceRow({ source, card, shots }: { source: AskSource; card: boolean; 
           </View>
         ) : null}
       </View>
-      <Text accessibilityElementsHidden style={[text.lead, { color: p.ink3 }]}>›</Text>
+      <SymbolView name="chevron.right" size={13} weight="semibold" tintColor={p.ink3} fallback={<Text style={{ color: p.ink3 }}>›</Text>} />
     </Pressable>
   );
 }
@@ -169,9 +170,10 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
 }
 
 export function AnswerBlock({ result, latest, shots, demo = false }: { result: AskResult; latest: boolean; shots?: Shots; demo?: boolean }) {
+  const p = usePalette();
   return (
     <DemoCtx.Provider value={demo}>
-      {demo ? <Text style={[text.caption, { color: "#A3162B" }]}>Dev fixture: the server did not answer, so this is the demo answer.</Text> : null}
+      {demo ? <Text style={[text.caption, { color: p.danger }]}>Dev fixture: the server did not answer, so this is the demo answer.</Text> : null}
       {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />}
     </DemoCtx.Provider>
   );
