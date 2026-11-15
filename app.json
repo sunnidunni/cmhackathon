@@ -38,7 +38,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "Psst reads your Screenshots album so it can sort them for you. It never touches your other photos.",
+          "photosPermission": "We only read your Screenshots album. Screenshots are sent to our server and an AI model to be read. Your other photos stay on your phone.",
           "savePhotosPermission": false,
           "isAccessMediaLocationEnabled": false,
           "preventAutomaticLimitedAccessAlert": true,
