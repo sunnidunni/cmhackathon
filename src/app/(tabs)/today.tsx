@@ -26,7 +26,7 @@ export default function Today() {
         await remove({ id: card._id });
         toast.show(TOAST_DELETED);
       } else if (action === "remind") {
-        await reminders.remind(card._id, card.date?.when);
+        await reminders.remind(card._id, card.date?.when, card.title);
       } else router.push(`/shot/${card._id}`);
     } catch {
       toast.show("That didn't work. Try again in a moment.");

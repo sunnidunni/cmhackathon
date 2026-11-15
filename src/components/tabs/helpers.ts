@@ -65,7 +65,7 @@ export function buttonLabel(
 ): string {
   switch (kind) {
     case "remind":
-      return date ? `Remind me ${weekday(date.when)}` : "Remind me";
+      return date ? `Remind ${weekday(date.when)}` : "Remind me";
     case "done":
       return "Done";
     case "keep":
@@ -84,5 +84,13 @@ export function cardSubtitle(card: { date: DateInfo | null; takenAt: number }): 
   const d = new Date(card.takenAt);
   return `Saved ${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
+
+export function reminderCaption(reminder: { state: "scheduled" | "sent" | "dismissed" } | null): string {
+  if (reminder?.state === "scheduled") return "Reminder set";
+  if (reminder?.state === "sent") return "Reminder sent";
+  return "Remind me";
+}
+
+export const nudgeSample = (title?: string) => `Psst: your ${title ?? "reminder"} is due tomorrow. Want to see it?`;
 
 export const TOAST_DELETED = "Deleted from Psst. The photo stays on your phone";
