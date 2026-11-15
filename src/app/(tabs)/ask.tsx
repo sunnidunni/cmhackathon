@@ -21,6 +21,7 @@ export default function Ask() {
   const askAction = useAction(api.ask.ask);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
+  const [slowFor, setSlowFor] = useState<number | null>(null);
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   async function send(question: string) {
@@ -29,6 +30,7 @@ export default function Ask() {
     setInput("");
     const sentAt = Date.now();
     setPending({ question: q, status: "looking", sentAt });
+    setTimeout(() => setSlowFor(sentAt), 400);
     try {
       const result = await askAction({ question: q });
       setPending({ question: q, status: "done", sentAt, result });
@@ -67,7 +69,7 @@ export default function Ask() {
           {shownPending ? (
             <View style={{ gap: 14 }}>
               <QuestionBubble question={shownPending.question} />
-              {shownPending.status === "looking" ? <LookingBlock count={rooms?.count} /> : null}
+              {shownPending.status === "looking" && slowFor === shownPending.sentAt ? <LookingBlock count={rooms?.count} /> : null}
               {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question)} /> : null}
               {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? demoShots : undefined} /> : null}
             </View>

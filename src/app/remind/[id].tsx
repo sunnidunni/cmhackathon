@@ -8,6 +8,7 @@ import { usePalette } from "@/design/psst";
 import { defaultReminder } from "@/components/remind/plan";
 import { RemindBody } from "@/components/remind/RemindBody";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
+import { FIXTURES } from "@/lib/fixtures";
 import { useReminderActions } from "@/lib/reminders";
 
 const tz = () => new Date().getTimezoneOffset();
@@ -71,6 +72,7 @@ export default function Remind() {
         onConfirm={confirm}
         onRetry={save}
         onClose={close}
+        onFireNow={FIXTURES ? () => void actions.fireNow(shotId).catch(() => undefined) : undefined}
         onAllow={async () => {
           setPriming(false);
           await ensureNotificationPermission().catch(() => false);

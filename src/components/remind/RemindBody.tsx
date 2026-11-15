@@ -22,9 +22,10 @@ export type RemindActions = {
   onAllow: () => void;
   onSkip: () => void;
   onClose: () => void;
+  onFireNow?: () => void;
 };
 
-export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, priming, onConfirm, onRetry, onTurnOff, onAllow, onSkip, onClose }: RemindState & RemindActions) {
+export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, priming, onConfirm, onRetry, onTurnOff, onAllow, onSkip, onClose, onFireNow }: RemindState & RemindActions) {
   const p = usePalette();
   const plan = shot ? defaultReminder(shot.dates, now, tz) : null;
   const existing = plan && shot ? shot.dates.find((d) => d.when === plan.date.when)?.reminder : null;
@@ -51,7 +52,8 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, prim
           <>
             <Text style={[text.lead, { color: p.ink2 }]}>{`${plan.date.what} ${whenLabel(plan.date.when)}.`}</Text>
             {failed ? <Banner kind="error" title="Couldn't set the reminder." body="Nothing changed. Your pick is kept below." /> : null}
-            {off ? <Banner kind="off" title="Notifications are off." body={`The reminder will wait at the top of Today on ${plan.day} at ${plan.clock}.`} /> : null}
+            {off ? <Banner kind="off" title="Saved, no notification." body={`Notifications are off. The reminder will wait at the top of Today on ${plan.day} at ${plan.clock}.`} /> : null}
+            {isSet && notifOn ? <Text style={[text.bodyBold, { color: p.ink }]}>{`Reminder set for ${plan.day} at ${plan.clock}.`}</Text> : null}
             <Options rows={options} />
             {off ? (
               <>
@@ -74,6 +76,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, prim
           <PsstButton kind="filled" label="Done" onPress={onClose} />
         )}
         {existing?.state === "scheduled" ? <PsstButton kind="text" label="Turn off this reminder" onPress={onTurnOff} disabled={saving} /> : null}
+        {onFireNow && isSet ? <PsstButton kind="text" label="Fire now (dev)" onPress={onFireNow} /> : null}
       </View>
       {priming && preview ? <Priming preview={{ body: preview, time: when }} onAllow={onAllow} onSkip={onSkip} /> : null}
     </View>
