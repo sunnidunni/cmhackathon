@@ -55,7 +55,7 @@ function CloseButton() {
 export default function Settings() {
   const pal = usePalette();
   const { access, openLimitedPicker, openSettings } = usePhotoAccess();
-  const { status, error, syncNow } = useSync();
+  const { status, syncNow } = useSync();
   const removeAll = useMutation(api.shots.removeAll);
   const { enabled: autoRead, setEnabled: setAutoRead } = useAutoRead();
   const [notify, setNotify] = useState(false);
@@ -87,16 +87,23 @@ export default function Settings() {
   function confirmDelete() {
     Alert.alert(
       "Delete everything?",
-      "This removes every screenshot, reminder and answer from Psst and our server. The photos stay on your phone.",
+      "This removes every screenshot, reminder and answer from Psst and our server. The photos stay on your phone. Reading new screenshots turns off until you turn it back on.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Delete everything", style: "destructive", onPress: () => removeAll({}) },
+        {
+          text: "Delete everything",
+          style: "destructive",
+          onPress: () => {
+            void setAutoRead(false);
+            void removeAll({});
+          },
+        },
       ],
     );
   }
 
   const checkDetail =
-    status === "syncing" ? "Checking now." : status === "error" ? (error ?? "Couldn't check. Try again.") : (checked ?? undefined);
+    status === "syncing" ? "Checking now." : status === "error" ? "Couldn't check. Try again." : (checked ?? undefined);
 
   return (
     <>
@@ -157,7 +164,7 @@ export default function Settings() {
               testID="notifications-switch"
             />
           </Group>
-          <Footer>We'll remind you once per item. You can snooze or turn reminders off.</Footer>
+          <Footer>{"We'll remind you once per item. You can snooze or turn reminders off."}</Footer>
         </View>
 
         <View style={{ gap: 8 }}>
