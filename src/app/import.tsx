@@ -1,4 +1,5 @@
 import { useQuery } from "convex/react";
+import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
@@ -49,6 +50,10 @@ export default function BringIn() {
   const total = progress?.total ?? 0;
   const read = progress?.read ?? 0;
   const done = state.kind === "done" && progress !== undefined && progress.pending === 0 && total > 0;
+
+  useEffect(() => {
+    if (done) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [done]);
 
   const due = keepersDue(read, done);
   const [shown, setShown] = useState(0);
