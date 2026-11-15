@@ -1,0 +1,33 @@
+import lines from "../../src/content/lines.json";
+
+export const CATEGORIES = ["deadlines", "chats", "money", "ideas", "unsorted"] as const;
+export type Category = (typeof CATEGORIES)[number];
+
+function playfulKeys(category: Category): string[] {
+  const group =
+    category === "unsorted"
+      ? lines.unsorted.lines
+      : lines.rooms[category].lines;
+  return Object.keys(group).filter((key) => /_\d\d$/.test(key));
+}
+
+function seriousKeys(category: Category): string[] {
+  if (category === "unsorted") return [];
+  return Object.keys(lines.rooms[category].lines).filter((key) => /_s\d\d$/.test(key));
+}
+
+export const SERIOUS_KEYS: Record<Category, string[]> = {
+  deadlines: seriousKeys("deadlines"),
+  chats: seriousKeys("chats"),
+  money: seriousKeys("money"),
+  ideas: seriousKeys("ideas"),
+  unsorted: [],
+};
+
+export const PLAYFUL_KEYS: Record<Category, string[]> = {
+  deadlines: playfulKeys("deadlines"),
+  chats: playfulKeys("chats"),
+  money: playfulKeys("money"),
+  ideas: playfulKeys("ideas"),
+  unsorted: playfulKeys("unsorted"),
+};

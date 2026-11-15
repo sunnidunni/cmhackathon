@@ -1,0 +1,128 @@
+{
+  "rooms": {
+    "deadlines": {
+      "character": "Psst",
+      "lines": {
+        "deadlines_01": "Got one! I've circled it twice already.",
+        "deadlines_02": "Tick tick, nothing scary, I just like saying it.",
+        "deadlines_03": "Filed with a little gold star. Neat, right?",
+        "deadlines_04": "A date! I love a date. Not that kind, the calendar kind.",
+        "deadlines_05": "Don't worry, I've got the clock on this one.",
+        "deadlines_06": "I set three imaginary alarms. You only need one.",
+        "deadlines_07": "This one's tucked in nice and tidy under my arm.",
+        "deadlines_08": "Ooh, that one has a time on it. Crisp.",
+        "deadlines_s01": "This is due today. Open it now to check the time.",
+        "deadlines_s02": "Deadline is within 24 hours. Tap to see the details."
+      },
+      "note": "keys deadlines_01..08 are playful; deadlines_s01, deadlines_s02 are serious and used for importance 4-5 or items due today/tomorrow"
+    },
+    "chats": {
+      "character": "Psst",
+      "lines": {
+        "chats_01": "Ooh, juicy. My lips are sealed, though.",
+        "chats_02": "Saved the chat. I didn't read it. Much.",
+        "chats_03": "Plans! I love plans. Who's coming?",
+        "chats_04": "Another conversation, filed away safe.",
+        "chats_05": "I heard nothing. I know everything. That's the deal.",
+        "chats_06": "A good one. I'll keep it between us.",
+        "chats_07": "Message received, secret kept.",
+        "chats_08": "Look at all that chatter. Perfect for my collection.",
+        "chats_s01": "This chat mentions a plan with a time today. Open it to check.",
+        "chats_s02": "There's a plan in this chat for tomorrow. Tap to see it."
+      },
+      "note": "chats_s01, chats_s02 serious"
+    },
+    "money": {
+      "character": "Psst",
+      "lines": {
+        "money_01": "Receipt filed. Pencil sharpened.",
+        "money_02": "Rounded up, added up, put away.",
+        "money_03": "Ooh, a price. Let me write that down.",
+        "money_04": "Neat and tidy, just how I like my numbers.",
+        "money_05": "Tickets, bills, bargains. I've got it all in one pocket.",
+        "money_06": "I tucked this one in the good drawer.",
+        "money_07": "I counted it twice. Once for luck.",
+        "money_08": "Saved it so the numbers stay in one place.",
+        "money_s01": "A payment is due today. Open it to see the amount and where to pay.",
+        "money_s02": "A payment is due tomorrow. Tap to see the amount."
+      },
+      "note": "money_s01, money_s02 serious"
+    },
+    "ideas": {
+      "character": "Psst",
+      "lines": {
+        "ideas_01": "Ooh, shiny idea. Into the collection it goes.",
+        "ideas_02": "I'll keep this one safe for later.",
+        "ideas_03": "What a lovely thing to save for later.",
+        "ideas_04": "Later is my favorite time. Saved for it.",
+        "ideas_05": "Another sparkle for the pile.",
+        "ideas_06": "This one made me daydream a little.",
+        "ideas_07": "Recipes, tips, quotes, I keep it all.",
+        "ideas_08": "Found a good one. Tucked in next to the others.",
+        "ideas_s01": "This has a time-limited deal on it. Open it to check the end date.",
+        "ideas_s02": "This saved item has a date coming up. Tap to see it."
+      },
+      "note": "ideas_s01, ideas_s02 serious"
+    }
+  },
+  "unsorted": {
+    "character": "Psst",
+    "lines": {
+      "unsorted_01": "Not sure where this one goes yet. You can move it.",
+      "unsorted_02": "A mystery! Pick a room for it whenever you like.",
+      "unsorted_03": "I couldn't read this one well. Maybe it's blurry?",
+      "unsorted_04": "This one's hanging out in the hallway for now.",
+      "unsorted_05": "Hmm, no room fits. Tap to choose one.",
+      "unsorted_06": "Can't tell what this is. A new room might be fun someday."
+    }
+  },
+  "priming": {
+    "title": "Can we look at your screenshots?",
+    "body": "The app reads only your Screenshots album. Images are sent securely to be read, and you can delete everything anytime in Settings.",
+    "button": "Allow photo access",
+    "lines": {
+      "priming_01": "Just the screenshots, never the rest of your photos.",
+      "priming_02": "I'm ready to sort them into rooms for you.",
+      "priming_03": "One tap and I'll start reading."
+    }
+  },
+  "importing": {
+    "importing_01": "Reading your screenshots...",
+    "importing_02": "{done} of {total} read. You can start browsing already.",
+    "importing_03": "Sorting into rooms as we go.",
+    "importing_04": "Almost there. Tidying the last few.",
+    "importing_05": "All read! Come say hi to the rooms."
+  },
+  "empty": {
+    "deadlines": "No dates here yet. Screenshot a flyer or a due date and I'll catch it.",
+    "chats": "No chats yet. Screenshot a conversation and I'll keep it safe.",
+    "money": "Nothing in the pocket yet. Receipts, tickets and bills land here.",
+    "ideas": "No ideas yet. Save a recipe, tip or quote and I'll collect it.",
+    "unsorted": "Nothing unsorted. Everything has a home.",
+    "missed": "All clear. Nothing important is waiting for you."
+  },
+  "missed": {
+    "title": "You might have missed",
+    "subtitle": "Things worth a quick look, most urgent first.",
+    "lines": {
+      "missed_01": "I'm holding these for you.",
+      "missed_02": "A few things worth a look.",
+      "missed_03": "Most urgent first."
+    },
+    "actions": {
+      "done": "Done",
+      "remind": "Remind me",
+      "delete": "Delete"
+    }
+  },
+  "notification": {
+    "template": "Psst: your {thing} is due {when}. Want to see it?",
+    "examples": [
+      "Psst: your Lantern Night ticket signup is due tomorrow. Want to see it?",
+      "Psst: your power bill is due tomorrow. Want to see it?",
+      "Psst: your Harvest Market flyer event is tomorrow. Want to see it?"
+    ],
+    "todayTemplate": "Psst: your {thing} is due today at {time}. Want to see it?"
+  },
+  "note": "Nov 15: one mascot, Psst. The four character names are retired; line keys are unchanged."
+}

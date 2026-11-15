@@ -1,0 +1,31 @@
+project:
+    id: 35e00c37-8640-4677-9f92-55d6c059b4bf
+session:
+    idle_timeout_seconds: 1800
+build:
+    framework: expo
+    profiles:
+        pull-request:
+            ios:
+                app_id: 4760ca9f-65e5-43b6-aeab-de9ca306fa98
+                setup_commands:
+                    - npm ci
+                    - npx expo prebuild --platform ios --clean
+                build_commands:
+                    - set -o pipefail && EXPO_PUBLIC_CONVEX_URL=https://frugal-grasshopper-744.convex.cloud EXPO_PUBLIC_DEV_TOOLS=1 xcodebuild -workspace ios/Psst.xcworkspace -scheme Psst -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGN_IDENTITY=- | tail -200
+                output_path: ios/build/Build/Products/Release-iphonesimulator/Psst.app
+pr_review:
+    enabled: true
+    triggers:
+        labels:
+            - revyl-proof
+    build:
+        kind: revyl
+        profile: pull-request
+    proof_of_changes:
+        enabled: true
+        harness:
+            kind: revyl
+        always_verify:
+            - The app launches to its first screen
+        system_prompt: Psst is an iPhone app with no login. It signs in anonymously in the background. The first screen is a photo-access priming screen, so allow photo access when asked.
