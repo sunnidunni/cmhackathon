@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import { Button, Character, colors, radii, rooms as roomTokens, SketchFrame, spacing, tiltFor, type } from "@/design";
-import { roomName, type Room } from "@/components/tabs/helpers";
+import { allScreenshotsCount, roomName, type Room } from "@/components/tabs/helpers";
 import { designRoom, InfoCard, Loading, Screen, TabHeader } from "@/components/tabs/ui";
 import { usePhotoAccess } from "@/lib/photos";
 
@@ -15,6 +15,8 @@ export default function Rooms() {
 
   const four = list?.filter((r) => r.category !== "unsorted") ?? [];
   const unsorted = list?.find((r) => r.category === "unsorted");
+  const all = useQuery(api.rooms.all, {});
+  const total = list ? allScreenshotsCount(list) : 0;
 
   return (
     <Screen>
@@ -29,6 +31,7 @@ export default function Rooms() {
               <Button label="Give access to all screenshots" onPress={() => openLimitedPicker()} />
             </InfoCard>
           ) : null}
+          {total > 0 ? <AllRow count={total} newestTitle={all?.items[0]?.title} /> : null}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
             {four.map((r) => (
               <View key={r.category} style={{ width: "48%", flexGrow: 1 }}>
@@ -61,6 +64,21 @@ function RoomCard({ entry }: { entry: Entry }) {
         {entry.newest ? (
           <Text style={type.caption} numberOfLines={2}>{entry.newest.title}</Text>
         ) : null}
+      </SketchFrame>
+    </Pressable>
+  );
+}
+
+function AllRow({ count, newestTitle }: { count: number; newestTitle?: string }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={() => router.push("/room/all")}>
+      <SketchFrame fill={colors.white} radius={radii.lg} seed="all" style={{ padding: spacing.lg, flexDirection: "row", alignItems: "center", gap: spacing.md, minHeight: 72 }}>
+        <Character size={44} outline={false} />
+        <View style={{ flex: 1 }}>
+          <Text style={type.heading}>All screenshots</Text>
+          <Text style={type.caption} numberOfLines={1}>{newestTitle ?? ""}</Text>
+        </View>
+        <Text style={type.heading}>{count}</Text>
       </SketchFrame>
     </Pressable>
   );

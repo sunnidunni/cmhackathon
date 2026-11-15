@@ -10,6 +10,7 @@ const ROOM_NAMES: Record<Room, string> = {
   ideas: "Ideas",
   unsorted: "Unsorted",
 };
+export const allScreenshotsCount = (rooms: { count: number }[]) => rooms.reduce((sum, r) => sum + r.count, 0);
 export const roomName = (room: string) => ROOM_NAMES[room as Room] ?? "Unsorted";
 
 export const EMPTY_BLURB: Record<Room, string> = {

@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { buttonLabel, cardSubtitle, formatWhen, lineFor, roomName, weekday } from "./helpers";
+import { allScreenshotsCount, buttonLabel, cardSubtitle, formatWhen, lineFor, roomName, weekday } from "./helpers";
+
+describe("all screenshots count", () => {
+  test("sums every room including unsorted", () => {
+    expect(allScreenshotsCount([{ count: 3 }, { count: 0 }, { count: 2 }, { count: 1 }, { count: 4 }])).toBe(10);
+    expect(allScreenshotsCount([])).toBe(0);
+  });
+});
 
 describe("tab helpers", () => {
   test("formats dates plainly", () => {
