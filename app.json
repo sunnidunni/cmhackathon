@@ -38,7 +38,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "Rooms reads your Screenshots album so it can sort them for you. It never touches your other photos.",
+          "photosPermission": "Psst reads your Screenshots album so it can sort them for you. It never touches your other photos.",
           "savePhotosPermission": false,
           "isAccessMediaLocationEnabled": false,
           "preventAutomaticLimitedAccessAlert": true,
