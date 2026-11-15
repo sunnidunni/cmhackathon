@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { Pressable, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { KeeperFace, text, usePalette } from "@/design/psst";
+import { KeeperFace, KEEPERS, text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { setReminderMoved, useActState } from "@/lib/act/store";
 import type { ActScenario } from "@/lib/act/types";
@@ -42,7 +42,7 @@ export function ActCards() {
   const [first, ...rest] = acts.filter((a) => !dismissed.has(a.id) && !completed.has(a.id));
   const moved = acts.flatMap((a) => {
     const step = a.steps.find((s) => s.kind === "move-reminder");
-    return step && a !== first && !rest.includes(a) && !undone.has(a.id) ? [{ id: a.id, step }] : [];
+    return step && a !== first && !rest.includes(a) && !undone.has(a.id) ? [{ id: a.id, step, keeper: a.keeper }] : [];
   });
   if (!first && moved.length === 0) return null;
   return (
@@ -61,10 +61,10 @@ export function ActCards() {
           <View style={{ borderTopWidth: 1, borderTopColor: p.hair }} />
         </View>
       ) : null}
-      {moved.map(({ id, step }) =>
+      {moved.map(({ id, step, keeper }) =>
         step.kind === "move-reminder" ? (
           <View key={id} style={{ gap: 0 }}>
-            <Text style={[text.body, { color: p.ink }]}>{`Tock moved your airport reminder from ${step.from} to ${step.to}.`}</Text>
+            <Text style={[text.body, { color: p.ink }]}>{`${KEEPERS[keeper].name} moved your ${step.label ?? "reminder"} from ${step.from} to ${step.to}.`}</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Undo. Put the reminder back to ${step.from}`}

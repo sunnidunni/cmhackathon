@@ -11,7 +11,7 @@ export const scenario: ActScenario = {
   ready: "A text to Sam is ready. As of your screenshot. Delays change. Check the airline before you leave.",
   cta: "Review text to Sam",
   steps: [
-    { kind: "move-reminder", from: "3:30 PM", to: "5:10 PM" },
+    { kind: "move-reminder", from: "3:30 PM", to: "5:10 PM", label: "airport reminder" },
     { kind: "draft-message", to: "Sam (picking you up)", via: "Messages", body: "Flight's delayed, landing 9:55 PM now instead of 8:15. Sorry!" },
   ],
   confirm: {

@@ -11,7 +11,7 @@ export function ActCard({ scenario }: { scenario: ActScenario }) {
   const { undone } = useActState();
   const move = scenario.steps.find((s) => s.kind === "move-reminder");
   const reverted = undone.has(scenario.id);
-  const didLine = move && reverted ? `Your airport reminder is back at ${move.from}.` : scenario.didOnOwn;
+  const didLine = move && reverted ? `Your ${move.label ?? "reminder"} is back at ${move.from}.` : scenario.didOnOwn;
   const undoLabel = move ? (reverted ? `Move it to ${move.to}` : `Undo · back to ${move.from}`) : null;
 
   return (

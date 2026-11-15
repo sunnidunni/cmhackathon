@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
-import { fonts, Keeper, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
+import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
 import { confirmFor, demoLine } from "./pages";
 import { Fade, TypingDots } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
@@ -125,7 +125,7 @@ export function MovePage({ scenario, step, moved, onToggle, onNext }: { scenario
   return (
     <View style={{ gap: 16 }}>
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
-        {moved ? `Tock moved your airport reminder from ${step.from} to ${step.to}.` : `Your airport reminder is back at ${step.from}.`}
+        {moved ? `${KEEPERS[scenario.keeper].name} moved your ${step.label ?? "reminder"} from ${step.from} to ${step.to}.` : `Your ${step.label ?? "reminder"} is back at ${step.from}.`}
       </Text>
       <WhyRow scenario={scenario} />
       <Text style={[text.body, { color: p.ink2 }]}>You can change it back any time.</Text>
