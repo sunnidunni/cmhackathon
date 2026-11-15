@@ -1,4 +1,5 @@
 // @vitest-environment node
+/// <reference types="node" />
 import { transformFileSync } from "@babel/core";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
