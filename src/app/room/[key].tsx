@@ -88,7 +88,7 @@ function SingleRoom({ category }: { category: Category }) {
 
   const items = data?.items ?? null;
   const rows = items?.map((i) => ({ date: i.date, takenAt: i.takenAt }));
-  const headline = !isRoom && items ? `${countLabel(items.length)} ${items.length === 1 ? 'was' : 'were'} too blurry to read.` : roomHeadline(category);
+  const headline = !isRoom && items ? `${countLabel(items.length)} couldn't be read.` : roomHeadline(category);
   const isEmpty = items !== null && items.length === 0;
 
   const wash = (

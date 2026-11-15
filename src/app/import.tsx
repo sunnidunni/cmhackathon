@@ -142,7 +142,7 @@ export default function BringIn() {
         <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
           {done
             ? unsorted > 0
-              ? unsorted === 1 ? "1 was too blurry to read. It's in Unsorted, and you decide where it goes." : `${unsorted} were too blurry to read. They're in Unsorted, and you decide where they go.`
+              ? unsorted === 1 ? "1 couldn't be read. It's in Unsorted, and you decide where it goes." : `${unsorted} couldn't be read. They're in Unsorted, and you decide where they go.`
               : "You can meet the keepers again in Rooms."
             : "About a minute left. You can go to Today while they read. No notification is sent when it finishes."}
         </Text>
