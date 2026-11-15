@@ -73,7 +73,7 @@ export function buttonLabel(
     case "see":
       return "See it";
     case "detail":
-      return date ? `Reminder set, ${weekday(date.when)}` : "Reminder set";
+      return "Reminder set";
     case "delete":
       return "Delete";
   }

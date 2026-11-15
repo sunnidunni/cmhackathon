@@ -20,7 +20,7 @@ describe("tab helpers", () => {
   test("button labels follow the card actions", () => {
     const date = { when: "2026-11-19", what: "appointment", confident: true };
     expect(buttonLabel("remind", date)).toBe("Remind Thu");
-    expect(buttonLabel("detail", date)).toBe("Reminder set, Thu");
+    expect(buttonLabel("detail", date)).toBe("Reminder set");
     expect(buttonLabel("keep", null)).toBe("Keep");
     expect(buttonLabel("see", null)).toBe("See it");
     expect(buttonLabel("delete", null)).toBe("Delete");
