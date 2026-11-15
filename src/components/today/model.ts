@@ -14,7 +14,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const ROOM_NAMES: Record<string, string> = { deadlines: "Deadlines", chats: "Chats", money: "Money", ideas: "Ideas", unsorted: "Unsorted" };
 const KEEPER_NAME: Record<KeeperId, string> = { tock: "Tock", murmur: "Murmur", penny: "Penny", mote: "Mote" };
 const ROOM_KEEPER: Record<string, KeeperId> = { deadlines: "tock", chats: "murmur", money: "penny", ideas: "mote", unsorted: "mote" };
-const NOUNS = ["sign-up", "booking", "appointment", "receipt", "ticket", "invoice", "flyer", "reservation", "schedule"];
+const NOUNS = ["sign-up", "booking", "appointment", "cleaning", "receipt", "ticket", "bill", "invoice", "flyer", "reservation", "schedule", "concert", "assignment"];
 
 export type Item = {
   id: string;
@@ -56,17 +56,20 @@ export function whenLabel(ms: number, now: number, tz: number): string {
 export const remindLabel = (item: Item, now: number, tz: number): string | null =>
   item.date ? whenLabel(computeDueAt(item.date.when, now, tz), now, tz) : null;
 
-function noun(title: string): string | null {
+// The noun comes from the title's last word, else from the first date's own label ("Pottery class sign-up closes").
+function noun(title: string, what?: string): string | null {
   const last = title.trim().split(/\s+/).pop()?.toLowerCase() ?? "";
-  return NOUNS.includes(last) ? last : null;
+  if (NOUNS.includes(last)) return last;
+  return what?.toLowerCase().split(/\s+/).find((w) => NOUNS.includes(w)) ?? null;
 }
 
-const noBreak = (s: string) => s.replace(/-/g, "\u2060-\u2060");
+// No break inside "sign-up" or between a month and its day.
+const noBreak = (s: string) => s.replace(/-/g, "\u2060-\u2060").replace(/([A-Z][a-z]{2}) (\d)/g, "$1\u00a0$2");
 
 // Fixed templates, never model-written. The noun comes from the title's last word.
 export function headline(item: Item, now: number, tz: number): { name: string; rest: string } {
   const name = KEEPER_NAME[item.keeper];
-  const n = noun(item.title);
+  const n = noun(item.title, item.date?.what);
   const when = item.date ? parseWhen(item.date.when, tz) : null;
   const dow = when ? DAYS_LONG[new Date(Date.UTC(when.y, when.mo - 1, when.d)).getUTCDay()] : null;
   const days = when ? Math.round((Date.parse(when.day) - Date.parse(localDay(now, tz))) / 86400000) : null;
@@ -77,8 +80,10 @@ export function headline(item: Item, now: number, tz: number): { name: string; r
     return { name, rest: closes ? `filed one that's due ${closes}.` : `filed a new one in ${item.roomName}.` };
   }
   if (item.section === "thin") return { name, rest: "kept one worth another look." };
-  if (n && dow && days !== null && days < 7) return { name, rest: noBreak(`found your ${dow} ${n}.`) };
-  if (closes) return { name, rest: `has one for ${closes}.` };
+  if (item.keeper === "penny" && n && closes) return { name, rest: `says your ${n} is due ${closes}.` };
+  if (n && dow && days !== null && days > 1 && days < 7) return { name, rest: noBreak(`found your ${dow} ${n}.`) };
+  if (n && closes) return { name, rest: noBreak(`found your ${n}, due ${closes}.`) };
+  if (closes) return { name, rest: noBreak(`has one for ${closes}.`) };
   return { name, rest: "has one for you." };
 }
 
@@ -162,10 +167,10 @@ export function captionFor(screen: Extract<Screen, { kind: "focus" }>): string {
 
 export function actionsFor(item: Item, now: number, tz: number) {
   const label = remindLabel(item, now, tz);
-  const doneLabel = item.keeper === "penny" ? "Already paid" : noun(item.title) === "sign-up" ? "Already signed up" : "Already done";
+  const doneLabel = item.keeper === "penny" ? "Already paid" : noun(item.title, item.date?.what) === "sign-up" ? "Already signed up" : "Already done";
   const sameDay = item.date ? localDay(computeDueAt(item.date.when, now, tz), tz) === item.date.when.slice(0, 10) : false;
   const when = sameDay ? "an hour before" : "the day before";
-  const closes = item.section === "justIn" && noun(item.title) === "sign-up" ? " it closes" : "";
+  const closes = item.section === "justIn" && noun(item.title, item.date?.what) === "sign-up" ? " it closes" : "";
   const tail = item.keeper === "penny" ? "Psst never pays or moves money." : "You can snooze or turn reminders off.";
   if (item.actions.primary === "remind" && label)
     return {

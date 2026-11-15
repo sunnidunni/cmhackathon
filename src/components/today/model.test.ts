@@ -43,8 +43,19 @@ describe("labels", () => {
     expect(h.rest.replace(/\u2060/g, "")).toBe("filed a sign-up that closes Friday.");
   });
 
+  test("noun can come from the date label", () => {
+    const h = headline(item({ section: "justIn", title: "Pottery night", date: { when: "2026-11-21", what: "Pottery class sign-up closes", confident: true } }), NOW, TZ);
+    expect(h.rest.replace(/\u2060/g, "")).toBe("filed a sign-up that closes Saturday.");
+  });
+
+  test("a bill says it is due", () => {
+    expect(headline(item({ keeper: "penny", title: "Energy bill", date: { when: "2026-11-21", what: "Willow Grid Energy bill due", confident: true } }), NOW, TZ)).toEqual({ name: "Penny", rest: "says your bill is due Saturday." });
+  });
+
   test("no noun falls back without inventing one", () => {
-    expect(headline(item({ keeper: "penny", title: "Rent due Dec 1", date: { when: "2026-12-01", what: "rent", confident: true } }), NOW, TZ)).toEqual({ name: "Penny", rest: "has one for Dec 1." });
+    const h = headline(item({ keeper: "penny", title: "Rent due Dec 1", date: { when: "2026-12-01", what: "rent", confident: true } }), NOW, TZ);
+    expect(h.name).toBe("Penny");
+    expect(h.rest.replace(/\u00a0/g, " ")).toBe("has one for Dec 1.");
   });
 });
 
