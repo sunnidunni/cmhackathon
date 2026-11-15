@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.cmhackathon.rooms",
+      "bundleIdentifier": "com.sunnidunni.cmhackathon.rooms",
       "supportsTablet": false
     },
     "android": {
