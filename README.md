@@ -30,16 +30,18 @@ Cloud machines have no Xcode. Use `tools.mobile.build`:
 tools.mobile.build({ action: "start", platform: "ios", app: "cmhackathon", source: { type: "workspace", path: "cmhackathon", commands: [
   "npm ci",
   "npx expo prebuild --platform ios --clean",
-  "set -o pipefail && EXPO_PUBLIC_DEV_TOOLS=1 xcodebuild -workspace ios/Rooms.xcworkspace -scheme Rooms -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO | tail -200"
+  "set -o pipefail && EXPO_PUBLIC_DEV_TOOLS=1 xcodebuild -workspace ios/Rooms.xcworkspace -scheme Rooms -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGN_IDENTITY=- | tail -200"
 ], output_path: "ios/build/Build/Products/Release-iphonesimulator/Rooms.app" } })
 ```
+- `CODE_SIGN_IDENTITY=-` ad-hoc signs the simulator app. Do not use `CODE_SIGNING_ALLOWED=NO`: an unsigned app has no keychain entitlement, expo-secure-store fails, and anonymous sign-in hangs.
+- Set `EXPO_PUBLIC_CONVEX_URL` on the xcodebuild line too if you want it explicit; otherwise it comes from `.env`.
 - Release config embeds the JS bundle, so the phone needs no Metro server. Every JS change needs a rebuild (about 15 min cold, faster once Xcode's cache is warm).
 - `EXPO_PUBLIC_*` vars are inlined at bundle time; set them on the xcodebuild line.
 - Then `tools.capy.phone({ action: "attach", platform: "ios", model: "iPhone 16" })` once, and `tools.capy.phone({ action: "install", machine, build_id })`. Sessions end after 60 min and app data is lost (new anonymous user, permission prompt again).
 
 ### Seed a photo on the simulator
 `tools.capy.phone({ action: "open_url", url: "https://picsum.photos/id/237/1080/1920.jpg" })`, long-press the image (mouseDown, wait 1.5 s, mouseUp), tap "Save to Photos". The simulator also ships with a few sample photos.
-Saved images are NOT screenshots: they lack the screenshot subtype, so the default (Screenshots-only) import finds nothing on a simulator. Build with `EXPO_PUBLIC_DEV_TOOLS=1` and flip "Dev: read all photos" on the library screen, or build with `EXPO_PUBLIC_READ_ALL_PHOTOS=1` to default it on. See the Phase 1 report for what the device showed.
+Saved images are NOT screenshots: they lack the screenshot subtype, so the default (Screenshots-only) import finds nothing on a simulator. Build with `EXPO_PUBLIC_DEV_TOOLS=1` and flip "Dev: read all photos" on the library screen, or build with `EXPO_PUBLIC_READ_ALL_PHOTOS=1` to default it on. On the Revyl iPhone 16 (iOS 26) the Screenshots smart album exists but holds 0 items; the library has 6 sample photos, none with the screenshot subtype. With the flag off the app says "No screenshots found yet."; with it on, the newest photo uploads.
 
 ### Dev flags (`src/lib/dev-flags.ts`)
 - `EXPO_PUBLIC_DEV_TOOLS=1`: shows the dev panel (read-all-photos switch, library diagnostics: smart albums, Screenshots album count, screenshot-subtype count, all-images count).
