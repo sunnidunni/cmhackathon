@@ -6,7 +6,7 @@ import { api } from "../../convex/_generated/api";
 import lines from "@/content/lines.json";
 import { barFraction, failedLabel, readLine } from "@/components/onboarding/format";
 import { Body, Heading, Screen } from "@/components/onboarding/ui";
-import { Button, Character, colors, radii, ROOM_KEYS, rooms, SketchFrame, spacing, type } from "@/design";
+import { Button, Character, colors, radii, ROOM_KEYS, rooms, SketchFrame, spacing, UNSORTED_ROOM, type } from "@/design";
 
 const allLines: Record<string, string> = {
   ...lines.rooms.deadlines.lines,
@@ -42,7 +42,7 @@ export default function Import() {
             <Button label="Try again" variant="secondary" onPress={() => retryAll({})} />
           </View>
         ) : null}
-        {ROOM_KEYS.map((key) => {
+        {[...ROOM_KEYS, ...(roomList?.some((r) => r.category === "unsorted" && r.count > 0) ? (["unsorted"] as const) : [])].map((key) => {
           const room = roomList?.find((r) => r.category === key);
           const line = room?.newest?.lineKey ? allLines[room.newest.lineKey] : null;
           return (
@@ -53,10 +53,10 @@ export default function Import() {
                 seed={key}
                 style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, padding: spacing.md }}
               >
-                <Character room={key} size={48} />
+                <Character room={key === "unsorted" ? UNSORTED_ROOM : key} size={48} />
                 <View style={{ flex: 1, gap: spacing.xxs }}>
                   <Text style={type.heading}>
-                    {rooms[key].label}
+                    {key === "unsorted" ? "Unsorted" : rooms[key].label}
                     {room && room.count > 0 ? ` · ${room.count}` : ""}
                   </Text>
                   <Text style={type.body} numberOfLines={2}>
