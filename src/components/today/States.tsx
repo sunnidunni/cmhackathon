@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { Keeper, KeeperFace, PsstButton, Skeleton, SoftCard, text, usePalette } from "./kit";
+import { Keeper, KeeperFace, PsstButton, Skeleton, SoftCard, text, usePalette } from "@/design/psst";
 
 export function ScreenTitle({ children }: { children: string }) {
   const p = usePalette();
@@ -61,7 +61,7 @@ export function DoneView({ children }: { children?: React.ReactNode }) {
   const p = usePalette();
   return (
     <View style={{ alignItems: "center", gap: 12 }}>
-      <Keeper id="tock" size={128} />
+      <Keeper id="tock" size={128} sticker />
       <Text accessibilityRole="header" style={[text.headline, { color: p.ink, textAlign: "center" }]}>
         {"That's today's handful."}
       </Text>
@@ -75,7 +75,7 @@ export function EmptyView() {
   const p = usePalette();
   return (
     <View style={{ alignItems: "center", gap: 12, paddingTop: 48 }}>
-      <Keeper id="murmur" size={128} />
+      <Keeper id="murmur" size={128} sticker />
       <Text accessibilityRole="header" style={[text.headline, { color: p.ink, textAlign: "center" }]}>
         No screenshots to keep yet.
       </Text>

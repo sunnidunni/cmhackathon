@@ -1,8 +1,8 @@
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "../../../convex/_generated/api";
 import { computeDueAt, localDay, parseWhen } from "../../../convex/lib/time";
-import { lineFor } from "../tabs/helpers";
-import type { KeeperId } from "./kit";
+import { psstLine } from "../../design/psst/lines";
+import type { KeeperId } from "@/design/psst";
 
 export type TodayData = FunctionReturnType<typeof api.today.get>;
 type Card = TodayData["handful"][number];
@@ -82,16 +82,34 @@ export function headline(item: Item, now: number, tz: number): { name: string; r
   return { name, rest: "has one for you." };
 }
 
-export function toItem(c: Card, section: Section): Item {
+const weekdayOf = (when: string) => {
+  const p = parseWhen(when, 0);
+  return p ? DAYS_LONG[new Date(Date.UTC(p.y, p.mo - 1, p.d)).getUTCDay()] : "soon";
+};
+
+// The keeper's line, from the kit's line bank and the card's own title and date. Null when the bank has nothing true to say.
+function lineOf(c: Card, section: Section, keeper: KeeperId): string | null {
+  const weekday = c.date ? weekdayOf(c.date.when) : null;
+  if (section === "missed") return psstLine("system.reminder.fired");
+  if (keeper === "tock" && weekday) return c.reminder?.state === "scheduled" ? psstLine("tock.handful.set", { weekday }) : psstLine("tock.handful.dated", { title: c.title, weekday });
+  if (keeper === "murmur") return psstLine("murmur.handful", { title: c.title });
+  if (section === "thin" && keeper === "mote") return psstLine("mote.thinday", { title: c.title, date: `${MONTHS[new Date(c.takenAt).getMonth()]} ${new Date(c.takenAt).getDate()}` });
+  return null;
+}
+
+export type LineFallback = (title: string) => string | null;
+
+export function toItem(c: Card, section: Section, fallback?: LineFallback): Item {
+  const keeper = ROOM_KEEPER[c.category] ?? "mote";
   return {
     id: c._id,
     section,
-    keeper: ROOM_KEEPER[c.category] ?? "mote",
+    keeper,
     roomName: ROOM_NAMES[c.category] ?? "Unsorted",
     title: c.title,
     imageUrl: c.imageUrl,
     date: c.date,
-    line: lineFor(c.lineKey),
+    line: lineOf(c, section, keeper) ?? fallback?.(c.title) ?? null,
     takenAt: c.takenAt,
     reminder: c.reminder,
     actions: c.actions,
@@ -99,14 +117,14 @@ export function toItem(c: Card, section: Section): Item {
   };
 }
 
-export function buildItems(today: TodayData): Item[] {
+export function buildItems(today: TodayData, fallback?: LineFallback): Item[] {
   const seen = new Set<string>();
   const out: Item[] = [];
   const add = (cards: Card[], section: Section) => {
     for (const c of cards) {
       if (seen.has(c._id)) continue;
       seen.add(c._id);
-      out.push(toItem(c, section));
+      out.push(toItem(c, section, fallback));
     }
   };
   add(today.justIn, "justIn");
@@ -123,9 +141,9 @@ export type Screen =
   | { kind: "focus"; focus: Item; position: number; total: number; rows: Item[] }
   | { kind: "done"; rows: Item[] };
 
-export function buildScreen(today: TodayData | undefined, skipped: ReadonlySet<string>): { screen: Screen; items: Item[] } {
+export function buildScreen(today: TodayData | undefined, skipped: ReadonlySet<string>, fallback?: LineFallback): { screen: Screen; items: Item[] } {
   if (!today) return { screen: { kind: "loading" }, items: [] };
-  const items = buildItems(today).filter((i) => !skipped.has(i.id));
+  const items = buildItems(today, fallback).filter((i) => !skipped.has(i.id));
   const focus = items.find((i) => !i.handled && i.section !== "thin") ?? items.find((i) => !i.handled);
   const waitingJustIn = !items.some((i) => i.section === "justIn" && !i.handled);
   if (today.reading.pending > 0 && waitingJustIn) return { screen: { kind: "reading", pending: today.reading.pending, rows: items.slice(0, 3) }, items };

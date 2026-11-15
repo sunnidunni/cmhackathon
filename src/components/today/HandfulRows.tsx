@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { KeeperFace, ShotSticker, text, usePalette } from "./kit";
+import { KeeperFace, ShotSticker, text, usePalette } from "@/design/psst";
 import { rowSubtitle, type Item } from "./model";
 
 function Bell({ color }: { color: string }) {
@@ -49,7 +49,7 @@ export function HandfulRows({
             <ShotSticker uri={item.imageUrl} title={item.title} size={44} />
             <View style={{ flex: 1, gap: 2 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                {item.handled ? null : <KeeperFace id={item.keeper} size={22} />}
+                <KeeperFace id={item.keeper} size={22} muted={item.handled} />
                 <Text numberOfLines={2} style={[text.bodyBold, { flexShrink: 1, color: item.handled ? p.ink2 : p.ink }]}>
                   {item.title}
                 </Text>
@@ -58,8 +58,8 @@ export function HandfulRows({
             </View>
           </Pressable>
           {item.handled ? (
-            <View style={{ opacity: 0.4, width: 44, alignItems: "center" }}>
-              <KeeperFace id={item.keeper} size={28} />
+            <View style={{ width: 44, alignItems: "center" }}>
+              <KeeperFace id={item.keeper} size={28} muted />
             </View>
           ) : (
             <View style={{ flexDirection: "row" }}>

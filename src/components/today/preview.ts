@@ -1,5 +1,8 @@
 import { Image } from "react-native";
+import { DEMO_FLYER, DEMO_SHOTS } from "@/lib/fixtures";
 import type { TodayData } from "./model";
+
+const titleOf = (id: string) => DEMO_SHOTS.find((s) => s.id === id)?.title ?? id;
 
 const demo = (module: number) => Image.resolveAssetSource(module)?.uri ?? null;
 
@@ -25,11 +28,11 @@ export function previewToday(kind: string, tz: number): { data: TodayData | unde
       ...over,
     }) as Card;
   const set = (dueAt: number): Partial<Card> => ({ reminder: { id: "r" as never, state: "scheduled", dueAt }, actions: { primary: "done", secondary: "detail" } });
-  const dentist = card("dentist", "Dentist booking", "deadlines", "2026-11-17T15:00", "appointment", 9, { imageUrl: demo(require("@/content/demo/appointment.png")) });
-  const rent = card("rent", "Rent due Dec 1", "money", "2026-12-01", "rent due", 12, { imageUrl: demo(require("@/content/demo/bill.png")) });
-  const wifi = card("wifi", "Wi-Fi password from Mom", "chats", null, "", 5, { imageUrl: demo(require("@/content/demo/chat.png")) });
-  const recipe = card("recipe", "Miso butter pasta", "ideas", null, "", 4, { importance: 2, imageUrl: demo(require("@/content/demo/recipe.png")) });
-  const flyer = card("flyer", "Pottery class sign-up", "deadlines", "2026-11-20", "sign-up closes", 15, { takenAt: local(2026, 11, 15, 9, 12, tz), imageUrl: demo(require("@/content/demo/flyer_3days.png")) });
+  const dentist = card("dentist", titleOf("d1"), "deadlines", "2026-11-17T15:00", "appointment", 9, { imageUrl: demo(require("@/content/demo/appointment.png")) });
+  const rent = card("rent", titleOf("m1"), "money", "2026-12-01", "rent due", 12, { imageUrl: demo(require("@/content/demo/bill.png")) });
+  const wifi = card("wifi", titleOf("c1"), "chats", null, "", 5, { imageUrl: demo(require("@/content/demo/chat.png")) });
+  const recipe = card("recipe", titleOf("i1"), "ideas", null, "", 4, { importance: 2, imageUrl: demo(require("@/content/demo/recipe.png")) });
+  const flyer = card("flyer", DEMO_FLYER.title, "deadlines", "2026-11-20", "sign-up closes", 15, { takenAt: local(2026, 11, 15, 9, 12, tz) });
   const reading = { read: 15, total: 16, pending: 0, failed: 0 };
   const base = { day: "2026-11-15", justIn: [], missed: [], handful: [], thin: null, reminders: [], resurfaced: null, cleared: false, reading };
   const out: Record<string, Partial<TodayData>> = {

@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { KeeperFace, PsstButton, ShotSticker, SoftCard, text, usePalette } from "./kit";
+import { KeeperFace, PsstButton, ShotSticker, SoftCard, text, usePalette } from "@/design/psst";
 import { whenLabel, type Item, type ReminderRow } from "./model";
 
 export function ReminderRows({ rows, now, tz, onOpen }: { rows: ReminderRow[]; now: number; tz: number; onOpen: (id: string) => void }) {

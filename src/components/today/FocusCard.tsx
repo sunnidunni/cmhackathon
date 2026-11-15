@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { KeeperFace, KeeperLine, PsstButton, ShotSticker, text, usePalette, useKeeperColors, Wash } from "./kit";
+import { fonts, KeeperFace, KeeperLine, PsstButton, ShotSticker, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
 import { actionsFor, clockLabel, dateLabel, headline, sourceLine, type Item } from "./model";
 
 export function Headline({ item, now, tz }: { item: Item; now: number; tz: number }) {
@@ -47,7 +47,7 @@ export function FocusCard({
         <View style={{ flex: 1, gap: 6 }}>
           {item.section === "justIn" ? (
             <View style={{ alignSelf: "flex-start", backgroundColor: p.white, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 }}>
-              <Text style={[text.caption, { color: p.ink, fontWeight: "700" }]}>{`Just in · ${clockLabel(item.takenAt, tz)}`}</Text>
+              <Text style={[text.caption, { color: p.ink, fontFamily: fonts.uiBold }]}>{`Just in · ${clockLabel(item.takenAt, tz)}`}</Text>
             </View>
           ) : null}
           <Text style={[text.bodyBold, { fontSize: 18, lineHeight: 23, color: p.ink }]}>{item.title}</Text>
@@ -56,7 +56,7 @@ export function FocusCard({
           <Text style={[text.caption, { color: p.ink2 }]}>{sourceLine(item)}</Text>
           {item.section === "justIn" ? (
             <Pressable accessibilityRole="button" onPress={onRemoveReading} style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}>
-              <Text style={[text.caption, { color: p.ink2, fontWeight: "700", textDecorationLine: "underline" }]}>Remove this reading</Text>
+              <Text style={[text.caption, { color: p.ink2, fontFamily: fonts.uiBold, textDecorationLine: "underline" }]}>Remove this reading</Text>
             </Pressable>
           ) : null}
         </View>

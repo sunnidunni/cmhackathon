@@ -9,12 +9,18 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { ReminderRows, RememberCard } from "@/components/today/Extras";
 import { FocusCard, Headline } from "@/components/today/FocusCard";
 import { HandfulRows } from "@/components/today/HandfulRows";
-import { FIXTURES, PsstButton, text, usePalette } from "@/components/today/kit";
+import { PsstButton, text, usePalette } from "@/design/psst";
+import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
 import { previewToday } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
 import { DoneView, EmptyView, FailedCard, LoadingView, ReadingView } from "@/components/today/States";
 import { runSync } from "@/lib/sync";
+
+// Fixtures fill a keeper line only when the card has none and FIXTURES is on.
+const fixtureLine = FIXTURES
+  ? (title: string) => [...DEMO_SHOTS, DEMO_FLYER].find((s) => s.title.toLowerCase() === title.toLowerCase())?.keeperLine ?? null
+  : undefined;
 
 const asId = (id: string) => id as Id<"screenshots">;
 
@@ -61,9 +67,10 @@ export default function Today() {
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { screen, items } = buildScreen(today, skipped);
+  const [removed, setRemoved] = useState(false);
+  const { screen, items } = buildScreen(today, skipped, fixtureLine);
   const reminderRows = today ? extraReminders(today, items) : [];
-  const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin") : null;
+  const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin", fixtureLine) : null;
 
   const checkForNew = async () => {
     setRefreshing(true);
@@ -73,6 +80,7 @@ export default function Today() {
 
   const run = async (work: () => Promise<unknown>) => {
     setFailed(false);
+    setRemoved(false);
     if (demo) return;
     try {
       await work();
@@ -82,7 +90,7 @@ export default function Today() {
   };
   const skip = (item: Item) => setSkipped((s) => new Set(s).add(item.id));
   const open = (item: Item) => router.push(`/shot/${item.id}`);
-  const remind = (item: Item) => router.push(`/remind/${item.id}`);
+  const remind = (item: Item) => router.push(`/remind/${item.id}` as never);
   const act = (item: Item, kind: ReturnType<typeof actionsFor>["primaryKind"] | ReturnType<typeof actionsFor>["secondaryKind"]) => {
     if (kind === "remind") return remind(item);
     if (kind === "see") return open(item);
@@ -91,9 +99,17 @@ export default function Today() {
     return run(() => done({ id: asId(item.id) }));
   };
   const confirmRemove = (item: Item, title: string) =>
-    Alert.alert(title, "It's removed from Psst. The photo stays on your phone.", [
+    Alert.alert(title, "This takes it out of Rooms, Ask and reminders. Your original screenshot stays in Photos.", [
       { text: "Keep it", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => run(() => remove({ id: asId(item.id) })) },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () =>
+          run(async () => {
+            await remove({ id: asId(item.id) });
+            setRemoved(true);
+          }),
+      },
     ]);
   const menu = (item: Item) =>
     Alert.alert(item.title, undefined, [
@@ -156,6 +172,7 @@ export default function Today() {
           {resurfaced ? (
             <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
           ) : null}
+          {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Psst. Your original screenshot stays in Photos.</Text> : null}
           {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
         </View>
         {footer}
