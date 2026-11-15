@@ -6,6 +6,8 @@ import type { MutationCtx } from "./_generated/server";
 import { category } from "./schema";
 import { requireUserId } from "./lib/auth";
 import { reminderFor } from "./lib/cards";
+import { hashPick } from "./lib/extraction";
+import { PLAYFUL_KEYS } from "./lib/lines";
 
 async function mine(ctx: MutationCtx, id: Id<"screenshots">) {
   const userId = await requireUserId(ctx);
@@ -67,7 +69,11 @@ export const move = mutation({
   args: { id: v.id("screenshots"), category },
   handler: async (ctx, { id, category: room }) => {
     await mine(ctx, id);
-    await ctx.db.patch(id, { category: room, userMoved: true });
+    await ctx.db.patch(id, {
+      category: room,
+      userMoved: true,
+      reactionKey: hashPick(PLAYFUL_KEYS[room], id),
+    });
     return null;
   },
 });

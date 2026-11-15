@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { PLAYFUL_KEYS } from "./lib/lines";
 import schema from "./schema";
 
 const removeMemory = vi.fn();
@@ -130,6 +131,20 @@ describe("rooms, detail and mutations", () => {
       screenshotId: id, title: "x", text: "", summary: "", category: "money", reason: "", dates: [], importance: 1, reactionKey: "money_01",
     });
     expect((await me.query(api.shots.detail, { id }))?.category).toBe("deadlines");
+  });
+
+  test("a moved screenshot gets a line key from its new room", async () => {
+    const { me, seed, t } = await setup();
+    const id = await seed({ title: "x", category: "unsorted" });
+    await t.run((ctx) => ctx.db.patch(id, { reactionKey: "unsorted_03" }));
+    await me.mutation(api.shots.move, { id, category: "ideas" });
+    const d = await me.query(api.shots.detail, { id });
+    expect(PLAYFUL_KEYS.ideas).toContain(d?.lineKey);
+    const room = await me.query(api.rooms.get, { category: "ideas" });
+    expect(PLAYFUL_KEYS.ideas).toContain(room.items[0].lineKey);
+    expect(PLAYFUL_KEYS.ideas).toContain(room.newestLineKey);
+    await me.mutation(api.shots.move, { id, category: "money" });
+    expect(PLAYFUL_KEYS.money).toContain((await me.query(api.shots.detail, { id }))?.lineKey);
   });
 
   test("detail and mutations are private to the owner", async () => {

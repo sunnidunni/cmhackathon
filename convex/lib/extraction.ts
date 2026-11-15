@@ -71,7 +71,7 @@ const str = (value: unknown) => (typeof value === "string" ? value : "");
 const PARTIAL_DATE = /^(\d{4}-)?\d{2}-\d{2}(T\d{1,2}:\d{2}(:\d{2})?)?$/;
 const PHONE_CHROME = /status bar|battery|signal|carrier|wi-?fi|phone clock|lock screen/i;
 
-function hashPick(keys: string[], seed: string) {
+export function hashPick(keys: string[], seed: string) {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
   return keys[(h >>> 0) % keys.length];
