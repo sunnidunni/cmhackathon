@@ -189,7 +189,11 @@ export const run = internalAction({
         await ctx.runAction(internal.memory.store, {
           screenshotId,
           userId: target.userId,
-          ...result,
+          title: result.title,
+          summary: result.summary,
+          text: result.text,
+          category: result.category,
+          dates: result.dates,
         });
       }
     } catch (e) {
