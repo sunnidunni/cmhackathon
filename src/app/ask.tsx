@@ -20,7 +20,7 @@ import { Button, LoadingView } from "@/components/state-views";
 
 type Exchange = FunctionReturnType<typeof api.ask.history>[number];
 type Source = Exchange["sources"][number];
-type Pending = { question: string; failed: boolean };
+type Pending = { question: string; failed: boolean; sentAt: number };
 
 const SUGGESTIONS = ["When is that due?", "My flight details", "Wi-Fi password", "That recipe"];
 
@@ -30,17 +30,23 @@ export default function Ask() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const answered =
+    pending !== null &&
+    !pending.failed &&
+    (history ?? []).some((ex) => ex.question === pending.question && ex.createdAt >= pending.sentAt - 5000);
+  const shownPending = answered ? null : pending;
 
   async function send(question: string) {
     const q = question.trim();
     if (!q || (pending && !pending.failed)) return;
     setInput("");
-    setPending({ question: q, failed: false });
+    const sentAt = Date.now();
+    setPending({ question: q, failed: false, sentAt });
     try {
       await askAction({ question: q });
       setPending(null);
     } catch {
-      setPending({ question: q, failed: true });
+      setPending({ question: q, failed: true, sentAt });
     }
   }
 
@@ -67,7 +73,7 @@ export default function Ask() {
             onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
             keyboardShouldPersistTaps="handled"
           >
-            {history.length === 0 && !pending ? (
+            {history.length === 0 && !shownPending ? (
               <View style={styles.empty}>
                 <Text style={styles.h1}>What are you looking for?</Text>
                 <Text style={styles.cap}>
@@ -87,14 +93,14 @@ export default function Ask() {
               <ExchangeView key={ex._id} exchange={ex} />
             ))}
 
-            {pending ? (
+            {shownPending ? (
               <View style={styles.exchange}>
-                <Text style={styles.question}>{pending.question}</Text>
-                {pending.failed ? (
+                <Text style={styles.question}>{shownPending.question}</Text>
+                {shownPending.failed ? (
                   <View style={styles.failCard}>
                     <Text style={styles.failTitle}>Couldn't get an answer</Text>
                     <Text style={styles.cap}>Your question is saved above.</Text>
-                    <Button label="Try again" onPress={() => send(pending.question)} />
+                    <Button label="Try again" onPress={() => send(shownPending.question)} />
                   </View>
                 ) : (
                   <View style={styles.row} accessibilityState={{ busy: true }}>
