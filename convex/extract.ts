@@ -183,7 +183,7 @@ export const run = internalAction({
       const target = await ctx.runQuery(internal.extract.getForExtract, { screenshotId });
       if (target === null) return;
       if (target.url === null) throw new Error("Image missing from storage");
-      const result = parseExtraction(await callVision(target.url));
+      const result = parseExtraction(await callVision(target.url), screenshotId);
       const saved = await ctx.runMutation(internal.extract.complete, { screenshotId, ...result });
       if (saved) {
         await ctx.runAction(internal.memory.store, {

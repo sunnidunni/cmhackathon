@@ -77,3 +77,43 @@ describe("manifest fixture", () => {
     }
   });
 });
+
+describe("extraction fixes", () => {
+  test("a phone status bar clock is never returned as a date", () => {
+    const r = parseExtraction(
+      JSON.stringify({
+        ...base,
+        dates: [
+          { when: "9:41", what: "Phone status bar time", confident: false },
+          { when: "09:41", what: "clock", confident: true },
+          { when: "2026-11-16T18:30", what: "event", confident: true },
+          { when: "11:20", what: "Flight arrival time", confident: false },
+          { when: "2026-11-16", what: "Battery 80%", confident: true },
+        ],
+      }),
+    );
+    expect(r.dates).toEqual([{ when: "2026-11-16T18:30", what: "event", confident: true }]);
+  });
+  test("partial month-day dates stay, not confident", () => {
+    const r = parseExtraction(
+      JSON.stringify({ ...base, dates: [{ when: "11-21T08:30", what: "hike", confident: true }] }),
+    );
+    expect(r.dates).toEqual([{ when: "11-21T08:30", what: "hike", confident: false }]);
+  });
+  test("reactionKey is picked from a stable hash of the screenshot id and varies", () => {
+    const keys = new Set<string>();
+    for (let i = 0; i < 40; i++) {
+      const raw = JSON.stringify({ ...base, reactionKey: "deadlines_01" });
+      const a = parseExtraction(raw, `id${i}`).reactionKey;
+      expect(parseExtraction(raw, `id${i}`).reactionKey).toBe(a);
+      expect(PLAYFUL_KEYS.deadlines).toContain(a);
+      keys.add(a);
+    }
+    expect(keys.size).toBeGreaterThan(4);
+  });
+  test("chats are capped at importance 2", () => {
+    const r = parseExtraction(JSON.stringify({ ...base, category: "chats", importance: 4, reactionKey: "chats_02" }));
+    expect(r.importance).toBe(2);
+  });
+});
+

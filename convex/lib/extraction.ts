@@ -22,10 +22,10 @@ export function buildPrompt(todayIso: string) {
 - title: a short title (under 60 characters). Include the key amount or name when there is one.
 - text: all readable text in the image, in reading order.
 - summary: one or two plain sentences.
-- category: deadlines (events, appointments, due dates, bookings), chats (messages and conversations), money (bills, prices, payments, receipts, tickets, flights), ideas (recipes, quotes, articles, things to try or remember), or unsorted.
+- category: deadlines (flyers, invitations, events, appointments, sign-ups, anything with a due date that is not a payment), chats (any screenshot of a messaging conversation, even when it mentions a plan, a date or a time), money (bills, prices, payments, receipts, tickets, flights), ideas (recipes, quotes, articles, AI answers, things to try or remember), or unsorted.
 - reason: one short sentence on why you chose that category.
-- dates: every date or time visibly shown. when is ISO 8601 (YYYY-MM-DD, or YYYY-MM-DDTHH:MM when a time is shown). what says what the date is for. Never guess a date, time, or price: only return what is visibly in the image. If the year or any other part is missing, write only what is visible (for example 11-21) and set confident to false. Use an empty array when there are no dates.
-- importance: 1 to 5. Use 4 or 5 only for deadlines, payments due, bookings, codes or passwords the user will need, and anything with a date in the next two weeks. Everything else is 1 to 3.
+- dates: every date or time visibly shown. when is ISO 8601 (YYYY-MM-DD, or YYYY-MM-DDTHH:MM when a time is shown). what says what the date is for. Never guess a date, time, or price: only return what is visibly in the image. If the year or any other part is missing, write only what is visible (for example 11-21) and set confident to false. Use an empty array when there are no dates. Only return dates the user might need to act on or attend: skip publication dates, billing periods, order dates and other dates already in the past. The phone's own status bar (clock such as 9:41, battery, signal, carrier) is never a date; ignore it. A bare time with no day is not a date either.
+- importance: 1 to 5. Use 4 or 5 only for deadlines, payments due, codes or passwords the user will need, and anything with a date within 14 days of today. A booking, ticket or flight more than 14 days away is 3. A product, price or sale deal is 3 (a payment actually due is 4 or 5). A conversation is 1 or 2. Saved ideas, recipes, quotes and articles are 1.
 - If the image is not readable or does not fit a room, set category to unsorted and importance to 1.
 - reactionKey: pick exactly one key from the list for the category you chose. Do not write your own line.
 ${keys}`;
@@ -64,7 +64,16 @@ const str = (value: unknown) => (typeof value === "string" ? value : "");
 // Turns a model reply into a safe Extraction. Throws only when the reply is not a JSON object.
 // A bad category becomes unsorted, a bad reactionKey becomes the first playful key of the room,
 // and any date that is not a full ISO date is marked not confident.
-export function parseExtraction(raw: string): Extraction {
+const PARTIAL_DATE = /^(\d{4}-)?\d{2}-\d{2}(T\d{1,2}:\d{2}(:\d{2})?)?$/;
+const PHONE_CHROME = /status bar|battery|signal|carrier|wi-?fi|phone clock|lock screen/i;
+
+function hashPick(keys: string[], seed: string) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  return keys[(h >>> 0) % keys.length];
+}
+
+export function parseExtraction(raw: string, screenshotId?: string): Extraction {
   const json = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
   let data: unknown;
   try {
@@ -80,20 +89,20 @@ export function parseExtraction(raw: string): Extraction {
     ? (o.category as Category)
     : "unsorted";
   const rawImportance = Number(o.importance);
-  const importance =
-    category === "unsorted"
-      ? 1
-      : Number.isFinite(rawImportance)
-        ? Math.min(5, Math.max(1, Math.round(rawImportance)))
-        : 1;
-  const reactionKey = PLAYFUL_KEYS[category].includes(str(o.reactionKey))
-    ? str(o.reactionKey)
-    : PLAYFUL_KEYS[category][0];
+  const clamped = Number.isFinite(rawImportance)
+    ? Math.min(5, Math.max(1, Math.round(rawImportance)))
+    : 1;
+  const importance = category === "unsorted" ? 1 : category === "chats" ? Math.min(2, clamped) : clamped;
+  const reactionKey = screenshotId
+    ? hashPick(PLAYFUL_KEYS[category], screenshotId)
+    : PLAYFUL_KEYS[category].includes(str(o.reactionKey))
+      ? str(o.reactionKey)
+      : PLAYFUL_KEYS[category][0];
   const dates: ExtractedDate[] = (Array.isArray(o.dates) ? o.dates : []).flatMap((d) => {
     if (typeof d !== "object" || d === null) return [];
     const item = d as Record<string, unknown>;
     const when = str(item.when).trim();
-    if (when === "") return [];
+    if (!PARTIAL_DATE.test(when) || PHONE_CHROME.test(str(item.what))) return [];
     return [
       {
         when,

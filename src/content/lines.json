@@ -1,7 +1,7 @@
 {
   "rooms": {
     "deadlines": {
-      "character": "Tock",
+      "character": "Psst",
       "lines": {
         "deadlines_01": "Got one! I've circled it twice already.",
         "deadlines_02": "Tick tick, nothing scary, I just like saying it.",
@@ -17,7 +17,7 @@
       "note": "keys deadlines_01..08 are playful; deadlines_s01, deadlines_s02 are serious and used for importance 4-5 or items due today/tomorrow"
     },
     "chats": {
-      "character": "Murmur",
+      "character": "Psst",
       "lines": {
         "chats_01": "Ooh, juicy. My lips are sealed, though.",
         "chats_02": "Saved the chat. I didn't read it. Much.",
@@ -33,7 +33,7 @@
       "note": "chats_s01, chats_s02 serious"
     },
     "money": {
-      "character": "Penny Pocket",
+      "character": "Psst",
       "lines": {
         "money_01": "Receipt filed. Pencil sharpened.",
         "money_02": "Rounded up, added up, put away.",
@@ -49,10 +49,10 @@
       "note": "money_s01, money_s02 serious"
     },
     "ideas": {
-      "character": "Wisp",
+      "character": "Psst",
       "lines": {
         "ideas_01": "Ooh, shiny idea. Into the collection it goes.",
-        "ideas_02": "I'll keep this one safe in my cloud.",
+        "ideas_02": "I'll keep this one safe for later.",
         "ideas_03": "What a lovely thing to save for later.",
         "ideas_04": "Later is my favorite time. Saved for it.",
         "ideas_05": "Another sparkle for the pile.",
@@ -66,7 +66,7 @@
     }
   },
   "unsorted": {
-    "character": "Wisp",
+    "character": "Psst",
     "lines": {
       "unsorted_01": "Not sure where this one goes yet. You can move it.",
       "unsorted_02": "A mystery! Pick a room for it whenever you like.",
@@ -82,7 +82,7 @@
     "button": "Allow photo access",
     "lines": {
       "priming_01": "Just the screenshots, never the rest of your photos.",
-      "priming_02": "Four little friends are waiting to sort them for you.",
+      "priming_02": "I'm ready to sort them into rooms for you.",
       "priming_03": "One tap and I'll start reading."
     }
   },
@@ -94,10 +94,10 @@
     "importing_05": "All read! Come say hi to the rooms."
   },
   "empty": {
-    "deadlines": "No dates here yet. Screenshot a flyer or a due date and Tock will catch it.",
-    "chats": "No chats yet. Screenshot a conversation and Murmur will keep it safe.",
+    "deadlines": "No dates here yet. Screenshot a flyer or a due date and I'll catch it.",
+    "chats": "No chats yet. Screenshot a conversation and I'll keep it safe.",
     "money": "Nothing in the pocket yet. Receipts, tickets and bills land here.",
-    "ideas": "No ideas yet. Save a recipe, tip or quote and Wisp will collect it.",
+    "ideas": "No ideas yet. Save a recipe, tip or quote and I'll collect it.",
     "unsorted": "Nothing unsorted. Everything has a home.",
     "missed": "All clear. Nothing important is waiting for you."
   },
@@ -105,7 +105,7 @@
     "title": "You might have missed",
     "subtitle": "Things worth a quick look, most urgent first.",
     "lines": {
-      "missed_01": "Tock is holding these for you.",
+      "missed_01": "I'm holding these for you.",
       "missed_02": "A few things worth a look.",
       "missed_03": "Most urgent first."
     },
@@ -116,12 +116,13 @@
     }
   },
   "notification": {
-    "template": "{character}: your {thing} is due {when}. Want to see it?",
+    "template": "Psst: your {thing} is due {when}. Want to see it?",
     "examples": [
-      "Tock: your Lantern Night ticket signup is due tomorrow. Want to see it?",
-      "Penny Pocket: your power bill is due tomorrow. Want to see it?",
-      "Tock: your Harvest Market flyer event is tomorrow. Want to see it?"
+      "Psst: your Lantern Night ticket signup is due tomorrow. Want to see it?",
+      "Psst: your power bill is due tomorrow. Want to see it?",
+      "Psst: your Harvest Market flyer event is tomorrow. Want to see it?"
     ],
-    "todayTemplate": "{character}: your {thing} is due today at {time}. Want to see it?"
-  }
+    "todayTemplate": "Psst: your {thing} is due today at {time}. Want to see it?"
+  },
+  "note": "Nov 15: one mascot, Psst. The four character names are retired; line keys are unchanged."
 }
