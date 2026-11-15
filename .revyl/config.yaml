@@ -18,7 +18,7 @@ pr_review:
     enabled: true
     triggers:
         labels:
-            - "!skip-proof"
+            - revyl-proof
     build:
         kind: revyl
         profile: pull-request
