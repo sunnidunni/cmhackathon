@@ -1,15 +1,33 @@
 import { useQuery } from "convex/react";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../convex/_generated/api";
-import { bringInState, broughtInLine, failedLabel, type BringInResult } from "@/components/onboarding/format";
-import { Body, Heading, Screen, Stack } from "@/components/onboarding/ui";
-import { Button, Character, colors, spacing } from "@/design";
+import { bringInState, failedLabel, type BringInResult } from "@/components/onboarding/format";
+import { KeeperRow, SkeletonKeeperRow, type RowShot } from "@/components/reveal/KeeperRow";
+import { FoundCard } from "@/components/reveal/FoundCard";
+import { PsstButton, KEEPERS, text, usePalette, type KeeperId } from "@/design/psst";
+import { FIXTURE_SHOT } from "@/components/reveal/demo-shots";
+import { ROOM_FOR, REACTION_GAP_MS, REVEAL_ORDER, keepersDue, screenshotsIn } from "@/components/reveal/model";
+import { DEMO_COUNTS, FIXTURES } from "@/lib/fixtures";
 import { useSync } from "@/lib/sync";
 
+
+const FIXTURE_COUNTS = { deadlines: DEMO_COUNTS.tock, money: DEMO_COUNTS.penny, chats: DEMO_COUNTS.murmur, ideas: DEMO_COUNTS.mote, unsorted: DEMO_COUNTS.unsorted };
+
 export default function BringIn() {
-  const progress = useQuery(api.sync.progress, {});
+  const p = usePalette();
+  // Dev preview: /import?demo=<0..16> drives the reveal from fixtures, only when FIXTURES is on.
+  const { demo } = useLocalSearchParams<{ demo?: string }>();
+  const demoRead = FIXTURES && demo !== undefined ? Math.min(DEMO_COUNTS.total, Math.max(0, Number(demo) || 0)) : null;
+  const liveProgress = useQuery(api.sync.progress, demoRead === null ? {} : "skip");
+  const liveRooms = useQuery(api.rooms.list, demoRead === null ? {} : "skip");
+  const progress = demoRead === null ? liveProgress : { total: DEMO_COUNTS.total, read: demoRead, failed: 0, pending: DEMO_COUNTS.total - demoRead, uploaded: DEMO_COUNTS.total };
+  const rooms =
+    demoRead === null
+      ? liveRooms
+      : (Object.entries(FIXTURE_COUNTS).map(([category, count]) => ({ category, count: Math.ceil((count * demoRead) / DEMO_COUNTS.total), newest: null })) as NonNullable<typeof liveRooms>);
   const { syncNow } = useSync();
   const [result, setResult] = useState<BringInResult | null>(null);
   const [error, setError] = useState(false);
@@ -22,52 +40,120 @@ export default function BringIn() {
   }, [syncNow]);
 
   useEffect(() => {
-    if (started.current) return;
+    if (started.current || demoRead !== null) return;
     started.current = true;
     run();
-  }, [run]);
+  }, [run, demoRead]);
 
-  const state = bringInState(result, error);
+  const state = demoRead === null ? bringInState(result, error) : ({ kind: demoRead >= DEMO_COUNTS.total ? "done" : "working" } as const);
+  const total = progress?.total ?? 0;
+  const read = progress?.read ?? 0;
+  const done = state.kind === "done" && progress !== undefined && progress.pending === 0 && total > 0;
 
+  const due = keepersDue(read, done);
+  const [shown, setShown] = useState(0);
+  const lastPop = useRef(0);
   useEffect(() => {
-    if (state.kind !== "done") return;
-    const timer = setTimeout(() => router.replace("/today"), 1200);
+    if (shown >= due) return;
+    const wait = shown === 0 ? 0 : Math.max(0, lastPop.current + REACTION_GAP_MS - Date.now());
+    const timer = setTimeout(() => {
+      lastPop.current = Date.now();
+      setShown((n) => n + 1);
+    }, wait);
     return () => clearTimeout(timer);
-  }, [state.kind]);
+  }, [shown, due]);
+
+  const roomFor = (id: KeeperId) => rooms?.find((r) => r.category === ROOM_FOR[id]);
+  const shotFor = (id: KeeperId): RowShot | null => {
+    const newest = roomFor(id)?.newest;
+    if (newest) return { uri: newest.imageUrl, title: newest.title };
+    return FIXTURES ? FIXTURE_SHOT[id] : null;
+  };
+  const unsorted = rooms?.find((r) => r.category === "unsorted")?.count ?? 0;
+  const activeId = !done && shown > 0 ? REVEAL_ORDER[shown - 1] : null;
+  const barColor = activeId ? KEEPERS[activeId].main : p.ink;
+  const allShown = shown >= REVEAL_ORDER.length;
+
+  if (state.kind === "failed") {
+    return (
+      <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
+        <View style={styles.center}>
+          <Text style={[text.headline, { color: p.ink }]}>{failedLabel(state.failed)}.</Text>
+          <Text style={[text.body, { color: p.ink2 }]}>Check your connection and try again. The ones already in are safe.</Text>
+        </View>
+        <View style={styles.footer}>
+          <PsstButton kind="filled" label="Try again" onPress={run} />
+          <PsstButton kind="text" label="Go to Today" onPress={() => router.replace("/today")} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const empty = state.kind === "done" && progress !== undefined && progress.pending === 0 && total === 0;
+  if (empty) {
+    return (
+      <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
+        <View style={styles.center}>
+          <Text style={[text.headline, { color: p.ink }]}>No screenshots to read yet.</Text>
+          <Text style={[text.body, { color: p.ink2 }]}>Take a screenshot and Psst reads it.</Text>
+        </View>
+        <View style={styles.footer}>
+          <PsstButton kind="filled" label="Continue" onPress={() => router.replace("/today")} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <Screen>
-      <View style={{ flex: 1, justifyContent: "center", gap: spacing.xl }}>
-        <View style={{ alignItems: "center" }}>
-          <Character size={96} expression={state.kind === "done" ? "happy" : "neutral"} />
+    <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+          {done ? `${screenshotsIn(total)} in.\nMeet your keepers.` : "Reading your screenshots."}
+        </Text>
+        {done ? null : (
+          <>
+            <Text style={[text.body, { color: p.ink2, marginTop: 8 }]}>{progress ? `${read} of ${total} read.` : " "}</Text>
+            <View style={[styles.track, { backgroundColor: p.fill2 }]}>
+              <View style={{ height: 4, borderRadius: 2, backgroundColor: barColor, width: `${total > 0 ? Math.round((read / total) * 100) : 0}%` }} />
+            </View>
+          </>
+        )}
+        {done && allShown && FIXTURES ? (
+          <View style={{ marginTop: 20 }}>
+            <FoundCard />
+          </View>
+        ) : null}
+        <View style={{ marginTop: done ? 20 : 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: p.hair }}>
+          {REVEAL_ORDER.map((id, i) =>
+            i < shown ? (
+              <KeeperRow key={id} id={id} count={roomFor(id)?.count ?? null} done={done} active={activeId === id} shot={shotFor(id)} />
+            ) : (
+              <SkeletonKeeperRow key={id} />
+            ),
+          )}
         </View>
-        {state.kind === "working" ? (
-          <Stack>
-            <Heading>Bringing in your screenshots</Heading>
-            <Body>{broughtInLine(progress?.uploaded ?? 0)}</Body>
-            <ActivityIndicator color={colors.ink} />
-          </Stack>
-        ) : null}
-        {state.kind === "done" ? (
-          <Stack>
-            <Heading>Your screenshots are in</Heading>
-            <Body>I'll sort them quietly while you look around.</Body>
-          </Stack>
-        ) : null}
-        {state.kind === "failed" ? (
-          <Stack>
-            <Heading>{failedLabel(state.failed)}</Heading>
-            <Body>Check your connection and try again. The ones already in are safe.</Body>
-          </Stack>
-        ) : null}
+      </ScrollView>
+      <View style={styles.footer}>
+        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
+          {done
+            ? unsorted > 0
+              ? `${screenshotsIn(unsorted)} ${unsorted === 1 ? "waits" : "wait"} in Unsorted. You can meet the keepers again in Rooms.`
+              : "You can meet the keepers again in Rooms."
+            : "Stay, or skip ahead and they keep reading."}
+        </Text>
+        <PsstButton kind="filled"
+          label={done ? "Continue" : "Skip ahead"}
+          onPress={() => router.replace(done ? "/keepers-card" : "/today")}
+        />
       </View>
-      {state.kind === "failed" ? (
-        <Stack gap={spacing.md}>
-          <Button label="Try again" onPress={run} />
-          <Button label="Go to Home" variant="secondary" onPress={() => router.replace("/today")} />
-        </Stack>
-      ) : null}
-      {state.kind === "done" ? <Button label="Open Psst" onPress={() => router.replace("/today")} /> : null}
-    </Screen>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  scroll: { padding: 16, paddingTop: 24 },
+  track: { height: 4, borderRadius: 2, marginTop: 14 },
+  center: { flex: 1, justifyContent: "center", paddingHorizontal: 16, gap: 12 },
+  footer: { paddingHorizontal: 16, paddingBottom: 12, gap: 12 },
+});
