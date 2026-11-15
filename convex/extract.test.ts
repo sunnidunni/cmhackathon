@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { MAX_PARALLEL } from "./extract";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -43,12 +44,13 @@ const status = (t: Awaited<ReturnType<typeof setup>>["t"], id: Id<"screenshots">
   t.run(async (ctx) => (await ctx.db.get(id))?.status);
 
 describe("status transitions", () => {
-  test("kick moves at most 4 uploaded rows to processing", async () => {
-    const { t, ids } = await setup(6);
+  test("kick moves at most MAX_PARALLEL uploaded rows to processing", async () => {
+    const { t, ids } = await setup(MAX_PARALLEL + 2);
     await t.mutation(internal.extract.kick, {});
     const statuses = await Promise.all(ids.map((id) => status(t, id)));
-    expect(statuses.filter((s) => s === "processing")).toHaveLength(4);
+    expect(statuses.filter((s) => s === "processing")).toHaveLength(MAX_PARALLEL);
     expect(statuses.filter((s) => s === "uploaded")).toHaveLength(2);
+    expect(MAX_PARALLEL).toBe(10);
   });
 
   test("complete makes a processing row ready, and ignores a row that is not processing", async () => {
@@ -107,5 +109,18 @@ describe("timeout recovery", () => {
     await t.run((ctx) => ctx.db.patch(ids[0], { status: "processing", startedAt: Date.now() - 10 * 60 * 1000, attempts: 2 }));
     await t.mutation(internal.extract.kick, {});
     expect((await t.run((ctx) => ctx.db.get(ids[0])))?.status).toBe("failed");
+  });
+});
+
+describe("rate limits", () => {
+  test("an OpenAI 429 retries without using up attempts, so it never fails for good", async () => {
+    const { t, ids } = await setup();
+    for (let i = 0; i < 6; i++) {
+      await t.run((ctx) => ctx.db.patch(ids[0], { status: "processing", startedAt: Date.now(), retryAt: undefined }));
+      await t.mutation(internal.extract.fail, { screenshotId: ids[0], error: "OpenAI 429: rate limit", rateLimited: true });
+      const row = await t.run((ctx) => ctx.db.get(ids[0]));
+      expect(row?.status).toBe("uploaded");
+      expect(row?.attempts ?? 0).toBe(0);
+    }
   });
 });

@@ -9,7 +9,7 @@ import {
 import { EXTRACTION_SCHEMA, buildPrompt, parseExtraction } from "./lib/extraction";
 import { requireUserId } from "./lib/auth";
 
-export const MAX_PARALLEL = 4;
+export const MAX_PARALLEL = 10;
 export const MAX_ATTEMPTS = 3;
 const STALE_MS = 3 * 60 * 1000;
 const backoffMs = (attempts: number) => 5000 * 2 ** (attempts - 1);
@@ -101,10 +101,16 @@ export const complete = internalMutation({
 });
 
 export const fail = internalMutation({
-  args: { screenshotId: v.id("screenshots"), error: v.string() },
-  handler: async (ctx, { screenshotId, error }) => {
+  args: { screenshotId: v.id("screenshots"), error: v.string(), rateLimited: v.optional(v.boolean()) },
+  handler: async (ctx, { screenshotId, error, rateLimited }) => {
     const row = await ctx.db.get(screenshotId);
     if (row === null || row.status !== "processing") return;
+    if (rateLimited) {
+      const wait = 8000 + Math.floor(Math.random() * 4000);
+      await ctx.db.patch(screenshotId, { status: "uploaded", error, retryAt: Date.now() + wait });
+      await ctx.scheduler.runAfter(wait + 100, internal.extract.kick, {});
+      return;
+    }
     const attempts = (row.attempts ?? 0) + 1;
     if (attempts >= MAX_ATTEMPTS) {
       await ctx.db.patch(screenshotId, { status: "failed", attempts, error });
@@ -170,6 +176,7 @@ async function callVision(imageUrl: string) {
     },
     body: JSON.stringify({
       model: process.env.OPENAI_VISION_MODEL ?? "gpt-6.1-terra",
+      reasoning: { effort: "low" },
       input: [
         {
           role: "user",
@@ -216,9 +223,11 @@ export const run = internalAction({
         });
       }
     } catch (e) {
+      const error = e instanceof Error ? e.message : String(e);
       await ctx.runMutation(internal.extract.fail, {
         screenshotId,
-        error: e instanceof Error ? e.message : String(e),
+        error,
+        rateLimited: /^OpenAI 429/.test(error),
       });
     } finally {
       await ctx.runMutation(internal.extract.kick, {});
