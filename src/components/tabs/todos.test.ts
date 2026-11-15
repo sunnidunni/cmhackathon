@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanTodoText, splitTodos } from "./todos";
+import { cleanTodoText, restoreDraft, splitTodos } from "./todos";
 
 describe("todos", () => {
   it("trims and rejects empty text", () => {
@@ -8,6 +8,10 @@ describe("todos", () => {
   });
   it("caps text at 200 characters", () => {
     expect(cleanTodoText("a".repeat(250))).toHaveLength(200);
+  });
+  it("restores a failed draft only into an empty field", () => {
+    expect(restoreDraft("", "buy stamps")).toBe("buy stamps");
+    expect(restoreDraft("call mom", "buy stamps")).toBe("call mom");
   });
   it("splits open from done, keeping order", () => {
     const items = [

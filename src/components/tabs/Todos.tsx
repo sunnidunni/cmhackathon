@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
-import { cleanTodoText, splitTodos } from "./todos";
+import { cleanTodoText, restoreDraft, splitTodos } from "./todos";
 import { Button, colors, radii, SketchFrame, spacing, type } from "@/design";
 
 export function Todos() {
@@ -11,12 +11,17 @@ export function Todos() {
   const toggle = useMutation(api.todos.toggle);
   const remove = useMutation(api.todos.remove);
   const [text, setText] = useState("");
+  const [failed, setFailed] = useState(false);
 
   async function submit() {
     const clean = cleanTodoText(text);
     if (!clean) return;
     setText("");
-    await add({ text: clean }).catch(() => setText((current) => (current === "" ? clean : current)));
+    setFailed(false);
+    await add({ text: clean }).catch(() => {
+      setFailed(true);
+      setText((current) => restoreDraft(current, clean));
+    });
   }
 
   const { open, done } = splitTodos(items ?? []);
@@ -41,6 +46,7 @@ export function Todos() {
           <Button label="Add" onPress={submit} disabled={!cleanTodoText(text)} />
         </View>
       </View>
+      {failed ? <Text style={type.caption}>Couldn't add that. Try again.</Text> : null}
       {items && items.length === 0 ? <Text style={type.body}>Nothing here yet. Add the first thing you need to do.</Text> : null}
       {open.map((t) => (
         <Row key={t._id} text={t.text} done={false} onToggle={() => toggle({ id: t._id })} onRemove={() => remove({ id: t._id })} />
