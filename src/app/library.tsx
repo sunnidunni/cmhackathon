@@ -1,0 +1,140 @@
+import { useConvex, useQuery } from "convex/react";
+import { Image } from "expo-image";
+import { useEffect, useState } from "react";
+import { FlatList, Linking, StyleSheet, Switch, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { api } from "../../convex/_generated/api";
+import { Button, LoadingView, MessageView } from "@/components/state-views";
+import { DEV_TOOLS, READ_ALL_PHOTOS_DEFAULT } from "@/lib/dev-flags";
+import { importOneScreenshot } from "@/lib/import-one";
+import {
+  getLibraryDiagnostics,
+  getPhotoAccess,
+  type LibraryDiagnostics,
+  type PhotoAccess,
+} from "@/lib/photos";
+
+type ImportState =
+  | { kind: "idle" }
+  | { kind: "working" }
+  | { kind: "done"; message: string }
+  | { kind: "failed"; message: string };
+
+export default function Library() {
+  const convex = useConvex();
+  const screenshots = useQuery(api.screenshots.list);
+  const [readAll, setReadAll] = useState(READ_ALL_PHOTOS_DEFAULT);
+  const [access, setAccess] = useState<PhotoAccess | null>(null);
+  const [state, setState] = useState<ImportState>({ kind: "idle" });
+  const [diag, setDiag] = useState<LibraryDiagnostics | string | null>(null);
+
+  useEffect(() => {
+    getPhotoAccess().then(setAccess, () => setAccess(null));
+    if (DEV_TOOLS) getLibraryDiagnostics().then(setDiag, (e: unknown) => setDiag(String(e)));
+  }, []);
+
+  async function onImport() {
+    setState({ kind: "working" });
+    try {
+      const result = await importOneScreenshot(convex, readAll);
+      if (result.kind === "uploaded") setState({ kind: "idle" });
+      else if (result.kind === "nothing-new")
+        setState({ kind: "done", message: "All caught up. Nothing new to bring in." });
+      else
+        setState({
+          kind: "done",
+          message: readAll ? "No photos on this phone yet." : "No screenshots found yet.",
+        });
+    } catch (e) {
+      setState({ kind: "failed", message: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <Text style={styles.header}>Your screenshots</Text>
+
+      {access === "limited" ? (
+        <View style={styles.card}>
+          <Text style={styles.cardText}>
+            You picked a few photos. Give access to all your screenshots so nothing gets missed.
+          </Text>
+          <Text style={styles.link} onPress={() => Linking.openSettings()}>
+            Open Settings
+          </Text>
+        </View>
+      ) : null}
+
+      {DEV_TOOLS ? (
+        <View style={styles.dev}>
+          <View style={styles.row}>
+            <Text style={styles.devText}>Dev: read all photos</Text>
+            <Switch value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
+          </View>
+          <Text style={styles.devText} testID="diagnostics">
+            {diag === null
+              ? "Reading library…"
+              : typeof diag === "string"
+                ? `Diagnostics failed: ${diag}`
+                : `Smart albums: ${diag.smartAlbums.join(", ") || "none"}\nScreenshots album: ${diag.screenshotsAlbumCount ?? "missing"} · screenshot subtype: ${diag.screenshotSubtypeCount} · all images: ${diag.allImagesCount}`}
+          </Text>
+        </View>
+      ) : null}
+
+      <Button
+        label={state.kind === "working" ? "Bringing it in…" : "Bring in a screenshot"}
+        onPress={onImport}
+        disabled={state.kind === "working"}
+      />
+      {state.kind === "done" ? <Text style={styles.note}>{state.message}</Text> : null}
+      {state.kind === "failed" ? (
+        <Text style={styles.error}>Couldn't bring it in: {state.message}</Text>
+      ) : null}
+
+      {screenshots === undefined ? (
+        <LoadingView label="Loading your screenshots…" />
+      ) : screenshots.length === 0 ? (
+        <MessageView title="Nothing here yet" body="Tap the button to bring in your newest screenshot." />
+      ) : (
+        <FlatList
+          data={screenshots}
+          keyExtractor={(s) => s._id}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
+              {item.url ? (
+                <Image source={{ uri: item.url }} style={styles.thumb} contentFit="cover" />
+              ) : (
+                <View style={[styles.thumb, styles.missing]} />
+              )}
+              <View style={styles.meta}>
+                <Text style={styles.status}>{item.status}</Text>
+                <Text style={styles.muted}>{new Date(item.takenAt).toLocaleString()}</Text>
+              </View>
+            </View>
+          )}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, paddingHorizontal: 20, gap: 12, backgroundColor: "white" },
+  header: { fontSize: 28, fontWeight: "700", marginTop: 8 },
+  card: { backgroundColor: "#FFF4E0", borderRadius: 12, padding: 12, gap: 6 },
+  cardText: { fontSize: 14, color: "#5A3E00" },
+  link: { fontSize: 14, color: "#3D5AFE", fontWeight: "600" },
+  dev: { backgroundColor: "#F1F1F4", borderRadius: 12, padding: 12, gap: 6 },
+  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  devText: { fontSize: 12, color: "#333", fontFamily: "Menlo" },
+  note: { fontSize: 14, color: "#555", textAlign: "center" },
+  error: { fontSize: 14, color: "#B00020", textAlign: "center" },
+  list: { gap: 12, paddingBottom: 40 },
+  item: { flexDirection: "row", gap: 12, alignItems: "center" },
+  thumb: { width: 90, height: 160, borderRadius: 10, backgroundColor: "#EEE" },
+  missing: { borderWidth: 1, borderColor: "#DDD" },
+  meta: { gap: 4 },
+  status: { fontSize: 16, fontWeight: "600" },
+  muted: { fontSize: 13, color: "#777" },
+});
