@@ -68,7 +68,7 @@ export const DEMO_RECEIPT = {
     { name: "Refund pending", amount: "-6.49" },
   ],
   reveal: "Penny Pocket found a refund still marked pending. $6.49 at Greenleaf, Nov 8",
-  source: "From the receipt. Psst can't see your bank.",
+  source: "From the receipt.",
   pennyLine: "Pending since Nov 8. Worth a look.",
   keeperLine: "$38.12 on Nov 8. One line is a refund still marked pending.",
   variant: "receipt",
