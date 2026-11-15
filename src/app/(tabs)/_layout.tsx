@@ -14,6 +14,7 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>Rooms</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="ask" role="search">
+        <NativeTabs.Trigger.Icon sf={{ default: "questionmark.bubble", selected: "questionmark.bubble.fill" }} />
         <NativeTabs.Trigger.Label>Ask</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="you" hidden />
