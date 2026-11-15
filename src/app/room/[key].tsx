@@ -44,7 +44,7 @@ function AllScreen() {
       : realAll;
   const header = (
     <View style={{ gap: 4 }}>
-      <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+      <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
         All screenshots
       </Text>
       {all ? <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(all.count)}</Text> : <Skeleton w={96} h={14} />}
@@ -94,7 +94,7 @@ function SingleRoom({ category }: { category: Category }) {
   const wash = (
     <RoomWash keeper={keeper} muted={!isRoom} style={{ padding: 16, flexDirection: "row", alignItems: "center", gap: 8 }}>
       <View style={{ flex: 1, gap: 6 }}>
-        <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
+        <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
           {headline}
         </Text>
         {rows ? <KeeperLine id={keeper}>{roomLine(category, rows)}</KeeperLine> : <Skeleton w={160} h={14} />}
@@ -128,7 +128,7 @@ function SingleRoom({ category }: { category: Category }) {
         {isEmpty && isRoom ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 8 }}>
             <Keeper id={keeper} size={128} />
-            <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
+            <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
               Nothing in {ROOM_LABEL[category]} yet.
             </Text>
             <Text style={[text.lead, { color: p.ink2, textAlign: "center" }]}>{EMPTY[category].body}</Text>

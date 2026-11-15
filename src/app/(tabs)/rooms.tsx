@@ -26,10 +26,10 @@ export default function Rooms() {
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, paddingBottom: 24, gap: 16, flexGrow: 1 }}>
-        <Text accessibilityRole="header" style={[text.largeTitle, { color: p.ink }]}>
+        <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.largeTitle, { color: p.ink }]}>
           Rooms
         </Text>
-        <Text style={[text.headline, { color: p.ink }]}>{empty ? "Your rooms are empty for now." : "Your screenshots live in four rooms."}</Text>
+        <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>{empty ? "Your rooms are empty for now." : "Your screenshots live in four rooms."}</Text>
         {access === "limited" ? <LimitedAccessCard onPress={() => openLimitedPicker()} /> : null}
         {[ROOM_KEYS.slice(0, 2), ROOM_KEYS.slice(2)].map((pair) => (
           <View key={pair[0]} style={{ flexDirection: "row", gap: 12 }}>

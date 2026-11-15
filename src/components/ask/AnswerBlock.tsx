@@ -6,6 +6,7 @@ import { Pressable, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { FunctionReturnType } from "convex/server";
+import { isConvexId } from "@/components/remind/ids";
 import { defaultReminder, dueParts, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
 import { KEEPERS, KeeperFace, PsstButton, ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
 
@@ -56,7 +57,7 @@ export function QuestionBubble({ question }: { question: string }) {
 
 function useShot(id: Id<"screenshots"> | undefined, shots?: Shots) {
   const given = id ? shots?.[id] : undefined;
-  const fetched = useQuery(api.shots.detail, id && !given ? { id } : "skip");
+  const fetched = useQuery(api.shots.detail, id && !given && isConvexId(id) ? { id } : "skip");
   return given ?? fetched;
 }
 
@@ -184,7 +185,7 @@ export function LookingBlock({ count }: { count: number | undefined }) {
   const bar = (w: `${number}%`, h = 14) => <Skeleton w={w} h={h} />;
   return (
     <View accessibilityState={{ busy: true }} accessibilityLabel="Looking through your screenshots" style={{ gap: 14 }}>
-      <Text style={[text.headline, { color: p.ink }]}>
+      <Text maxFontSizeMultiplier={2.95} style={[text.headline, { color: p.ink }]}>
         {count === undefined ? "Looking through your screenshots." : `Looking through your ${count} screenshot${count === 1 ? "" : "s"}.`}
       </Text>
       <View style={{ gap: 10 }}>

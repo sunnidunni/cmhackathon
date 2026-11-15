@@ -22,7 +22,7 @@ export function Page({ children, header, footer }: { children: React.ReactNode; 
 export function Headline({ children, large }: { children: React.ReactNode; large?: boolean }) {
   const p = usePalette();
   return (
-    <Text accessibilityRole="header" style={[large ? welcomeTitle : text.headline, { color: p.ink }]}>
+    <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[large ? welcomeTitle : text.headline, { color: p.ink }]}>
       {children}
     </Text>
   );

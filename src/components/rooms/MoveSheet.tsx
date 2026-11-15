@@ -14,7 +14,7 @@ export function MoveSheet({ visible, current, onClose, onMove }: { visible: bool
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose} onDismiss={() => setPicked(null)}>
       <View style={{ flex: 1, backgroundColor: p.paper, padding: 16, paddingTop: 24, paddingBottom: 32, gap: 8 }}>
-        <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, marginBottom: 8 }]}>
+        <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink, marginBottom: 8 }]}>
           Move to another room
         </Text>
         {ROOM_KEYS.map((room) => {

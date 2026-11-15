@@ -115,7 +115,7 @@ export default function Detail() {
       <View style={{ flex: 1, backgroundColor: p.paper }}>
         {header}
         <View style={{ flex: 1, padding: 16, justifyContent: "center", gap: 12 }}>
-          <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{"I can't find that screenshot."}</Text>
+          <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{"I can't find that screenshot."}</Text>
           <Text style={[text.lead, { color: p.ink2 }]}>It may have been deleted.</Text>
           <PsstButton kind="filled" label="Back to Today" onPress={() => router.replace("/today")} />
         </View>
@@ -172,7 +172,7 @@ export default function Detail() {
         {shot.status === "ready" ? (
           <>
             <View style={{ gap: 6, marginTop: 4 }}>
-              <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
+              <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
                 {shot.title || "Screenshot"}
               </Text>
               {shot.summary ? <Text style={[text.lead, { color: p.ink }]}>{shot.summary}</Text> : null}
@@ -299,7 +299,13 @@ function AmountText({ keeper, amount }: { keeper: KeeperId; amount: string }) {
 function Row({ label, value, action, onAction }: { label: string; value: string | null; action?: string; onAction?: () => void }) {
   const p = usePalette();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", minHeight: 60, paddingVertical: 10, borderTopWidth: 1, borderColor: p.hair, gap: 12 }}>
+    <View
+      accessible={!!action}
+      accessibilityLabel={action ? [label, value].filter(Boolean).join(", ") : undefined}
+      accessibilityActions={action ? [{ name: "rowAction", label: action }] : undefined}
+      onAccessibilityAction={action ? () => onAction?.() : undefined}
+      style={{ flexDirection: "row", alignItems: "center", minHeight: 60, paddingVertical: 10, borderTopWidth: 1, borderColor: p.hair, gap: 12 }}
+    >
       <View style={{ flex: 1 }}>
         <Text style={[text.bodyBold, { color: p.ink }]}>{label}</Text>
         {value ? (
@@ -309,7 +315,7 @@ function Row({ label, value, action, onAction }: { label: string; value: string 
         ) : null}
       </View>
       {action ? (
-        <Pressable accessibilityRole="button" onPress={onAction} hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>
+        <Pressable accessibilityRole="button" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" onPress={onAction} hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>
           <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>{action}</Text>
         </Pressable>
       ) : null}

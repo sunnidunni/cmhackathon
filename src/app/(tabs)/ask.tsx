@@ -8,16 +8,21 @@ import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult 
 import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
+import { shownQuestion, withFocus } from "@/components/ask/focus";
+import { buildScreen } from "@/components/today/model";
 import { text, usePalette } from "@/design/psst";
 import { FIXTURES } from "@/lib/fixtures";
 
 type Exchange = FunctionReturnType<typeof api.ask.history>[number];
-type Pending = { question: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean };
+type Pending = { question: string; sent: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean };
 
 export default function Ask() {
   const p = usePalette();
   const history = useQuery(api.ask.history);
   const rooms = useQuery(api.rooms.all);
+  const today = useQuery(api.today.get, { tzOffsetMinutes: new Date().getTimezoneOffset() });
+  const { screen } = buildScreen(today, new Set());
+  const focusTitle = screen.kind === "focus" ? screen.focus.title : null;
   const askAction = useAction(api.ask.ask);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
@@ -40,14 +45,15 @@ export default function Ask() {
     if (!q || pending?.status === "looking") return;
     setInput("");
     const sentAt = Date.now();
-    setPending({ question: q, status: "looking", sentAt });
+    const sent = withFocus(q, focusTitle);
+    setPending({ question: q, sent, status: "looking", sentAt });
     setTimeout(() => setSlowFor(sentAt), 400);
     try {
-      const result = await askAction({ question: q });
-      setPending({ question: q, status: "done", sentAt, result });
+      const result = await askAction({ question: sent });
+      setPending({ question: q, sent, status: "done", sentAt, result });
     } catch {
-      if (FIXTURES) setPending({ question: q, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true });
-      else setPending({ question: q, status: "failed", sentAt });
+      if (FIXTURES) setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true });
+      else setPending({ question: q, sent, status: "failed", sentAt });
     }
   }
 
@@ -55,14 +61,14 @@ export default function Ask() {
   const synced =
     pending !== null &&
     pending.status !== "failed" &&
-    exchanges.some((ex) => ex._id === pending.result?.questionId || (ex.question === pending.question && ex.createdAt >= pending.sentAt - 5000));
+    exchanges.some((ex) => ex._id === pending.result?.questionId || (ex.question === pending.sent && ex.createdAt >= pending.sentAt - 5000));
   const shownPending = synced ? null : pending;
   const empty = history !== undefined && exchanges.length === 0 && !shownPending;
   const lastId = shownPending?.result ? undefined : exchanges[exchanges.length - 1]?._id;
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
-      <Text style={[text.largeTitle, { color: p.ink, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }]} accessibilityRole="header">
+      <Text maxFontSizeMultiplier={1.67} style={[text.largeTitle, { color: p.ink, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }]} accessibilityRole="header">
         Ask
       </Text>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -76,7 +82,7 @@ export default function Ask() {
           {empty ? <EmptyAsk count={rooms?.count} onPick={send} showSuggestions={input.length === 0} /> : null}
           {exchanges.map((ex) => (
             <View key={ex._id} style={{ gap: 14 }}>
-              <QuestionBubble question={ex.question} />
+              <QuestionBubble question={shownQuestion(ex.question)} />
               <AnswerBlock result={ex} latest={!shownPending && ex._id === lastId} />
             </View>
           ))}
