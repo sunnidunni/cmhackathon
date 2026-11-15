@@ -19,7 +19,7 @@ export function Todos() {
     <View style={{ gap: spacing.lg }}>
       <Text style={[type.title, { color: colors.ink }]}>To do</Text>
       {items && items.length === 0 ? (
-        <Text style={type.body}>Nothing to do yet. I'll add things as I read your screenshots.</Text>
+        <Text style={type.body}>Nothing to do yet. I&apos;ll add things as I read your screenshots.</Text>
       ) : null}
       {[...shown.map((t) => ({ t, done: false })), ...done.map((t) => ({ t, done: true }))].map(({ t, done: isDone }) => (
         <Row
