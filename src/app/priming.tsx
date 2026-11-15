@@ -26,19 +26,22 @@ export default function Priming() {
 
   if (denied)
     return (
-      <Page>
-        <View style={{ flex: 1, justifyContent: "center", gap: 14 }}>
+      <Page
+        footer={
+          <View style={{ gap: 4 }}>
+            <Footnote>Nothing was read. We only read your Screenshots album.</Footnote>
+            <PsstButton kind="filled" label="Open iOS Settings" onPress={openSettings} />
+            <PsstButton kind="text" label="Not now" onPress={() => router.replace("/today")} />
+          </View>
+        }
+      >
+        <View style={{ flexGrow: 1, justifyContent: "center", gap: 14 }}>
           <View style={{ alignSelf: "center" }}>
             <Keeper id="murmur" size={128} />
           </View>
           <Headline>{"Psst can't see your screenshots yet."}</Headline>
           <Lead>{"You chose Don't Allow, so Psst hasn't read anything. You can change this in iOS Settings."}</Lead>
           <KeeperLine id="murmur">{"Fine by me. I'll wait by the door."}</KeeperLine>
-        </View>
-        <View style={{ gap: 4 }}>
-          <Footnote>Nothing was read. We only read your Screenshots album.</Footnote>
-          <PsstButton kind="filled" label="Open iOS Settings" onPress={openSettings} />
-          <PsstButton kind="text" label="Not now" onPress={() => router.replace("/today")} />
         </View>
       </Page>
     );
@@ -48,8 +51,17 @@ export default function Priming() {
     ["Limit Access", "iOS shows all your photos: tap Collections › Screenshots and tick the ones you want. Add more any time."],
   ] as const;
   return (
-    <Page>
-      <View style={{ flex: 1, paddingTop: 24, gap: 20 }}>
+    <Page
+      footer={
+        <View style={{ gap: 8 }}>
+          <Footnote>
+            {"Screenshots are sent to our server and an AI model to be read. We don't sell your data. Delete everything anytime in Settings."}
+          </Footnote>
+          <PsstButton kind="filled" label="Continue" onPress={ask} disabled={busy} />
+        </View>
+      }
+    >
+      <View style={{ flexGrow: 1, paddingTop: 24, gap: 20 }}>
         <View style={{ alignSelf: "flex-start" }}>
           <Keeper id="murmur" size={88} />
         </View>
@@ -72,12 +84,6 @@ export default function Priming() {
             </View>
           ))}
         </View>
-      </View>
-      <View style={{ gap: 8 }}>
-        <Footnote>
-          {"Screenshots are sent to our server and an AI model to be read. We don't sell your data. Delete everything anytime in Settings."}
-        </Footnote>
-        <PsstButton kind="filled" label="Continue" onPress={ask} disabled={busy} />
       </View>
     </Page>
   );

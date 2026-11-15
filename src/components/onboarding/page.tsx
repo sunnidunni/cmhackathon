@@ -1,13 +1,22 @@
-import { Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { Keeper, KEEPER_IDS, text, usePalette } from "@/design/psst";
 
 const welcomeTitle = { ...text.headline, fontSize: 38, lineHeight: 41, letterSpacing: -0.76 };
 
-export function Page({ children }: { children: React.ReactNode }) {
+// The content scrolls when it is taller than the screen (small phones, larger text); the footer stays in reach.
+export function Page({ children, header, footer }: { children: React.ReactNode; header?: React.ReactNode; footer?: React.ReactNode }) {
   const p = usePalette();
-  return <SafeAreaView style={{ flex: 1, backgroundColor: p.paper, paddingHorizontal: 16, paddingBottom: 8 }}>{children}</SafeAreaView>;
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: p.paper, paddingHorizontal: 16, paddingBottom: 8 }}>
+      {header}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} bounces={false}>
+        {children}
+      </ScrollView>
+      {footer}
+    </SafeAreaView>
+  );
 }
 
 export function Headline({ children, large }: { children: React.ReactNode; large?: boolean }) {

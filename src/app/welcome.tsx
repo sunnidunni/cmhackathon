@@ -18,11 +18,20 @@ export default function Welcome() {
 
   if (step === "explainer")
     return (
-      <Page>
-        <View style={{ alignItems: "flex-end" }}>
-          <PsstButton kind="text" label="Skip" onPress={toPriming} />
-        </View>
-        <View style={{ flex: 1, gap: 20, paddingTop: 8 }}>
+      <Page
+        header={
+          <View style={{ alignItems: "flex-end" }}>
+            <PsstButton kind="text" label="Skip" onPress={toPriming} />
+          </View>
+        }
+        footer={
+          <View style={{ gap: 8 }}>
+            <Footnote>Reading starts only after you choose in the iOS prompt.</Footnote>
+            <PsstButton kind="filled" label="Next" onPress={toPriming} />
+          </View>
+        }
+      >
+        <View style={{ flexGrow: 1, gap: 20, paddingTop: 8 }}>
           <Headline>Psst pulls the date, price or place out of a screenshot.</Headline>
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
             <ShotSticker uri={null} title={DEMO_FLYER.title} size={132} tilt />
@@ -37,25 +46,24 @@ export default function Welcome() {
           </View>
           <Lead>Dates, prices, plans and places, pulled out of the screenshot itself.</Lead>
         </View>
-        <View style={{ gap: 8 }}>
-          <Footnote>Reading starts only after you choose in the iOS prompt.</Footnote>
-          <PsstButton kind="filled" label="Next" onPress={toPriming} />
-        </View>
       </Page>
     );
 
   return (
-    <Page>
-      <View style={{ flex: 1, justifyContent: "center", gap: 28 }}>
+    <Page
+      footer={
+        <View style={{ gap: 8 }}>
+          <Footnote>Nothing is read until you choose in the iOS prompt. About two minutes.</Footnote>
+          <PsstButton kind="filled" label="Show me how" onPress={() => setStep("explainer")} />
+        </View>
+      }
+    >
+      <View style={{ flexGrow: 1, justifyContent: "center", gap: 28 }}>
         <KeeperRow size={76} />
         <View style={{ gap: 12 }}>
           <Headline large>Psst. You saved these for a reason.</Headline>
           <Lead>Four keepers file your screenshots into four rooms. They bring back the few that matter today.</Lead>
         </View>
-      </View>
-      <View style={{ gap: 8 }}>
-        <Footnote>Nothing is read until you choose in the iOS prompt. About two minutes.</Footnote>
-        <PsstButton kind="filled" label="Show me how" onPress={() => setStep("explainer")} />
       </View>
     </Page>
   );

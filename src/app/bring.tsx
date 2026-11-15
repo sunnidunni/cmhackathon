@@ -12,7 +12,7 @@ export default function Bring() {
   const p = usePalette();
   const { markStarted } = useImportStarted();
   const { access, openLimitedPicker } = usePhotoAccess();
-  const { count, limit } = useBringCount();
+  const { count, limit, recount } = useBringCount();
   const [busy, setBusy] = useState(false);
 
   async function start() {
@@ -22,8 +22,15 @@ export default function Bring() {
   }
 
   return (
-    <Page>
-      <View style={{ flex: 1, paddingTop: 24, gap: 20 }}>
+    <Page
+      footer={
+        <View style={{ gap: 8 }}>
+          <Footnote>Screenshots are sent to our server and an AI model to be read.</Footnote>
+          <PsstButton kind="filled" label="Bring in my screenshots" onPress={start} disabled={busy} />
+        </View>
+      }
+    >
+      <View style={{ flexGrow: 1, paddingTop: 24, gap: 20 }}>
         <KeeperRow muted size={64} />
         {count === null ? (
           <View style={{ gap: 10 }} accessibilityLabel="Counting your screenshots">
@@ -40,7 +47,7 @@ export default function Bring() {
               <KeeperFace id="murmur" size={36} />
               <View style={{ flex: 1 }}>
                 <Text style={[text.bodyBold, { color: p.ink }]}>{`We only read the ${count} you picked. Your other photos stay on your phone.`}</Text>
-                <Text style={[text.caption, { color: p.ink2 }]} onPress={openLimitedPicker} accessibilityRole="button">
+                <Text style={[text.caption, { color: p.ink2 }]} onPress={async () => { await openLimitedPicker(); recount(); }} accessibilityRole="button">
                   Add more
                 </Text>
               </View>
@@ -58,10 +65,6 @@ export default function Bring() {
             </Text>
           </View>
         </View>
-      </View>
-      <View style={{ gap: 8 }}>
-        <Footnote>Screenshots are sent to our server and an AI model to be read.</Footnote>
-        <PsstButton kind="filled" label="Bring in my screenshots" onPress={start} disabled={busy} />
       </View>
     </Page>
   );

@@ -11,6 +11,7 @@ import { bringInCount } from "./format";
 export function useBringCount() {
   const info = useQuery(api.sync.importInfo, {});
   const [found, setFound] = useState<number | null>(null);
+  const [round, setRound] = useState(0);
   const limit = info?.limit;
 
   useEffect(() => {
@@ -23,9 +24,10 @@ export function useBringCount() {
     return () => {
       live = false;
     };
-  }, [limit]);
+  }, [limit, round]);
 
-  if (limit === undefined || found === null) return { count: null, limit: null };
+  const recount = () => setRound((n) => n + 1);
+  if (limit === undefined || found === null) return { count: null, limit: null, recount };
   const count = bringInCount(found, limit);
-  return { count: count === 0 && FIXTURES ? DEMO_COUNTS.total : count, limit };
+  return { count: count === 0 && FIXTURES ? DEMO_COUNTS.total : count, limit, recount };
 }
