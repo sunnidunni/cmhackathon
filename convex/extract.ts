@@ -176,7 +176,6 @@ async function callVision(imageUrl: string) {
     },
     body: JSON.stringify({
       model: process.env.OPENAI_VISION_MODEL ?? "gpt-6.1-terra",
-      reasoning: { effort: "low" },
       input: [
         {
           role: "user",
