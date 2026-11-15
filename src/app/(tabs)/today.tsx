@@ -68,8 +68,9 @@ export default function Today() {
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [removed, setRemoved] = useState(false);
-  const { screen, items } = buildScreen(today, skipped, fixtureLine);
-  const reminderRows = today ? extraReminders(today, items) : [];
+  const { screen } = buildScreen(today, skipped, fixtureLine);
+  const rendered = screen.kind === "focus" ? [screen.focus, ...screen.rows] : screen.kind === "reading" || screen.kind === "done" ? screen.rows : [];
+  const reminderRows = today ? extraReminders(today, rendered) : [];
   const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin", fixtureLine) : null;
 
   const checkForNew = async () => {
@@ -113,13 +114,12 @@ export default function Today() {
     ]);
   const menu = (item: Item) =>
     Alert.alert(item.title, undefined, [
-      ...(item.actions.primary === "remind" ? [{ text: "Remind me", onPress: () => remind(item) }] : []),
-      { text: "Not today", onPress: () => skip(item) },
+      item.actions.primary === "remind" ? { text: "Remind me", onPress: () => remind(item) } : { text: "Not today", onPress: () => skip(item) },
       { text: "Delete from Psst", style: "destructive" as const, onPress: () => confirmRemove(item, "Delete from Psst?") },
       { text: "Cancel", style: "cancel" as const },
     ]);
 
-  const rows = screen.kind === "focus" || screen.kind === "reading" || screen.kind === "done" ? screen.rows : [];
+  const rows = rendered.filter((i) => screen.kind !== "focus" || i !== screen.focus);
   const rowTitle = screen.kind === "focus" || screen.kind === "reading" ? "Also in today's handful" : undefined;
   const footer =
     screen.kind === "done" ? (

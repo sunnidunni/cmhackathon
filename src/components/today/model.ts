@@ -201,8 +201,8 @@ export function actionsFor(item: Item, now: number, tz: number) {
 
 export type ReminderRow = TodayData["reminders"][number];
 
-// Scheduled reminders already shown as a handled handful row are not listed twice.
-export const extraReminders = (today: TodayData, items: Item[]): ReminderRow[] => today.reminders.filter((r) => !items.some((i) => i.id === r.screenshotId));
+// A reminder is listed unless its card is already on screen (the focus or a handful row).
+export const extraReminders = (today: TodayData, rendered: Item[]): ReminderRow[] => today.reminders.filter((r) => !rendered.some((i) => i.id === r.screenshotId));
 
 export const sourceLine = (item: Item): string => {
   if (item.section === "justIn") return "Read when you opened Psst.";
