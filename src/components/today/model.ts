@@ -14,7 +14,7 @@ const DAYS_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const ROOM_NAMES: Record<string, string> = { deadlines: "Deadlines", chats: "Chats", money: "Money", ideas: "Ideas", unsorted: "Unsorted" };
 const KEEPER_NAME: Record<KeeperId, string> = { tock: "Tock", murmur: "Murmur", penny: "Penny", mote: "Mote" };
-const ROOM_KEEPER: Record<string, KeeperId> = { deadlines: "tock", chats: "murmur", money: "penny", ideas: "mote", unsorted: "mote" };
+export const ROOM_KEEPER: Record<string, KeeperId> = { deadlines: "tock", chats: "murmur", money: "penny", ideas: "mote", unsorted: "mote" };
 const NOUNS = ["sign-up", "booking", "appointment", "cleaning", "receipt", "ticket", "bill", "invoice", "flyer", "reservation", "schedule", "concert", "assignment"];
 
 export type Item = {

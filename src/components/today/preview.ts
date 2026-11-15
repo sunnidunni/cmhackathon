@@ -1,6 +1,7 @@
 import { Asset } from "expo-asset";
 import manifest from "../../../demo-screenshots/manifest.json";
 import type { TodayData } from "./model";
+import type { ShotInfo, TodoItem } from "./todoRows";
 
 type Card = TodayData["handful"][number];
 type Entry = (typeof manifest)[number];
@@ -63,4 +64,29 @@ export function previewToday(kind: string, tz: number): { data: TodayData | unde
   };
   if (kind === "loading") return { data: undefined, now };
   return { data: { ...base, ...(out[kind] ?? out["td-1"]) } as TodayData, now };
+}
+
+// Dev-only: a to-do list for ?preview=td-15, with room and date borrowed from the demo screenshots above.
+export function previewTodos(kind: string): { todos: TodoItem[]; shots: [string, ShotInfo][] } | null {
+  if (kind !== "td-15") return null;
+  const t = (n: number, textLine: string, shot: string | null, done = false): TodoItem => ({ _id: `t${n}`, text: textLine, done, screenshotId: shot, createdAt: n });
+  return {
+    todos: [
+      t(1, "Confirm the dentist cleaning", "png/04-dentist-text.png"),
+      t(2, "Pay the energy bill", "png/15-utility-bill.png"),
+      t(3, "Share the wifi password with Sam", "png/08-wifi-chat.png"),
+      t(4, "Sign up for the pottery class", "png/01-pottery-flyer.png"),
+      t(5, "Buy miso for the pasta", "png/18-miso-pasta.png"),
+      t(6, "Call the landlord back", null),
+      t(7, "Renew the parking permit", null),
+      t(8, "Email Mom the photos", null, true),
+    ],
+    shots: [
+      ["png/04-dentist-text.png", { category: "deadlines", date: "2026-11-24T15:00" }],
+      ["png/15-utility-bill.png", { category: "money", date: "2026-11-21" }],
+      ["png/08-wifi-chat.png", { category: "chats", date: null }],
+      ["png/01-pottery-flyer.png", { category: "deadlines", date: "2026-11-22T10:00" }],
+      ["png/18-miso-pasta.png", { category: "ideas", date: null }],
+    ],
+  };
 }
