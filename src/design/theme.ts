@@ -17,10 +17,10 @@ export type RoomKey = "deadlines" | "chats" | "money" | "ideas";
 export const ROOM_KEYS: RoomKey[] = ["deadlines", "chats", "money", "ideas"];
 
 export const rooms: Record<RoomKey, { label: string; character: string; color: string; tint: string }> = {
-  deadlines: { label: "Deadlines", character: "Tock", color: "#F59E0B", tint: "#FEF0D2" },
-  chats: { label: "Chats", character: "Murmur", color: "#EC6FA3", tint: "#FCE4EE" },
-  money: { label: "Money", character: "Penny Pocket", color: "#2FA37A", tint: "#DDF2EA" },
-  ideas: { label: "Ideas", character: "Wisp", color: "#8B7CF6", tint: "#ECE9FE" },
+  deadlines: { label: "Deadlines", character: "Psst", color: "#F59E0B", tint: "#FEF0D2" },
+  chats: { label: "Chats", character: "Psst", color: "#EC6FA3", tint: "#FCE4EE" },
+  money: { label: "Money", character: "Psst", color: "#2FA37A", tint: "#DDF2EA" },
+  ideas: { label: "Ideas", character: "Psst", color: "#8B7CF6", tint: "#ECE9FE" },
 };
 
 export const UNSORTED_ROOM: RoomKey = "ideas";
