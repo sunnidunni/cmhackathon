@@ -73,8 +73,8 @@ export type KeeperInfo = {
 };
 
 export const KEEPERS: Record<KeeperId, KeeperInfo> = {
-  tock: { id: "tock", name: "Tock", room: "deadlines", main: "#F6B23C", tint: "#FDF0D8", deep: "#704905", tintDark: "#443423", deepDark: "#F8BF5D", motto: "Early is on time." },
-  murmur: { id: "murmur", name: "Murmur", room: "chats", main: "#F58CA5", tint: "#FDE8ED", deep: "#8E1F3D", tintDark: "#432D38", deepDark: "#F8B0C1", motto: "I saw nothing. Mostly." },
+  tock: { id: "tock", name: "Tock", room: "deadlines", main: "#F6B23C", tint: "#FDF0D8", deep: "#704905", tintDark: "#443423", deepDark: "#F8BF5D", motto: "I'll ring first." },
+  murmur: { id: "murmur", name: "Murmur", room: "chats", main: "#F58CA5", tint: "#FDE8ED", deep: "#8E1F3D", tintDark: "#432D38", deepDark: "#F8B0C1", motto: "Heard it. Kept it." },
   penny: { id: "penny", name: "Penny Pocket", room: "money", main: "#63C598", tint: "#E0F3EA", deep: "#215940", tintDark: "#263836", deepDark: "#8CD4B3", motto: "Every cent has a home." },
   mote: { id: "mote", name: "Mote", room: "ideas", main: "#9FA8F7", tint: "#ECEEFD", deep: "#2C3794", tintDark: "#323249", deepDark: "#BBC1F9", motto: "Saved for a someday." },
 };
