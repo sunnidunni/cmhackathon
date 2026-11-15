@@ -17,6 +17,7 @@ build:
 pr_review:
     enabled: true
     triggers:
+        drafts: true
         labels:
             - revyl-proof
     build:

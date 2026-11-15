@@ -1,10 +1,12 @@
-export function cleanTodoText(text: string): string | null {
-  const trimmed = text.trim().slice(0, 200).trim();
-  return trimmed === "" ? null : trimmed;
-}
-
-export const restoreDraft = (current: string, failed: string) => (current === "" ? failed : current);
+export const OPEN_LIMIT = 5;
 
 export function splitTodos<T extends { done: boolean }>(items: T[]): { open: T[]; done: T[] } {
   return { open: items.filter((i) => !i.done), done: items.filter((i) => i.done) };
 }
+
+export function visibleOpen<T>(open: T[], expanded: boolean): { shown: T[]; hidden: number } {
+  if (expanded || open.length <= OPEN_LIMIT) return { shown: open, hidden: 0 };
+  return { shown: open.slice(0, OPEN_LIMIT), hidden: open.length - OPEN_LIMIT };
+}
+
+export const showAllLabel = (openCount: number) => `Show all (${openCount})`;

@@ -56,7 +56,7 @@ export default function Upgrade() {
           <ActivityIndicator color={colors.ink} />
         ) : paid ? (
           <View style={{ alignSelf: "stretch", gap: spacing.sm }} testID="upgrade-paid">
-            <Text style={type.display}>You're all set</Text>
+            <Text style={type.display}>You&apos;re all set</Text>
             <Text style={type.body}>
               Bring in your whole screenshot library, not just the newest 50. Thank you for supporting Psst.
             </Text>
@@ -94,7 +94,7 @@ export default function Upgrade() {
             ) : null}
             {phase === "failed" ? (
               <Text testID="upgrade-failed" style={type.body}>
-                Couldn't start checkout{error ? `: ${error}` : ""}. Nothing was charged.
+                Couldn&apos;t start checkout{error ? `: ${error}` : ""}. Nothing was charged.
               </Text>
             ) : null}
             <Button
