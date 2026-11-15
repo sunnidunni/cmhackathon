@@ -11,7 +11,7 @@ export const HIDDEN_FROM_SCREEN_READERS =
     ? ({ "aria-hidden": true } as const)
     : ({ accessible: false, accessibilityElementsHidden: true, importantForAccessibility: "no-hide-descendants" } as const);
 
-const CUT_PARTS = new Set(["body", "limb", "foot", "ear", "item", "sparkle"]);
+const CUT_PARTS = new Set(["body", "limb", "foot", "ear", "item", "sparkle", "frame"]);
 
 export function useRoleColors(id: KeeperId, muted: boolean): RoleColors {
   const pal = usePalette();

@@ -25,20 +25,26 @@ export function registerBlink(run: () => void): () => void {
     last = Date.now();
     run();
   };
+  const spaced = (retry: () => void) => {
+    const wait = last + blink.crossKeeperMin - Date.now();
+    if (wait <= 0) return true;
+    timer = setTimeout(retry, wait + 16);
+    return false;
+  };
+  const second = () => {
+    if (!alive) return;
+    if (!active) return schedule();
+    if (!spaced(second)) return;
+    start();
+    schedule();
+  };
   const fire = () => {
     if (!alive) return;
     if (!active) return schedule();
-    const wait = last + blink.crossKeeperMin - Date.now();
-    if (wait > 0) {
-      timer = setTimeout(fire, wait + 16);
-      return;
-    }
+    if (!spaced(fire)) return;
     start();
     if (Math.random() >= blink.doubleChance) return schedule();
-    timer = setTimeout(() => {
-      if (alive && active) start();
-      schedule();
-    }, blink.close + blink.hold + blink.open + blink.doubleGap);
+    timer = setTimeout(second, blink.close + blink.hold + blink.open + blink.doubleGap);
   };
   schedule();
   return () => {
