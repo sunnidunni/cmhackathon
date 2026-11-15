@@ -85,6 +85,7 @@ export default function Detail() {
             <View style={{ gap: spacing.sm }}>
               <Text style={type.title}>{shot.title ?? "Screenshot"}</Text>
               {shot.summary ? <Text style={type.body}>{shot.summary}</Text> : null}
+              {shot.amount ? <Text style={type.bodyBold}>{shot.amount}</Text> : null}
             </View>
 
             <InfoCard>
