@@ -25,7 +25,10 @@ export function confirmFor(scenario: ActScenario, step: ActStep, final: boolean)
   return scenario.confirm;
 }
 
-export const willBe = (done: string) => done.replace(" was ", " will be ");
+export function demoLine(step: ActStep, tense: "will" | "was") {
+  const what = step.kind === "order" ? "ordered or charged" : step.kind === "calendar" ? "added to your calendar" : "sent";
+  return `Demo: nothing ${tense === "will" ? "will be" : "was"} ${what}.`;
+}
 
 const cents = (s: string) => Math.round(parseFloat(s.replace(/[^0-9.]/g, "")) * 100);
 export const itemsSum = (items: { price: string }[]) => items.reduce((n, i) => n + cents(i.price), 0);

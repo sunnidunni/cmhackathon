@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import type { ActScenario } from "../../lib/act/types";
-import { buildPages, confirmFor, itemsSum, totalCents, willBe } from "./pages";
+import type { ActScenario, ActStep } from "../../lib/act/types";
+import { buildPages, confirmFor, itemsSum, totalCents, demoLine } from "./pages";
 
 vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2 }));
 
@@ -33,6 +33,11 @@ describe("act pages", () => {
       expect(a.cta).toMatch(/^Review /);
       expect(a.done).toMatch(/^Demo: nothing was /);
     }
-    expect(willBe("Demo: nothing was sent.")).toBe("Demo: nothing will be sent.");
+    const draft: ActStep = { kind: "draft-message", to: "Mom", via: "iMessage", body: "x" };
+    const order: ActStep = { kind: "order", merchant: "m", items: [], deliverTo: "d", total: "$1", eta: "e" };
+    const calendar: ActStep = { kind: "calendar", title: "t", when: "w" };
+    expect(demoLine(draft, "will")).toBe("Demo: nothing will be sent.");
+    expect(demoLine(order, "was")).toBe("Demo: nothing was ordered or charged.");
+    expect(demoLine(calendar, "will")).toBe("Demo: nothing will be added to your calendar.");
   });
 });
