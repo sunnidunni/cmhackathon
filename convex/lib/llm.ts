@@ -45,7 +45,8 @@ export async function todosFromText(row: { title: string; summary: string; text:
     body.output
       ?.flatMap((o: { content?: { type: string; text?: string }[] }) => o.content ?? [])
       .find((c: { type: string }) => c.type === "output_text")?.text;
-  return text ? cleanTodos(JSON.parse(text).todos) : [];
+  if (!text) throw new Error("OpenAI returned no text");
+  return cleanTodos(JSON.parse(text).todos);
 }
 
 export async function askModel(system: string, user: string): Promise<AskModelReply> {
