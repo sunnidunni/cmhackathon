@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ActScenario } from "../../lib/act/types";
 import { buildPages, confirmFor, itemsSum, totalCents, willBe } from "./pages";
 
-vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2 }));
+vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2, BILL_IMAGE: 3, CONCERT_IMAGE: 4 }));
 
 let DEMO_ACTS: ActScenario[] = [];
 const act = (id: string) => DEMO_ACTS.find((a) => a.id === id)!;
