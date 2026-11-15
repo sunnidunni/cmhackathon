@@ -1,3 +1,18 @@
+// How many screenshots Bring in will read: everything found on the phone, capped by the plan (null = no cap).
+export function bringInCount(found: number, limit: number | null): number {
+  return limit === null ? found : Math.min(found, limit);
+}
+
+export function bringInHeadline(count: number): string {
+  if (count === 0) return "Bring in your screenshots.";
+  return count === 1 ? "Bring in your newest screenshot." : `Bring in your ${count} newest screenshots.`;
+}
+
+export function howManyLine(count: number, limit: number | null): string {
+  if (count === 0) return "None found on this phone yet";
+  return `All ${count} on this phone${limit === null ? "" : ` (up to ${limit})`} · about 1 minute`;
+}
+
 export type BringInResult = { uploaded: number; failed: number; skipped: number };
 
 export type BringInState =
