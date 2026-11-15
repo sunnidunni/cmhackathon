@@ -3,17 +3,15 @@ import { useState } from "react";
 import { View } from "react-native";
 import { Body, Heading, Screen, Stack } from "@/components/onboarding/ui";
 import { Button, Character, spacing } from "@/design";
-import { useSync, useImportStarted } from "@/lib/sync";
+import { useImportStarted } from "@/lib/sync";
 
 export default function Bring() {
   const { markStarted } = useImportStarted();
-  const { syncNow } = useSync();
   const [busy, setBusy] = useState(false);
 
   async function start() {
     setBusy(true);
     await markStarted();
-    syncNow().catch(() => {});
     router.replace("/import");
   }
 

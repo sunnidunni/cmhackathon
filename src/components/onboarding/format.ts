@@ -1,17 +1,23 @@
-export type Progress = { total: number; read: number; failed: number; pending: number };
+export type BringInResult = { uploaded: number; failed: number; skipped: number };
 
-export function readLine(p: Progress): string {
-  if (p.total === 0) return "Waiting for your first screenshot.";
-  if (p.pending === 0) return `${p.read} of ${p.total} read.`;
-  return `${p.read} of ${p.total} read. You can look around while I finish.`;
+export type BringInState =
+  | { kind: "working" }
+  | { kind: "done" }
+  | { kind: "failed"; failed: number };
+
+export function bringInState(result: BringInResult | null, error: boolean): BringInState {
+  if (error) return { kind: "failed", failed: 0 };
+  if (!result) return { kind: "working" };
+  if (result.failed > 0) return { kind: "failed", failed: result.failed };
+  return { kind: "done" };
 }
 
-export function barFraction(p: Progress): number {
-  if (p.total === 0) return 0;
-  return Math.min(1, (p.read + p.failed) / p.total);
+export function broughtInLine(count: number): string {
+  if (count === 0) return "Looking for your screenshots.";
+  return count === 1 ? "1 screenshot brought in." : `${count} screenshots brought in.`;
 }
 
-export function failedLabel(failed: number): string | null {
-  if (failed <= 0) return null;
-  return failed === 1 ? "Couldn't read 1 screenshot" : `Couldn't read ${failed} screenshots`;
+export function failedLabel(failed: number): string {
+  if (failed <= 0) return "Couldn't bring in your screenshots";
+  return failed === 1 ? "Couldn't bring in 1 screenshot" : `Couldn't bring in ${failed} screenshots`;
 }

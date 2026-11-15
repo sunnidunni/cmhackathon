@@ -1,25 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { barFraction, failedLabel, readLine } from "./format";
+import { bringInState, broughtInLine, failedLabel } from "./format";
 
-describe("onboarding format", () => {
-  it("counts reads while pending", () => {
-    expect(readLine({ total: 18, read: 7, failed: 0, pending: 11 })).toBe(
-      "7 of 18 read. You can look around while I finish.",
-    );
+describe("bring in", () => {
+  it("is working until the sync result arrives", () => {
+    expect(bringInState(null, false)).toEqual({ kind: "working" });
   });
-  it("drops the hint when nothing is pending", () => {
-    expect(readLine({ total: 18, read: 18, failed: 0, pending: 0 })).toBe("18 of 18 read.");
+  it("is done when nothing failed", () => {
+    expect(bringInState({ uploaded: 18, failed: 0, skipped: 0 }, false)).toEqual({ kind: "done" });
   });
-  it("handles an empty import", () => {
-    expect(readLine({ total: 0, read: 0, failed: 0, pending: 0 })).toBe("Waiting for your first screenshot.");
-    expect(barFraction({ total: 0, read: 0, failed: 0, pending: 0 })).toBe(0);
+  it("is done when everything was already in", () => {
+    expect(bringInState({ uploaded: 0, failed: 0, skipped: 18 }, false)).toEqual({ kind: "done" });
   });
-  it("fills the bar with read and failed", () => {
-    expect(barFraction({ total: 10, read: 4, failed: 1, pending: 5 })).toBe(0.5);
+  it("fails on partial failure and on a rejected sync", () => {
+    expect(bringInState({ uploaded: 15, failed: 3, skipped: 0 }, false)).toEqual({ kind: "failed", failed: 3 });
+    expect(bringInState(null, true)).toEqual({ kind: "failed", failed: 0 });
+  });
+  it("words the count without saying anything was read", () => {
+    expect(broughtInLine(0)).toBe("Looking for your screenshots.");
+    expect(broughtInLine(1)).toBe("1 screenshot brought in.");
+    expect(broughtInLine(7)).toBe("7 screenshots brought in.");
   });
   it("words failures", () => {
-    expect(failedLabel(0)).toBeNull();
-    expect(failedLabel(1)).toBe("Couldn't read 1 screenshot");
-    expect(failedLabel(3)).toBe("Couldn't read 3 screenshots");
+    expect(failedLabel(0)).toBe("Couldn't bring in your screenshots");
+    expect(failedLabel(1)).toBe("Couldn't bring in 1 screenshot");
+    expect(failedLabel(3)).toBe("Couldn't bring in 3 screenshots");
   });
 });
