@@ -112,7 +112,12 @@ export default function DesignGallery() {
         <Text style={type.label}>Label 16</Text>
       </Section>
 
-      <Section title="Characters">
+      <Section title="Psst, the mascot">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+          <Character size={96} />
+          <Character size={96} expression="happy" />
+          <Text style={[type.caption, { flex: 1 }]}>No room: the plain bubble, for app-level lines.</Text>
+        </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: spacing.lg }}>
           {ROOM_KEYS.map((r) => (
             <View key={r} style={{ width: "48%", alignItems: "center", gap: spacing.xs }}>
@@ -120,11 +125,19 @@ export default function DesignGallery() {
                 <Character room={r} size={84} />
                 <Character room={r} size={84} expression="happy" />
               </View>
-              <Text style={type.heading}>{rooms[r].character}</Text>
-              <Text style={type.caption}>{rooms[r].label}</Text>
+              <Text style={type.heading}>{rooms[r].label}</Text>
             </View>
           ))}
         </View>
+        <Text style={type.caption}>At list size (28, 34, 40)</Text>
+        {[28, 34, 40].map((s) => (
+          <View key={s} style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+            <Character size={s} />
+            {ROOM_KEYS.map((r) => (
+              <Character key={r} room={r} size={s} />
+            ))}
+          </View>
+        ))}
       </Section>
 
       <Section title="Sticker">
@@ -145,7 +158,7 @@ export default function DesignGallery() {
         </View>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Character room="chats" size={56} />
-          <SpeechBubble tail="left" style={{ marginBottom: 0 }}>Tail on the left, next to a character.</SpeechBubble>
+          <SpeechBubble tail="left" style={{ marginBottom: 0 }}>Tail on the left, next to Psst.</SpeechBubble>
         </View>
       </Section>
 
