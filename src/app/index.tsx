@@ -10,5 +10,5 @@ export default function Index() {
   }, []);
 
   if (access === null) return <LoadingView label="Loading…" />;
-  return <Redirect href={access === "all" || access === "limited" ? "/library" : "/priming"} />;
+  return <Redirect href={access === "full" || access === "limited" ? "/library" : "/priming"} />;
 }

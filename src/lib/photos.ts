@@ -6,29 +6,90 @@ import {
   getPermissionsAsync,
   MediaSubtype,
   MediaType,
+  presentPermissionsPicker,
   Query,
   requestPermissionsAsync,
 } from "expo-media-library";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { AppState, Linking } from "react-native";
+import { DEV_TOOLS, READ_ALL_PHOTOS_DEFAULT } from "./dev-flags";
 
-export type PhotoAccess = "all" | "limited" | "denied" | "undetermined";
+export { DEV_TOOLS };
+
+export type PhotoAccess = "undetermined" | "denied" | "limited" | "full";
 
 function toAccess(res: { granted: boolean; canAskAgain: boolean; accessPrivileges?: string }): PhotoAccess {
-  if (res.granted) return res.accessPrivileges === "limited" ? "limited" : "all";
+  if (res.granted) return res.accessPrivileges === "limited" ? "limited" : "full";
   return res.canAskAgain ? "undetermined" : "denied";
 }
 
-export async function getPhotoAccess() {
+export async function getPhotoAccess(): Promise<PhotoAccess> {
   return toAccess(await getPermissionsAsync(false, ["photo"]));
 }
 
-export async function requestPhotoAccess() {
+export async function requestPhotoAccess(): Promise<PhotoAccess> {
   return toAccess(await requestPermissionsAsync(false, ["photo"]));
 }
 
+export function hasPhotoAccess(access: PhotoAccess | null) {
+  return access === "full" || access === "limited";
+}
+
+// access is null until the first read. It re-reads whenever the app returns to the foreground,
+// so a change made in Settings shows up without a restart.
+export function usePhotoAccess() {
+  const [access, setAccess] = useState<PhotoAccess | null>(null);
+  const refresh = useCallback(async () => {
+    const next = await getPhotoAccess().catch(() => "undetermined" as const);
+    setAccess(next);
+    return next;
+  }, []);
+  useEffect(() => {
+    void refresh();
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active") void refresh();
+    });
+    return () => sub.remove();
+  }, [refresh]);
+  const request = useCallback(async () => {
+    const next = await requestPhotoAccess().catch(() => "denied" as const);
+    setAccess(next);
+    return next;
+  }, []);
+  const openLimitedPicker = useCallback(async () => {
+    await presentPermissionsPicker(["photo"]);
+    await refresh();
+  }, [refresh]);
+  const openSettings = useCallback(() => Linking.openSettings(), []);
+  return { access, request, refresh, openLimitedPicker, openSettings };
+}
+
+// Dev switch: read every photo instead of only the Screenshots album (simulators have no screenshots).
+let readAllPhotos = READ_ALL_PHOTOS_DEFAULT;
+const readAllListeners = new Set<() => void>();
+export function getReadAllPhotos() {
+  return readAllPhotos;
+}
+export function setReadAllPhotos(value: boolean) {
+  readAllPhotos = value;
+  readAllListeners.forEach((l) => l());
+}
+export function useReadAllPhotos(): [boolean, (value: boolean) => void] {
+  const value = useSyncExternalStore(
+    (l) => {
+      readAllListeners.add(l);
+      return () => readAllListeners.delete(l);
+    },
+    getReadAllPhotos,
+  );
+  return [value, setReadAllPhotos];
+}
+
 // Newest first. The Screenshots album on iOS is the set of images with the screenshot subtype.
-export async function listCandidates(readAllPhotos: boolean, limit: number): Promise<Asset[]> {
+export async function listCandidates(readAll: boolean, limit: number): Promise<Asset[]> {
+  if (limit <= 0) return [];
   let query = new Query().eq(AssetField.MEDIA_TYPE, MediaType.IMAGE);
-  if (!readAllPhotos) query = query.contains(AssetField.MEDIA_SUBTYPES, MediaSubtype.SCREENSHOT);
+  if (!readAll) query = query.contains(AssetField.MEDIA_SUBTYPES, MediaSubtype.SCREENSHOT);
   return await query.orderBy({ key: AssetField.CREATION_TIME, ascending: false }).limit(limit).exe();
 }
 
@@ -54,6 +115,16 @@ export async function getLibraryDiagnostics(): Promise<LibraryDiagnostics> {
     screenshotSubtypeCount: subtype.length,
     allImagesCount: all.length,
   };
+}
+
+// null while loading, a string when it failed. Only reads the library when DEV_TOOLS is on.
+export function useLibraryDiagnostics(): LibraryDiagnostics | string | null {
+  const [diag, setDiag] = useState<LibraryDiagnostics | string | null>(null);
+  useEffect(() => {
+    if (!DEV_TOOLS) return;
+    getLibraryDiagnostics().then(setDiag, (e: unknown) => setDiag(String(e)));
+  }, []);
+  return diag;
 }
 
 const MAX_WIDTH = 1080;

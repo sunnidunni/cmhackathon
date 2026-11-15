@@ -14,7 +14,7 @@ export default function Priming() {
     setBusy(true);
     const access = await requestPhotoAccess().catch(() => "denied" as const);
     setBusy(false);
-    if (access === "all" || access === "limited") router.replace("/library");
+    if (access === "full" || access === "limited") router.replace("/library");
     else setDenied(true);
   }
 
