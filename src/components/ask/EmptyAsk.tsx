@@ -1,9 +1,8 @@
 import { SymbolView } from "expo-symbols";
 import { Pressable, Text, View } from "react-native";
-import { DEV_TOOLS } from "@/lib/dev-flags";
 import { Keeper, KeeperLine, PsstButton, text, usePalette } from "@/design/psst";
 
-const TRY = DEV_TOOLS ? "When does pottery sign-up close?" : "When is that due?";
+const TRY = "When does the pottery sign-up close?";
 const MORE = ["What's the Wi-Fi password from Mom?", "What are my flight details?", "What was that recipe?"];
 
 export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | undefined; onPick: (q: string) => void; showSuggestions: boolean }) {
