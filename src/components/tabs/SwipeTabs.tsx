@@ -6,13 +6,15 @@ import { tabAfterSwipe } from "./swipe";
 
 // Horizontal drags switch tabs. Vertical movement fails this gesture, so scrolling keeps working.
 export function SwipeTabs({ name, children }: { name: string; children: React.ReactNode }) {
-  const go = (tab: string) => router.navigate(`/${tab}` as never);
+  const onSwipeEnd = (dx: number, vx: number) => {
+    const next = tabAfterSwipe(name, dx, vx);
+    if (next) router.navigate(`/${next}` as never);
+  };
   const gesture = Gesture.Pan()
     .activeOffsetX([-24, 24])
     .failOffsetY([-12, 12])
     .onEnd((e) => {
-      const next = tabAfterSwipe(name, e.translationX, e.velocityX);
-      if (next) runOnJS(go)(next);
+      runOnJS(onSwipeEnd)(e.translationX, e.velocityX);
     });
   return (
     <GestureDetector gesture={gesture}>
