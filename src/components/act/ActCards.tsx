@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { setReminderMoved, useActState } from "@/lib/act/store";
+import { useDetectedActs } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
 import { ActCard } from "./ActCard";
 import { Fade } from "./Motion";
@@ -9,7 +10,8 @@ import { Fade } from "./Motion";
 export function ActCards() {
   const p = usePalette();
   const { dismissed, completed, undone } = useActState();
-  const acts = (FIXTURES ? DEMO_ACTS : []).filter((a) => a.steps.length > 0);
+  const detected = useDetectedActs();
+  const acts = (FIXTURES ? DEMO_ACTS : detected).filter((a) => a.steps.length > 0);
   const open = acts.filter((a) => !dismissed.has(a.id) && !completed.has(a.id));
   const moved = acts.flatMap((a) => {
     const step = a.steps.find((s) => s.kind === "move-reminder");

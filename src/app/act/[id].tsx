@@ -9,6 +9,7 @@ import { buildPages } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
+import { getDetectedAct } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
 
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
@@ -16,7 +17,7 @@ const close = () => (router.canGoBack() ? router.back() : router.replace("/today
 export default function Act() {
   const p = usePalette();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const scenario = (FIXTURES ? DEMO_ACTS : []).find((a) => a.id === id);
+  const scenario = (FIXTURES ? DEMO_ACTS.find((a) => a.id === id) : undefined) ?? getDetectedAct(id);
   const { undone } = useActState();
   const pages = useMemo(() => buildPages(scenario?.steps ?? []), [scenario]);
   const [index, setIndex] = useState(0);
