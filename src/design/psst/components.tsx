@@ -51,7 +51,7 @@ export function PsstButton({ kind, label, onPress, keeper, disabled = false, dan
                   : pal.ink2
                 : pal.ink;
         return (
-          <Text style={[font, { color }, kind === "text" && { textDecorationLine: "underline", textDecorationColor: pal.hair2 }]}>{label}</Text>
+          <Text maxFontSizeMultiplier={2.6} style={[font, { color }, kind === "text" && { textDecorationLine: "underline", textDecorationColor: pal.hair2 }]}>{label}</Text>
         );
       }}
     </Pressable>
@@ -83,7 +83,7 @@ export function Skeleton({ w, h, style }: { w: number | `${number}%`; h: number;
 export function KeeperLine({ id, row = false, children, style }: { id: KeeperId; row?: boolean; children: ReactNode; style?: StyleProp<TextStyle> }) {
   const { deep } = useKeeperColors(id);
   return (
-    <Text accessibilityLabel={`${KEEPERS[id].name}: ${typeof children === "string" ? children : ""}`} style={[row ? text.voiceRow : text.voice, { color: deep }, style]}>
+    <Text maxFontSizeMultiplier={2.5} accessibilityLabel={`${KEEPERS[id].name} says: ${typeof children === "string" ? children : ""}`} style={[row ? text.voiceRow : text.voice, { color: deep }, style]}>
       {children}
     </Text>
   );

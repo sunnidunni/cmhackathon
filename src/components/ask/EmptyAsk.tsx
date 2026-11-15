@@ -11,7 +11,7 @@ export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | u
   return (
     <View style={{ flex: 1 }}>
       <View style={{ gap: 8 }}>
-        <Text style={[text.headline, { color: p.ink }]}>Ask about screenshots Psst has read.</Text>
+        <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>Ask about screenshots Psst has read.</Text>
         <Text style={[text.lead, { color: p.ink2 }]}>Each answer comes with its source screenshot. Open it to check the details.</Text>
       </View>
       {showSuggestions ? (

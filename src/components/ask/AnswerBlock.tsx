@@ -184,7 +184,7 @@ export function LookingBlock({ count }: { count: number | undefined }) {
   const bar = (w: `${number}%`, h = 14) => <Skeleton w={w} h={h} />;
   return (
     <View accessibilityState={{ busy: true }} accessibilityLabel="Looking through your screenshots" style={{ gap: 14 }}>
-      <Text style={[text.headline, { color: p.ink }]}>
+      <Text maxFontSizeMultiplier={2.95} style={[text.headline, { color: p.ink }]}>
         {count === undefined ? "Looking through your screenshots." : `Looking through your ${count} screenshot${count === 1 ? "" : "s"}.`}
       </Text>
       <View style={{ gap: 10 }}>
