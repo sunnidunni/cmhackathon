@@ -15,11 +15,12 @@ import {
   text,
   usePalette,
 } from "@/design/psst";
-import { DEMO_FLYER, DEMO_SHOTS } from "@/lib/fixtures";
+import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 
 export default function KitSheet() {
   const pal = usePalette();
   const insets = useSafeAreaInsets();
+  if (!FIXTURES) return null;
   const label = { ...text.caption, color: pal.ink2, marginTop: 8 };
   return (
     <ScrollView style={{ backgroundColor: pal.paper }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 48, gap: 16 }}>
@@ -48,7 +49,7 @@ export default function KitSheet() {
       <Text style={{ ...text.caption, color: pal.ink2 }}>Caption 13</Text>
       <Wash keeper="tock">
         <View style={{ flexDirection: "row", gap: 16 }}>
-          <ShotSticker uri={null} title={DEMO_FLYER.title} tilt size={110} variant="flyer" />
+          <ShotSticker uri={DEMO_FLYER.image} title={DEMO_FLYER.title} tilt size={110} />
           <View style={{ flex: 1, gap: 8 }}>
             <Text style={{ ...text.bodyBold, fontSize: 18, color: pal.ink }}>{DEMO_FLYER.title}</Text>
             <KeeperLine id="tock">{DEMO_FLYER.keeperLine}</KeeperLine>
@@ -56,11 +57,11 @@ export default function KitSheet() {
         </View>
       </Wash>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-        {DEMO_SHOTS.filter((s) => ["m4", "m3", "i1", "u1"].includes(s.id)).map((s) => (
-          <ShotSticker key={s.id} uri={null} title={s.title} size={80} variant={s.variant} />
+        {DEMO_SHOTS.filter((s) => ["12-coffee-receipt", "13-order-confirmation", "18-miso-pasta", "24-blurry-meme"].includes(s.id)).map((s) => (
+          <ShotSticker key={s.id} uri={s.image} title={s.title} size={80} />
         ))}
       </View>
-      <PsstButton kind="filled" keeper="tock" label="Remind me Thu 9:00 AM" onPress={() => {}} />
+      <PsstButton kind="filled" keeper="tock" label={DEMO_FLYER.reminderLabel} onPress={() => {}} />
       <PsstButton kind="filled" label="Continue" onPress={() => {}} />
       <PsstButton kind="outline" label="Not today" onPress={() => {}} />
       <PsstButton kind="text" label="Skip ahead" onPress={() => {}} />

@@ -1,26 +1,22 @@
-import { Tabs } from "expo-router";
-import { SwipeTabs } from "@/components/tabs/SwipeTabs";
-import { colors, fonts } from "@/design";
+import { NativeTabs } from "expo-router/native-tabs";
+import { fonts, usePalette } from "@/design/psst";
 
 export default function TabsLayout() {
+  const pal = usePalette();
   return (
-    <Tabs
-      screenLayout={({ route, children }) => <SwipeTabs name={route.name}>{children}</SwipeTabs>}
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.ink,
-        tabBarInactiveTintColor: colors.inkFaint,
-        tabBarStyle: { backgroundColor: colors.paper, borderTopColor: colors.line },
-        tabBarLabelStyle: { fontFamily: fonts.hand, fontSize: 20, lineHeight: 26 },
-        tabBarLabelPosition: "beside-icon",
-        tabBarIcon: () => null,
-        tabBarIconStyle: { display: "none" },
-      }}
-    >
-      <Tabs.Screen name="today" options={{ title: "Home" }} />
-      <Tabs.Screen name="rooms" options={{ title: "Rooms" }} />
-      <Tabs.Screen name="ask" options={{ title: "Ask" }} />
-      <Tabs.Screen name="you" options={{ title: "You" }} />
-    </Tabs>
+    <NativeTabs tintColor={pal.ink} minimizeBehavior="onScrollDown" backgroundColor={pal.paper} shadowColor={pal.hair} labelStyle={{ fontFamily: fonts.uiBold }}>
+      <NativeTabs.Trigger name="today">
+        <NativeTabs.Trigger.Icon sf={{ default: "sun.max", selected: "sun.max.fill" }} />
+        <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="rooms">
+        <NativeTabs.Trigger.Icon sf={{ default: "square.grid.2x2", selected: "square.grid.2x2.fill" }} />
+        <NativeTabs.Trigger.Label>Rooms</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="ask" role="search">
+        <NativeTabs.Trigger.Label>Ask</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="you" hidden />
+    </NativeTabs>
   );
 }
