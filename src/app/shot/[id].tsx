@@ -2,11 +2,11 @@ import { useMutation, useQuery } from "convex/react";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button, Character, colors, radii, SpeechBubble, spacing, Sticker, type } from "@/design";
-import { formatWhen, lineFor, ROOM_ORDER, roomName, type Room } from "@/components/tabs/helpers";
+import { formatWhen, lineFor, reminderCaption, ROOM_ORDER, roomName, type Room } from "@/components/tabs/helpers";
 import { useReminders } from "@/components/tabs/reminders";
 import { designRoom, InfoCard, Loading, Notice, Screen, Sheet, useToast } from "@/components/tabs/ui";
 import { DEV_TOOLS } from "@/lib/dev-flags";
@@ -107,7 +107,7 @@ export default function Detail() {
                       <View style={{ flex: 1, gap: spacing.xs }}>
                         <Text style={type.bodyBold}>{formatWhen(d.when)}</Text>
                         <Text style={type.body}>{d.what}</Text>
-                        <Text style={type.caption}>{on ? "Reminder set" : "Remind me"}</Text>
+                        <Text style={type.caption}>{reminderCaption(d.reminder)}</Text>
                       </View>
                       <Switch
                         value={on}
@@ -116,7 +116,7 @@ export default function Detail() {
                         accessibilityLabel={`Remind me about ${d.what}`}
                         onValueChange={async (next) => {
                           try {
-                            if (next) await reminders.remind(shotId, d.when);
+                            if (next) await reminders.remind(shotId, d.when, shot.title ?? undefined);
                             else if (d.reminder) await reminders.cancel(d.reminder.id);
                           } catch {
                             toast.show("That didn't work. Try again in a moment.");
@@ -128,10 +128,7 @@ export default function Detail() {
                       <Button
                         variant="secondary"
                         label="Fire now"
-                        onPress={async () => {
-                          const res = await reminders.fireNow(shotId);
-                          Alert.alert("Psst", res.text);
-                        }}
+                        onPress={() => reminders.fireNow(shotId).catch(() => toast.show("That didn't work. Try again in a moment."))}
                       />
                     ) : null}
                   </InfoCard>

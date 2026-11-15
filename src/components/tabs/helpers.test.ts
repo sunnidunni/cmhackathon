@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { buttonLabel, cardSubtitle, formatWhen, lineFor, roomName, weekday } from "./helpers";
+import { allScreenshotsCount, buttonLabel, cardSubtitle, formatWhen, lineFor, nudgeSample, reminderCaption, roomName, weekday } from "./helpers";
+
+describe("all screenshots count", () => {
+  test("sums every room including unsorted", () => {
+    expect(allScreenshotsCount([{ count: 3 }, { count: 0 }, { count: 2 }, { count: 1 }, { count: 4 }])).toBe(10);
+    expect(allScreenshotsCount([])).toBe(0);
+  });
+});
 
 describe("tab helpers", () => {
   test("formats dates plainly", () => {
@@ -12,7 +19,7 @@ describe("tab helpers", () => {
 
   test("button labels follow the card actions", () => {
     const date = { when: "2026-11-19", what: "appointment", confident: true };
-    expect(buttonLabel("remind", date)).toBe("Remind me Thu");
+    expect(buttonLabel("remind", date)).toBe("Remind Thu");
     expect(buttonLabel("detail", date)).toBe("Reminder set, Thu");
     expect(buttonLabel("keep", null)).toBe("Keep");
     expect(buttonLabel("see", null)).toBe("See it");
@@ -31,6 +38,18 @@ describe("tab helpers", () => {
     expect(lineFor("unsorted_01")).toContain("Not sure");
     expect(lineFor("nope")).toBeNull();
     expect(lineFor(null)).toBeNull();
+  });
+
+  test("reminder caption follows the reminder state", () => {
+    expect(reminderCaption(null)).toBe("Remind me");
+    expect(reminderCaption({ state: "scheduled" })).toBe("Reminder set");
+    expect(reminderCaption({ state: "sent" })).toBe("Reminder sent");
+    expect(reminderCaption({ state: "dismissed" })).toBe("Remind me");
+  });
+
+  test("nudge sample uses the item's own title", () => {
+    expect(nudgeSample("Brightside Power bill")).toBe("Psst: your Brightside Power bill is due tomorrow. Want to see it?");
+    expect(nudgeSample(undefined)).toBe("Psst: your reminder is due tomorrow. Want to see it?");
   });
 
   test("room names", () => {
