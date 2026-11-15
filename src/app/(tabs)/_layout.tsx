@@ -8,8 +8,9 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkFaint,
-        tabBarStyle: { backgroundColor: colors.paper, borderTopColor: colors.line, height: 64 },
-        tabBarLabelStyle: { fontFamily: fonts.hand, fontSize: 20, marginBottom: 14 },
+        tabBarStyle: { backgroundColor: colors.paper, borderTopColor: colors.line },
+        tabBarLabelStyle: { fontFamily: fonts.hand, fontSize: 20, lineHeight: 26 },
+        tabBarLabelPosition: "beside-icon",
         tabBarIcon: () => null,
         tabBarIconStyle: { display: "none" },
       }}
