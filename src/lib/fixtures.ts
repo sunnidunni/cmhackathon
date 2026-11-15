@@ -103,7 +103,7 @@ const byId = (id: string): DemoShot => {
 export const DEMO_FLYER = {
   ...byId("01-pottery-flyer"),
   savedLabel: "today, 9:12 AM",
-  closes: "Nov 21",
+  closes: "Nov 20",
   reminderLabel: "Remind me Nov 20, 9:00 AM",
 };
 
@@ -115,7 +115,7 @@ export const DEMO_RECEIPT = {
 
 export const DEMO_ANSWER = {
   question: "When does the pottery sign-up close?",
-  answer: "Pottery night sign-up closes Nov 21.",
+  answer: "Pottery night sign-up closes Nov 20.",
   source: "from a screenshot saved today, 9:12 AM",
   shotId: DEMO_FLYER.id,
   reminderLabel: DEMO_FLYER.reminderLabel,
