@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { tabAfterSwipe } from "./swipe";
+import { pageAfterDrag, tabAfterSwipe } from "./swipe";
 
 describe("tab swipe", () => {
   test("left goes forward, right goes back", () => {
@@ -20,5 +20,24 @@ describe("tab swipe", () => {
 
   test("a quick flick counts even when short", () => {
     expect(tabAfterSwipe("today", -40, -900)).toBe("rooms");
+  });
+});
+
+describe("pageAfterDrag", () => {
+  const W = 400;
+  test("past a third of the screen settles on the neighbour", () => {
+    expect(pageAfterDrag(0, -150, 0, W, 4)).toBe(1);
+    expect(pageAfterDrag(2, 150, 0, W, 4)).toBe(1);
+  });
+  test("a short slow drag springs back", () => {
+    expect(pageAfterDrag(1, -100, -100, W, 4)).toBe(1);
+  });
+  test("a fast flick commits even when short", () => {
+    expect(pageAfterDrag(1, -40, -700, W, 4)).toBe(2);
+    expect(pageAfterDrag(1, 40, 700, W, 4)).toBe(0);
+  });
+  test("never past the ends", () => {
+    expect(pageAfterDrag(0, 300, 900, W, 4)).toBe(0);
+    expect(pageAfterDrag(3, -300, -900, W, 4)).toBe(3);
   });
 });
