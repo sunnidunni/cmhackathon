@@ -104,7 +104,7 @@ export const DEMO_FLYER = {
   ...byId("01-pottery-flyer"),
   savedLabel: "today, 9:12 AM",
   closes: "Nov 20",
-  reminderLabel: "Remind me Nov 20, 9:00 AM",
+  reminderLabel: "Remind me Nov 19, 9:00 AM",
 };
 
 export const DEMO_RECEIPT = {
