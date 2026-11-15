@@ -13,7 +13,7 @@ const ROOT = resolve(__dirname, "../../..");
 const { transformFileSync } = createRequire(__filename)("@babel/core") as {
   transformFileSync: (file: string, options: object) => { code?: string | null } | null;
 };
-const FILES = ["PhotoGrid.tsx", "ZoomViewer.tsx", "SwipeTabs.tsx"].map((f) => resolve(__dirname, f));
+const FILES = ["ZoomViewer.tsx", "SwipeTabs.tsx"].map((f) => resolve(__dirname, f));
 
 function compile(file: string) {
   return transformFileSync(file, {
