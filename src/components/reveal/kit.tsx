@@ -70,11 +70,11 @@ export function Skeleton({ w, h, style }: { w: number | string; h: number; style
   return <View style={[{ width: w as number, height: h, borderRadius: h / 2, backgroundColor: p.fill2 }, style]} />;
 }
 
-export function ShotSticker({ uri, title, size = 56 }: { uri: string | null; title: string; tilt?: number; size?: number }) {
+export function ShotSticker({ uri, title, size = 56 }: { uri: string | number | null; title: string; tilt?: number; size?: number }) {
   const p = usePalette();
   return (
     <View style={{ width: size, height: size * 1.15, borderRadius: 8, borderWidth: 3, borderColor: p.cut, backgroundColor: p.white, overflow: "hidden", justifyContent: "center", padding: 3, outlineWidth: 1, outlineColor: p.hair } as ViewStyle}>
-      {uri ? <Image source={{ uri }} style={{ flex: 1 }} contentFit="cover" /> : <Text numberOfLines={3} style={[text.caption, { fontSize: 9, lineHeight: 11, color: p.ink2 }]}>{title}</Text>}
+      {uri ? <Image source={typeof uri === "number" ? uri : { uri }} style={{ flex: 1 }} contentFit="cover" /> : <Text numberOfLines={3} style={[text.caption, { fontSize: 9, lineHeight: 11, color: p.ink2 }]}>{title}</Text>}
     </View>
   );
 }

@@ -8,16 +8,11 @@ import { bringInState, failedLabel, type BringInResult } from "@/components/onbo
 import { KeeperRow, SkeletonKeeperRow, type RowShot } from "@/components/reveal/KeeperRow";
 import { RefundCard } from "@/components/reveal/RefundCard";
 import { PsstButton, KEEPERS, text, usePalette, type KeeperId } from "@/components/reveal/kit";
+import { FIXTURE_SHOT } from "@/components/reveal/demo-shots";
 import { ROOM_FOR, REACTION_GAP_MS, REVEAL_ORDER, keepersDue, screenshotsIn } from "@/components/reveal/model";
 import { DEV_TOOLS as FIXTURES } from "@/lib/dev-flags";
 import { useSync } from "@/lib/sync";
 
-const FIXTURE_SHOT: Record<KeeperId, string> = {
-  tock: "Pottery class sign-up",
-  penny: "Greenleaf grocery receipt",
-  murmur: "Dinner Saturday",
-  mote: "Olive butter pasta",
-};
 
 const FIXTURE_COUNTS = { deadlines: 3, money: 4, chats: 4, ideas: 4, unsorted: 1 };
 
@@ -72,7 +67,7 @@ export default function BringIn() {
   const shotFor = (id: KeeperId): RowShot | null => {
     const newest = roomFor(id)?.newest;
     if (newest) return { uri: newest.imageUrl, title: newest.title };
-    return FIXTURES ? { uri: null, title: FIXTURE_SHOT[id] } : null;
+    return FIXTURES ? FIXTURE_SHOT[id] : null;
   };
   const unsorted = rooms?.find((r) => r.category === "unsorted")?.count ?? 0;
   const activeId = !done && shown > 0 ? REVEAL_ORDER[shown - 1] : null;

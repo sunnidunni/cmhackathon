@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Enter } from "./Enter";
+import { FIXTURE_SHOT } from "./demo-shots";
 import { KeeperLine, ShotSticker, Wash, text, usePalette, useKeeperColors } from "./kit";
 
 // Fixture only: the backend has no refund field yet (see Backend asks in the PR).
@@ -11,11 +12,11 @@ export function RefundCard() {
   return (
     <Enter>
       <Wash keeper="penny" style={styles.card}>
-        <ShotSticker uri={null} title={REFUND_FIXTURE.title} size={52} />
+        <ShotSticker uri={FIXTURE_SHOT.penny.uri} title={REFUND_FIXTURE.title} size={52} />
         <View style={styles.body}>
           <Text style={[text.bodyBold, { color: p.ink }]}>Penny Pocket found a refund still marked pending.</Text>
           <Text style={[text.bodyBold, { color: deep }]}>{`${REFUND_FIXTURE.amount} at ${REFUND_FIXTURE.merchant}, ${REFUND_FIXTURE.date}`}</Text>
-          <Text style={[text.caption, { color: p.ink2 }]}>{"From the receipt. Psst can't see your bank."}</Text>
+          <Text style={[text.caption, { color: p.ink2 }]}>From the receipt.</Text>
           <KeeperLine id="penny">Pending since Nov 8. Worth a look.</KeeperLine>
         </View>
       </Wash>

@@ -3,7 +3,7 @@ import { Enter } from "./Enter";
 import { KEEPERS, Keeper, KeeperLine, ShotSticker, Skeleton, Wash, usePalette, text, type KeeperId } from "./kit";
 import { INTRO, ROOM_LABEL, screenshotsIn } from "./model";
 
-export type RowShot = { uri: string | null; title: string };
+export type RowShot = { uri: string | number | null; title: string };
 
 export function SkeletonKeeperRow() {
   const p = usePalette();
