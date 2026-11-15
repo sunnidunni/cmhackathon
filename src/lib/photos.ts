@@ -45,6 +45,7 @@ export function usePhotoAccess() {
     return next;
   }, []);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- setState runs after an await
     void refresh();
     const sub = AppState.addEventListener("change", (s) => {
       if (s === "active") void refresh();
