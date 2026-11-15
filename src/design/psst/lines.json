@@ -1,0 +1,367 @@
+{
+  "tock.intro": {
+    "text": "I keep dates. One reminder each, at the time you pick.",
+    "where": "Import reveal, Tock's row",
+    "voice": "keeper: Tock",
+    "placeholders": []
+  },
+  "tock.handful.dated": {
+    "text": "{title} closes {weekday}. I already started worrying for you.",
+    "where": "Today focus card, dated, no reminder yet",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "tock.handful.set": {
+    "text": "Reminder set for {weekday}. Quiet until then.",
+    "where": "Today focus card, reminder set",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "weekday"
+    ]
+  },
+  "tock.reminder.push": {
+    "text": "Tock: {title} closes tomorrow. Want to see it?",
+    "where": "Notification, at the reminder time",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "title"
+    ]
+  },
+  "tock.week": {
+    "text": "{n} things due this week. The first is {weekday}.",
+    "where": "Rooms card, Deadlines",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "n",
+      "weekday"
+    ]
+  },
+  "tock.room": {
+    "text": "{n} things with a date. The nearest is {date}.",
+    "where": "Room header wash",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "n",
+      "date"
+    ]
+  },
+  "tock.done": {
+    "text": "Done. {date} is off my mind.",
+    "where": "Toast after Mark as done",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "date"
+    ]
+  },
+  "tock.empty": {
+    "text": "Nothing with a date yet. Sign-ups, bookings and things due back land here.",
+    "where": "Room empty state",
+    "voice": "keeper: Tock",
+    "placeholders": []
+  },
+  "tock.error": {
+    "text": "I couldn't read {n} new screenshots. They're still on your phone.",
+    "where": "Today error card, with Try again. Say \"screenshot\" when {n} is 1",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "n"
+    ]
+  },
+  "murmur.intro": {
+    "text": "I keep chats. I never quote them back.",
+    "where": "Import reveal, Murmur's row",
+    "voice": "keeper: Murmur",
+    "placeholders": []
+  },
+  "murmur.handful": {
+    "text": "{title}. I wrote it down and told no one.",
+    "where": "Today focus card, chat",
+    "voice": "keeper: Murmur",
+    "placeholders": [
+      "title"
+    ]
+  },
+  "murmur.code": {
+    "text": "The code from {title} is in here. I won't say it out loud.",
+    "where": "Detail, chat with a code or password",
+    "voice": "keeper: Murmur",
+    "placeholders": [
+      "title"
+    ]
+  },
+  "murmur.plan": {
+    "text": "{title} is on {weekday}. That's all I'm repeating.",
+    "where": "Detail, chat with a plan",
+    "voice": "keeper: Murmur",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "murmur.room": {
+    "text": "{n} conversations kept. Not a word repeated.",
+    "where": "Room header wash",
+    "voice": "keeper: Murmur",
+    "placeholders": [
+      "n"
+    ]
+  },
+  "murmur.priming": {
+    "text": "Only your Screenshots album. I won't peek anywhere else.",
+    "where": "Priming, beside the trust lines",
+    "voice": "keeper: Murmur",
+    "placeholders": []
+  },
+  "murmur.empty": {
+    "text": "Nothing in Chats yet. Plans, codes and addresses land here.",
+    "where": "Room empty state",
+    "voice": "keeper: Murmur",
+    "placeholders": []
+  },
+  "murmur.credits": {
+    "text": "You found the credits. I'll tell no one.",
+    "where": "About screen, the keepers (easter egg)",
+    "voice": "keeper: Murmur",
+    "placeholders": []
+  },
+  "murmur.error": {
+    "text": "The server didn't answer. I kept your question above.",
+    "where": "Ask failed, with Try again",
+    "voice": "keeper: Murmur",
+    "placeholders": []
+  },
+  "penny.intro": {
+    "text": "I keep prices and receipts. Unclear amounts stay blank.",
+    "where": "Import reveal, Penny's row",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": []
+  },
+  "penny.reveal": {
+    "text": "I found {n} things with a price. One is {title}, due {date}.",
+    "where": "Import done, the one true fact",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "n",
+      "title",
+      "date"
+    ]
+  },
+  "penny.due": {
+    "text": "{title} is due {date}. {amount}.",
+    "where": "Today focus card, bill. Plain, no joke",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "title",
+      "date",
+      "amount"
+    ]
+  },
+  "penny.refund": {
+    "text": "{amount} refund marked pending on the {date} receipt.",
+    "where": "Today focus card, receipt with a refund line",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "amount",
+      "title"
+    ]
+  },
+  "penny.wishlist": {
+    "text": "{amount} when you saved it, {date}. Prices change.",
+    "where": "Thin day, product page. Facts only, no prompt to buy",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "amount",
+      "date"
+    ]
+  },
+  "penny.room": {
+    "text": "{n} things with a price. The next one due is {date}.",
+    "where": "Room header wash",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "n",
+      "date"
+    ]
+  },
+  "penny.unclear": {
+    "text": "I couldn't read the amount on {title}, so I left it blank.",
+    "where": "Detail, amount not readable",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "title"
+    ]
+  },
+  "penny.reminder.push": {
+    "text": "Penny Pocket: {title} is due tomorrow. {amount}.",
+    "where": "Notification, at the reminder time",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "title",
+      "amount"
+    ]
+  },
+  "penny.empty": {
+    "text": "Nothing with a price yet. Receipts, bills and tickets land here.",
+    "where": "Room empty state",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": []
+  },
+  "mote.intro": {
+    "text": "I keep ideas. One may come back to Today on a quiet day.",
+    "where": "Import reveal, Mote's row",
+    "voice": "keeper: Mote",
+    "placeholders": []
+  },
+  "mote.thinday": {
+    "text": "Nothing urgent today, so here's one from the jar. {title}, saved {date}.",
+    "where": "Today focus card, thin day",
+    "voice": "keeper: Mote",
+    "placeholders": [
+      "title",
+      "date"
+    ]
+  },
+  "mote.recipe": {
+    "text": "{title}. {n} weeks in the jar. Still sounds delicious.",
+    "where": "Today focus card or detail, recipe",
+    "voice": "keeper: Mote",
+    "placeholders": [
+      "title",
+      "n"
+    ]
+  },
+  "mote.place": {
+    "text": "{title}. For a slow {weekday}, maybe.",
+    "where": "Detail, a place",
+    "voice": "keeper: Mote",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "mote.room": {
+    "text": "{n} ideas saved. The oldest has waited since {date}.",
+    "where": "Room header wash",
+    "voice": "keeper: Mote",
+    "placeholders": [
+      "n",
+      "date"
+    ]
+  },
+  "mote.kept": {
+    "text": "Kept. Back in the jar for another day.",
+    "where": "Toast after Keep it",
+    "voice": "keeper: Mote",
+    "placeholders": []
+  },
+  "mote.reminder.push": {
+    "text": "Mote: you saved {title} {n} weeks ago. Tonight, maybe?",
+    "where": "Notification, only for a reminder the user set on an idea",
+    "voice": "keeper: Mote",
+    "placeholders": [
+      "title",
+      "n"
+    ]
+  },
+  "mote.empty": {
+    "text": "Nothing in Ideas yet. Recipes, places and quotes land here.",
+    "where": "Room empty state",
+    "voice": "keeper: Mote",
+    "placeholders": []
+  },
+  "system.reading": {
+    "text": "Reading {n} new screenshots.",
+    "where": "Today, loading row",
+    "voice": "app",
+    "placeholders": [
+      "n"
+    ]
+  },
+  "system.handful.caption": {
+    "text": "Brought to you today. {n} left in today's handful.",
+    "where": "Today, caption under the headline",
+    "voice": "app",
+    "placeholders": [
+      "n"
+    ]
+  },
+  "system.thinday": {
+    "text": "Nothing urgent today, so here is one from the pile.",
+    "where": "Today caption, thin day",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.alldone": {
+    "text": "That's today's handful. Quiet from here until something needs you.",
+    "where": "Today, nothing left",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.room.quiet": {
+    "text": "Nothing new today.",
+    "where": "Rooms card, muted room",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.unsorted": {
+    "text": "{n} screenshots didn't fit a room. You decide where they go.",
+    "where": "Rooms, Unsorted row",
+    "voice": "app",
+    "placeholders": [
+      "n"
+    ]
+  },
+  "system.partial": {
+    "text": "Psst can see only the screenshots you picked. That works.",
+    "where": "Rooms, partial photo access card",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.denied": {
+    "text": "Psst can't see your screenshots yet.",
+    "where": "Photo access denied, one button that asks again",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.ask.loading": {
+    "text": "Looking through your screenshots.",
+    "where": "Ask, loading",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.ask.nomatch": {
+    "text": "I couldn't find that in your screenshots.",
+    "where": "Ask, no match. App voice, no keeper",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.ask.nomatch.keeper": {
+    "text": "Maybe it's in {room}? Have a look.",
+    "where": "Ask, the one keeper row under the closest screenshots",
+    "voice": "keeper: the room keeper it points to",
+    "placeholders": [
+      "room"
+    ]
+  },
+  "system.sync.error": {
+    "text": "Couldn't sync. Check your connection and try again.",
+    "where": "Settings, sync failed",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.notif.primer": {
+    "text": "Only for reminders you set. You can turn them off in Settings.",
+    "where": "Notification primer sheet",
+    "voice": "app",
+    "placeholders": []
+  },
+  "system.reminder.fired": {
+    "text": "You were reminded today.",
+    "where": "Today focus card, after a reminder fired",
+    "voice": "app",
+    "placeholders": []
+  }
+}

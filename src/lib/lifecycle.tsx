@@ -3,9 +3,10 @@ import * as Notifications from "expo-notifications";
 import { addListener as addLibraryListener } from "expo-media-library";
 import { type Href, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import { api } from "../../convex/_generated/api";
 import { screenshotIdFromData, shotRoute } from "./notification-plan";
+import { getAutoRead } from "./auto-read";
 import { getPhotoAccess, hasPhotoAccess } from "./photos";
 import { getImportStarted, runSync } from "./sync";
 
@@ -13,7 +14,8 @@ const LIBRARY_CHANGE_DEBOUNCE_MS = 1500;
 
 // Mount once in the root layout, inside the Convex provider. Renders nothing.
 // After sign-in: on launch and every return to the foreground it calls today.appOpened and, once the
-// import has been started, syncs the album. While the app is open it syncs on library changes.
+// import has been started and "Read new screenshots automatically" is on, syncs the album. While the
+// app is open it syncs on library changes.
 // A tap on a reminder notification routes to /shot/<screenshotId>.
 export function AppLifecycle() {
   const { isAuthenticated } = useConvexAuth();
@@ -23,7 +25,7 @@ export function AppLifecycle() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const syncIfStarted = async () => {
-      if (await getImportStarted()) await runSync().catch(() => undefined);
+      if ((await getImportStarted()) && (await getAutoRead())) await runSync().catch(() => undefined);
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
     let library: { remove(): void } | undefined;
@@ -61,7 +63,7 @@ export function AppLifecycle() {
   }, [isAuthenticated, appOpened]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || Platform.OS === "web") return;
     const open = (response: Notifications.NotificationResponse | null) => {
       const id = screenshotIdFromData(response?.notification.request.content.data);
       if (!id) return;

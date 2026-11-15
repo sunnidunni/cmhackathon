@@ -9,5 +9,5 @@ export default function Entry() {
   if (access === null || started === null) return <LoadingView label="Loading…" />;
   if (started) return <Redirect href="/today" />;
   if (hasPhotoAccess(access)) return <Redirect href="/bring" />;
-  return <Redirect href="/priming" />;
+  return <Redirect href="/welcome" />;
 }
