@@ -6,7 +6,7 @@ import { Pressable, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { FunctionReturnType } from "convex/server";
-import { defaultReminder, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
+import { defaultReminder, dueParts, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
 import { KEEPERS, KeeperFace, PsstButton, ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
 
 const Decor = ({ children }: { children: ReactNode }) => (
@@ -99,8 +99,9 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
   const go = useGo();
   const shot = useShot(source?.screenshotId, shots);
   const now = useNow();
-  const reminder = shot ? defaultReminder(shot.dates, now, tz()) : null;
-  const existing = reminder ? shot?.dates.find((d) => d.when === reminder.date.when)?.reminder : null;
+  const fresh = shot ? defaultReminder(shot.dates, now, tz()) : null;
+  const existing = fresh ? shot?.dates.find((d) => d.when === fresh.date.when)?.reminder : null;
+  const reminder = fresh && existing?.state === "scheduled" ? { ...fresh, ...dueParts(existing.dueAt, tz()) } : fresh;
   const isSet = existing?.state === "scheduled";
   const closes = reminder ? /clos/i.test(reminder.date.what) : false;
   return (

@@ -42,12 +42,14 @@ export function nextConfidentDate(dates: ShotDate[], now: number, tz: number) {
   return future[0] ?? null;
 }
 
-// The backend schedules 9:00 local the day before (computeDueAt); this only previews it.
-export function defaultReminder(dates: ShotDate[], now: number, tz: number) {
+export const dueParts = (dueAt: number, tz: number) => ({ dueAt, label: `${local(dueAt, tz).dow} ${clock(dueAt, tz)}`, day: dayLabel(dueAt, tz), clock: clock(dueAt, tz) });
+
+// The backend schedules 9:00 local the day before (computeDueAt); this only previews it. A reminder that is already
+// scheduled keeps its saved instant (existingDueAt) instead of being recomputed in the phone's current time zone.
+export function defaultReminder(dates: ShotDate[], now: number, tz: number, existingDueAt?: number) {
   const date = nextConfidentDate(dates, now, tz);
   if (!date) return null;
-  const dueAt = computeDueAt(date.when, now, tz);
-  return { date, dueAt, label: `${local(dueAt, tz).dow} ${clock(dueAt, tz)}`, day: dayLabel(dueAt, tz), clock: clock(dueAt, tz) };
+  return { date, ...dueParts(existingDueAt ?? computeDueAt(date.when, now, tz), tz) };
 }
 
 export function previewText(shot: { title: string; category: string; amount: string | null }, date: ShotDate, dueAt: number, tz: number) {

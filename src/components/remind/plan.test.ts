@@ -30,6 +30,15 @@ describe("defaultReminder", () => {
   });
 });
 
+describe("existing reminder", () => {
+  it("keeps the saved instant instead of recomputing in the current time zone", () => {
+    const saved = Date.UTC(2026, 10, 19, 17, 0);
+    const r = defaultReminder([{ when: "2026-11-20", what: "Sign-up closes", confident: true }], sun9am, 300, saved);
+    expect(r?.dueAt).toBe(saved);
+    expect(r?.label).toBe("Thu 12:00 PM");
+  });
+});
+
 describe("labels", () => {
   it("formats a date without a time zone shift", () => {
     expect(whenLabel("2026-11-20")).toBe("Fri, Nov 20");

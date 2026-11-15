@@ -52,7 +52,10 @@ export default function Ask() {
   }
 
   const exchanges: Exchange[] = history ?? [];
-  const synced = pending?.status === "done" && exchanges.some((ex) => ex._id === pending.result?.questionId);
+  const synced =
+    pending !== null &&
+    pending.status !== "failed" &&
+    exchanges.some((ex) => ex._id === pending.result?.questionId || (ex.question === pending.question && ex.createdAt >= pending.sentAt - 5000));
   const shownPending = synced ? null : pending;
   const empty = history !== undefined && exchanges.length === 0 && !shownPending;
   const lastId = shownPending?.result ? undefined : exchanges[exchanges.length - 1]?._id;

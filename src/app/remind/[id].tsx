@@ -26,6 +26,7 @@ export default function Remind() {
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [cancelFailed, setCancelFailed] = useState(false);
 
   useEffect(() => {
     hasNotificationPermission().then(setNotifOn);
@@ -67,6 +68,7 @@ export default function Remind() {
         notifOn={notifOn}
         saved={saved}
         failed={failed}
+        cancelFailed={cancelFailed}
         saving={saving}
         priming={priming}
         onConfirm={confirm}
@@ -85,8 +87,15 @@ export default function Remind() {
         onTurnOff={async () => {
           if (!existing) return;
           setSaving(true);
-          await actions.cancel(existing.id).catch(() => undefined);
-          close();
+          setCancelFailed(false);
+          try {
+            await actions.cancel(existing.id);
+            close();
+          } catch {
+            setCancelFailed(true);
+          } finally {
+            setSaving(false);
+          }
         }}
       />
     </>

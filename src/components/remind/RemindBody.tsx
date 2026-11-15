@@ -1,7 +1,7 @@
 import { ScrollView, Text, View } from "react-native";
 import type { ShotDetail } from "@/components/ask/AnswerBlock";
 import { PsstButton, text, usePalette } from "@/design/psst";
-import { dayLabel, defaultReminder, previewText, whenLabel } from "./plan";
+import { dayLabel, defaultReminder, dueParts, previewText, whenLabel } from "./plan";
 import { Banner, Headline, Options, Preview, Priming, TodayPreview } from "./ReminderViews";
 
 export type RemindState = {
@@ -11,6 +11,7 @@ export type RemindState = {
   notifOn: boolean | null;
   saved: boolean;
   failed: boolean;
+  cancelFailed?: boolean;
   saving: boolean;
   priming: boolean;
 };
@@ -25,10 +26,11 @@ export type RemindActions = {
   onFireNow?: () => void;
 };
 
-export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, priming, onConfirm, onRetry, onTurnOff, onAllow, onSkip, onClose, onFireNow }: RemindState & RemindActions) {
+export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed, saving, priming, onConfirm, onRetry, onTurnOff, onAllow, onSkip, onClose, onFireNow }: RemindState & RemindActions) {
   const p = usePalette();
-  const plan = shot ? defaultReminder(shot.dates, now, tz) : null;
-  const existing = plan && shot ? shot.dates.find((d) => d.when === plan.date.when)?.reminder : null;
+  const fresh = shot ? defaultReminder(shot.dates, now, tz) : null;
+  const existing = fresh && shot ? shot.dates.find((d) => d.when === fresh.date.when)?.reminder : null;
+  const plan = fresh && existing?.state === "scheduled" ? { ...fresh, ...dueParts(existing.dueAt, tz) } : fresh;
   const isSet = saved || existing?.state === "scheduled";
   const off = isSet && notifOn === false;
   const options = plan
@@ -52,6 +54,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, prim
           <>
             <Text style={[text.lead, { color: p.ink2 }]}>{`${plan.date.what} ${whenLabel(plan.date.when)}.`}</Text>
             {failed ? <Banner kind="error" title="Couldn't set the reminder." body="Nothing changed. Your pick is kept below." /> : null}
+            {cancelFailed ? <Banner kind="error" title="Couldn't turn off the reminder." body="It's still on. Try again." /> : null}
             {off ? <Banner kind="off" title="Saved, no notification." body={`Notifications are off. The reminder will wait at the top of Today on ${plan.day} at ${plan.clock}.`} /> : null}
             {isSet && notifOn ? <Text style={[text.bodyBold, { color: p.ink }]}>{`Reminder set for ${plan.day} at ${plan.clock}.`}</Text> : null}
             <Options rows={options} />
