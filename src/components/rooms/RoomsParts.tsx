@@ -82,7 +82,7 @@ export function LimitedAccessCard({ onPress }: { onPress: () => void }) {
         <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, justifyContent: "center" }}>
           <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Give access to all screenshots</Text>
         </Pressable>
-        <Text style={[text.caption, { color: p.ink2 }]}>Optional. Psst still reads only screenshots.</Text>
+        <Text style={[text.caption, { color: p.ink2 }]}>We only read your Screenshots album.</Text>
       </View>
     </SoftCard>
   );

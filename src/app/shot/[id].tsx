@@ -152,7 +152,7 @@ export default function Detail() {
               {dates.map((d) => (
                 <Row key={d.when + d.what} label={d.what} value={dateLabel(d.when)} />
               ))}
-              <Row label="Reminder" value={reminderRow} onPress={() => router.push(`/remind/${shotId}`)} chevron />
+              <Row label="Reminder" value={reminderRow} onPress={() => router.push(`/remind/${shotId}` as never)} chevron />
               <Row
                 label={`Filed in ${roomLabel}`}
                 value={shot.reason ? `Because ${shot.reason.charAt(0).toLowerCase()}${shot.reason.slice(1)}`.replace(/\.?$/, ".") : shot.userMoved ? "Moved by you." : null}
@@ -211,7 +211,7 @@ export default function Detail() {
               <PsstButton
                 keeper={keeper}
                 label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Set a reminder"}
-                onPress={() => router.push(`/remind/${shotId}`)}
+                onPress={() => router.push(`/remind/${shotId}` as never)}
               />
               <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
                 {suggestion ? `One reminder, ${suggestion.long}. Change it later.` : primary ? "You pick the day and time." : "No reminder unless you set one. You pick the day and time."}
@@ -257,7 +257,7 @@ function Row({ label, value, action, onAction, onPress, chevron }: { label: stri
     <View style={{ flexDirection: "row", alignItems: "center", minHeight: 60, paddingVertical: 10, borderTopWidth: 1, borderColor: p.hair, gap: 12 }}>
       <View style={{ flex: 1 }}>
         <Text style={[text.bodyBold, { color: p.ink }]}>{label}</Text>
-        {value ? <Text style={[text.caption, { color: p.ink2 }]}>{value}</Text> : null}
+        {value ? <Text selectable={!onPress && !action} style={[text.caption, { color: p.ink2 }]}>{value}</Text> : null}
       </View>
       {action ? (
         <Pressable accessibilityRole="button" onPress={onAction} hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }}>

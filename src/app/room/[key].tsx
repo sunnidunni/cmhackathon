@@ -3,11 +3,10 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
-import { dateLabel, countLabel, roomHeadline, roomLine, sortItems, type Category } from "@/components/rooms/format";
-import { Keeper, KeeperLine, PsstButton, text, usePalette, Wash, keeperForRoom, type KeeperId, type RoomKey } from "@/components/rooms/kit";
+import { countLabel, dateLabel, roomHeadline, roomLine, type Category } from "@/components/rooms/format";
+import { Keeper, KeeperLine, keeperForRoom, PsstButton, Skeleton, text, usePalette, Wash, type KeeperId, type RoomKey } from "@/components/rooms/kit";
+import { PhotoGrid, ShotGridSkeleton } from "@/components/rooms/PhotoGrid";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
-import { ShotGrid, ShotGridSkeleton, type GridItem } from "@/components/rooms/ShotGrid";
-import { Skeleton } from "@/components/rooms/kit";
 import { runSync } from "@/lib/sync";
 
 const CATEGORIES: Category[] = ["deadlines", "chats", "money", "ideas", "unsorted"];
@@ -25,6 +24,7 @@ function HeaderOptions() {
 }
 
 const body = { padding: 16, paddingTop: Platform.OS === "ios" ? 8 : 64, paddingBottom: 32, gap: 16, flexGrow: 1 } as const;
+const open = (id: string) => router.push(`/shot/${id}`);
 
 export default function RoomScreen() {
   const { key } = useLocalSearchParams<{ key: string }>();
@@ -34,20 +34,30 @@ export default function RoomScreen() {
 function AllScreen() {
   const p = usePalette();
   const all = useQuery(api.rooms.all, {});
-  const items: GridItem[] | null = all
-    ? all.items.map((i) => ({ id: i._id, title: i.title, imageUrl: i.imageUrl, sub: ROOM_LABEL[i.category as RoomKey] ?? "Unsorted" }))
-    : null;
+  const header = (
+    <View style={{ gap: 4 }}>
+      <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+        All screenshots
+      </Text>
+      {all ? <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(all.count)}</Text> : <Skeleton w={96} h={14} />}
+    </View>
+  );
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
       <HeaderOptions />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
-        <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
-          All screenshots
-        </Text>
-        {all === undefined ? <Skeleton w={96} h={14} /> : <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(all.count)}</Text>}
-        {items === null ? <ShotGridSkeleton /> : <ShotGrid items={items} keeper="mote" onOpen={(id) => router.push(`/shot/${id}`)} />}
-        {items?.length === 0 ? <Text style={[text.body, { color: p.ink2 }]}>Nothing here yet. Bring in screenshots from Rooms.</Text> : null}
-      </ScrollView>
+      {all && all.items.length > 0 ? (
+        <PhotoGrid
+          keeper="mote"
+          header={header}
+          onOpen={open}
+          items={all.items.map((i) => ({ id: i._id, title: i.title, imageUrl: i.imageUrl, takenAt: i.takenAt, sub: ROOM_LABEL[i.category as RoomKey] ?? "Unsorted" }))}
+        />
+      ) : (
+        <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
+          {header}
+          {all === undefined ? <ShotGridSkeleton /> : <Text style={[text.body, { color: p.ink2 }]}>Nothing here yet. Bring in screenshots from Rooms.</Text>}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -59,59 +69,64 @@ function SingleRoom({ category }: { category: Category }) {
   const isRoom = category !== "unsorted";
   const keeper: KeeperId = isRoom ? keeperForRoom(category) : "mote";
 
-  const items = data
-    ? sortItems(
-        category,
-        data.items.map((i) => ({ id: i._id, title: i.title, date: i.date, imageUrl: i.imageUrl, lineKey: i.lineKey, takenAt: i.takenAt })),
-      )
-    : null;
-  const grid: GridItem[] = (items ?? []).map((i) => ({ id: i.id, title: i.title, imageUrl: i.imageUrl, sub: i.date ? dateLabel(i.date) : null }));
-
+  const items = data?.items ?? null;
+  const rows = items?.map((i) => ({ date: i.date, takenAt: i.takenAt }));
   const headline = !isRoom && items ? `${countLabel(items.length)} didn't fit a room.` : roomHeadline(category);
+  const isEmpty = items !== null && items.length === 0;
+
+  const wash = (
+    <Wash keeper={isRoom ? keeper : "muted"} style={{ padding: 16, flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View style={{ flex: 1, gap: 6 }}>
+        <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
+          {headline}
+        </Text>
+        {rows ? <KeeperLine id={keeper}>{roomLine(category, rows)}</KeeperLine> : <Skeleton w={160} h={14} />}
+      </View>
+      <Keeper id={keeper} size={88} />
+    </Wash>
+  );
+
+  if (items !== null && items.length > 0)
+    return (
+      <View style={{ flex: 1, backgroundColor: p.paper }}>
+        <HeaderOptions />
+        <PhotoGrid
+          keeper={keeper}
+          onOpen={open}
+          header={
+            <>
+              {wash}
+              <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(items.length)}</Text>
+            </>
+          }
+          items={items.map((i) => ({ id: i._id, title: i.title, imageUrl: i.imageUrl, takenAt: i.takenAt, sub: i.date ? dateLabel(i.date) : null }))}
+        />
+      </View>
+    );
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
       <HeaderOptions />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
-        {items !== null && items.length === 0 && isRoom ? (
+        {isEmpty && isRoom ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 8 }}>
             <Keeper id={keeper} size={128} />
             <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
               Nothing in {ROOM_LABEL[category]} yet.
             </Text>
             <Text style={[text.lead, { color: p.ink2, textAlign: "center" }]}>{EMPTY[category].body}</Text>
-            <View style={{ alignItems: "center" }}>
-              <KeeperLine id={keeper}>{EMPTY[category].line}</KeeperLine>
-            </View>
+            <KeeperLine id={keeper}>{EMPTY[category].line}</KeeperLine>
           </View>
         ) : (
           <>
-            <Wash keeper={isRoom ? keeper : "muted"} style={{ padding: 16, flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <View style={{ flex: 1, gap: 6 }}>
-                <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
-                  {headline}
-                </Text>
-                {items ? <KeeperLine id={keeper}>{roomLine(category, items)}</KeeperLine> : <Skeleton w={160} h={14} />}
-              </View>
-              <Keeper id={keeper} size={88} />
-            </Wash>
-            {items === null ? (
-              <ShotGridSkeleton />
-            ) : items.length === 0 ? (
-              <Text style={[text.body, { color: p.ink2 }]}>Nothing is waiting here.</Text>
-            ) : (
-              <>
-                <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(items.length)}</Text>
-                <ShotGrid items={grid} keeper={keeper} onOpen={(id) => router.push(`/shot/${id}`)} />
-              </>
-            )}
+            {wash}
+            {isEmpty ? <Text style={[text.body, { color: p.ink2 }]}>Nothing is waiting here.</Text> : <ShotGridSkeleton />}
           </>
         )}
       </ScrollView>
-      {items !== null && items.length === 0 && isRoom ? (
+      {isEmpty && isRoom ? (
         <View style={{ padding: 16 }}>
           <PsstButton
-            keeper={keeper}
             label={checking ? "Checking" : "Check for new screenshots"}
             disabled={checking}
             onPress={() => {

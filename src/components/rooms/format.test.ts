@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countLabel, dateLabel, defaultReminder, reminderLabel, roomLine, sortItems } from "./format";
+import { countLabel, dateLabel, defaultReminder, reminderLabel, roomLine } from "./format";
 
 const now = new Date(2026, 10, 15, 10, 0);
 
@@ -19,17 +19,6 @@ describe("rooms format", () => {
   it("offers 9:00 AM the day before, or nothing once that has passed", () => {
     expect(defaultReminder("2026-11-20", now)?.short).toBe("Thu 9:00 AM");
     expect(defaultReminder("2026-11-16", now)).toBeNull();
-  });
-
-  it("sorts soonest first with undated between upcoming and past", () => {
-    const items = [
-      { id: "a", date: "2026-11-01", takenAt: 1 },
-      { id: "b", date: null, takenAt: 5 },
-      { id: "c", date: "2026-12-04", takenAt: 2 },
-      { id: "d", date: "2026-11-17", takenAt: 3 },
-    ];
-    expect(sortItems("deadlines", items, now).map((i) => i.id)).toEqual(["d", "c", "b", "a"]);
-    expect(sortItems("ideas", items, now).map((i) => i.id)).toEqual(["b", "d", "c", "a"]);
   });
 
   it("builds room lines from real rows", () => {

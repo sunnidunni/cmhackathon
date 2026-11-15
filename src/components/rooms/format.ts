@@ -77,24 +77,6 @@ export type RoomItem = {
   takenAt: number;
 };
 
-// Deadlines and Money read soonest-first: upcoming dates, then undated by newest, then past dates.
-export function sortItems<T extends Pick<RoomItem, "date" | "takenAt">>(category: Category, items: T[], now: Date = new Date()): T[] {
-  if (category !== "deadlines" && category !== "money") return [...items].sort((a, b) => b.takenAt - a.takenAt);
-  const today = ymdKey(now);
-  const rank = (i: T) => {
-    const k = i.date ? whenKey(i.date) : null;
-    if (k === null) return 1;
-    return k >= today ? 0 : 2;
-  };
-  return [...items].sort((a, b) => {
-    const ra = rank(a);
-    const rb = rank(b);
-    if (ra !== rb) return ra - rb;
-    if (ra === 1) return b.takenAt - a.takenAt;
-    return (whenKey(a.date ?? "") ?? 0) - (whenKey(b.date ?? "") ?? 0);
-  });
-}
-
 export const roomHeadline = (category: Category): string =>
   ({
     deadlines: "Tock keeps your deadlines.",

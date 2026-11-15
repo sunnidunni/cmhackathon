@@ -40,7 +40,7 @@ export default function Rooms() {
         {empty ? (
           <View style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>
             <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-              We only read screenshots, never your other photos. Delete everything in Settings.
+              We only read your Screenshots album. Your other photos stay on your phone.
             </Text>
             <PsstButton label="Bring in screenshots" onPress={() => router.push("/bring")} />
           </View>
