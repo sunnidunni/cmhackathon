@@ -18,7 +18,7 @@ import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item 
 import { previewToday } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
 import { DoneView, EmptyView, FailedLine, LoadingView, ReadingView } from "@/components/today/States";
-import { sameMemory } from "@/components/today/focus";
+import { sameMemory, withSkipped } from "@/components/today/focus";
 import { useFocusMemory } from "@/components/today/focusMemory";
 import { runSync } from "@/lib/sync";
 
@@ -123,7 +123,10 @@ export default function Today() {
       setFailed(true);
     }
   };
-  const skip = (item: Item) => setSkipped((s) => new Set(s).add(item.id));
+  const skip = (item: Item) => {
+    setSkipped((s) => new Set(s).add(item.id));
+    if (!demo && today) saveFocus(withSkipped(focusMemory, today.day, item.id));
+  };
   const open = (item: Item) => router.push(`/shot/${item.id}`);
   const remind = (item: Item) => router.push(`/remind/${item.id}` as never);
   const act = (item: Item, kind: ReturnType<typeof actionsFor>["primaryKind"] | ReturnType<typeof actionsFor>["secondaryKind"]) => {

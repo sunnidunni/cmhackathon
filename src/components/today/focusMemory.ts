@@ -9,8 +9,9 @@ export function parseFocusMemory(stored: string | null): FocusMemory | null {
   try {
     const v: unknown = stored === null ? null : JSON.parse(stored);
     if (typeof v !== "object" || v === null) return null;
-    const { day, id } = v as Record<string, unknown>;
-    return typeof day === "string" && typeof id === "string" ? { day, id } : null;
+    const { day, id, skipped } = v as Record<string, unknown>;
+    if (typeof day !== "string" || typeof id !== "string") return null;
+    return { day, id, skipped: Array.isArray(skipped) ? skipped.filter((s): s is string => typeof s === "string") : [] };
   } catch {
     return null;
   }
