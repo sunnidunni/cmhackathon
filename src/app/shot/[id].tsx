@@ -13,6 +13,7 @@ import { RoomWash } from "@/components/rooms/RoomWash";
 import { useReminders } from "@/components/tabs/reminders";
 import { FIXTURES } from "@/lib/fixtures";
 import { demoById, isDemoId, useDemoFallback, type DemoRow } from "@/components/rooms/demo";
+import { UndoToast } from "@/components/rooms/UndoToast";
 import { MoveSheet } from "@/components/rooms/MoveSheet";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 
@@ -219,21 +220,17 @@ export default function Detail() {
         <View style={{ paddingHorizontal: 16, paddingBottom: Math.max(insets.bottom, 12), paddingTop: 8, gap: 8 }}>
           {finished ? (
             <>
-              <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: p.ink, borderRadius: 10, minHeight: 56, paddingHorizontal: 16, gap: 12 }}>
-                <Text style={[text.body, { color: p.paper, flex: 1 }]}>Marked done.</Text>
-                {phase === "pending" ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => {
-                      if (timer.current) clearTimeout(timer.current);
-                      setPhaseBoth("idle");
-                    }}
-                    style={{ minHeight: 44, justifyContent: "center" }}
-                  >
-                    <Text style={[text.bodyBold, { color: p.paper, textDecorationLine: "underline" }]}>Undo</Text>
-                  </Pressable>
-                ) : null}
-              </View>
+              <UndoToast
+                message="Marked done."
+                onUndo={
+                  phase === "pending"
+                    ? () => {
+                        if (timer.current) clearTimeout(timer.current);
+                        setPhaseBoth("idle");
+                      }
+                    : undefined
+                }
+              />
               <PsstButton kind="filled"
                 label={`Back to ${roomLabel}`}
                 onPress={async () => {
