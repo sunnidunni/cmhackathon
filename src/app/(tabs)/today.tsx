@@ -1,108 +1,136 @@
 import { useMutation, useQuery } from "convex/react";
-import { router } from "expo-router";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Circle, Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
-import { Button, colors, spacing, type } from "@/design";
-import { type CardActions } from "@/components/tabs/helpers";
-import { useReminders } from "@/components/tabs/reminders";
-import { InfoCard, Loading, Notice, Screen, TabHeader, tzOffset, useToast } from "@/components/tabs/ui";
-import { justInCaption, TodayCard, type TodayCardData } from "@/components/tabs/TodayCard";
-import { TOAST_DELETED } from "@/components/tabs/helpers";
+import type { Id } from "../../../convex/_generated/dataModel";
+import { FocusCard, Headline } from "@/components/today/FocusCard";
+import { HandfulRows } from "@/components/today/HandfulRows";
+import { FIXTURES, PsstButton, text, usePalette } from "@/components/today/kit";
+import { actionsFor, buildScreen, captionFor, type Item } from "@/components/today/model";
+import { previewToday } from "@/components/today/preview";
+import { Rise } from "@/components/today/Rise";
+import { DoneView, EmptyView, FailedCard, LoadingView, ReadingView } from "@/components/today/States";
 
-export default function Home() {
-  const today = useQuery(api.today.get, { tzOffsetMinutes: tzOffset() });
+const asId = (id: string) => id as Id<"screenshots">;
+
+function Header() {
+  const p = usePalette();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+      <Text accessibilityRole="header" style={[text.headline, { fontSize: 24, color: p.ink }]}>
+        Psst
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Settings"
+        onPress={() => router.push("/settings")}
+        style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair, alignItems: "center", justifyContent: "center" }}
+      >
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={p.ink} strokeWidth={1.8} strokeLinecap="round">
+          <Path d="M4 8h9M19 8h1M4 16h1M11 16h9" />
+          <Circle cx={16} cy={8} r={2.4} />
+          <Circle cx={8} cy={16} r={2.4} />
+        </Svg>
+      </Pressable>
+    </View>
+  );
+}
+
+export default function Today() {
+  const p = usePalette();
+  const { preview } = useLocalSearchParams<{ preview?: string }>();
+  const tz = new Date().getTimezoneOffset();
+  const live = useQuery(api.today.get, { tzOffsetMinutes: tz });
+  const demo = FIXTURES && preview ? previewToday(preview, tz) : null;
+  const today = demo ? demo.data : live;
+  const [clock, setClock] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setClock(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const now = demo ? demo.now : clock;
   const done = useMutation(api.shots.done);
   const keep = useMutation(api.shots.keep);
   const remove = useMutation(api.shots.remove);
   const retryAll = useMutation(api.extract.retryAllFailed);
-  const reminders = useReminders();
-  const toast = useToast();
+  const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
+  const [failed, setFailed] = useState(false);
+  const { screen } = buildScreen(today, skipped);
 
-  async function onAction(action: CardActions["primary"] | CardActions["secondary"], card: TodayCardData) {
+  const run = async (work: () => Promise<unknown>) => {
+    setFailed(false);
+    if (demo) return;
     try {
-      if (action === "done") await done({ id: card._id });
-      else if (action === "keep") await keep({ id: card._id });
-      else if (action === "delete") {
-        await remove({ id: card._id });
-        toast.show(TOAST_DELETED);
-      } else if (action === "remind") {
-        await reminders.remind(card._id, card.date?.when, card.title);
-      } else router.push(`/shot/${card._id}`);
+      await work();
     } catch {
-      toast.show("That didn't work. Try again in a moment.");
+      setFailed(true);
     }
-  }
+  };
+  const skip = (item: Item) => setSkipped((s) => new Set(s).add(item.id));
+  const open = (item: Item) => router.push(`/shot/${item.id}`);
+  const remind = (item: Item) => router.push(`/remind/${item.id}`);
+  const act = (item: Item, kind: ReturnType<typeof actionsFor>["primaryKind"] | ReturnType<typeof actionsFor>["secondaryKind"]) => {
+    if (kind === "remind") return remind(item);
+    if (kind === "see") return open(item);
+    if (kind === "skip") return skip(item);
+    if (kind === "keep") return run(() => keep({ id: asId(item.id) }));
+    return run(() => done({ id: asId(item.id) }));
+  };
+  const removeReading = (item: Item) =>
+    Alert.alert("Remove this reading?", "It's removed from Psst. The photo stays on your phone.", [
+      { text: "Keep it", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: () => run(() => remove({ id: asId(item.id) })) },
+    ]);
+
+  const rows = screen.kind === "focus" || screen.kind === "reading" || screen.kind === "done" ? screen.rows : [];
+  const rowTitle = screen.kind === "focus" || screen.kind === "reading" ? "Also in today's handful" : undefined;
+  const footer =
+    screen.kind === "done" ? (
+      <PsstButton kind="filled" label="Browse your rooms" onPress={() => router.navigate("/rooms")} />
+    ) : screen.kind === "empty" ? (
+      <View style={{ gap: 12 }}>
+        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
+          We only read screenshots, never your other photos. Delete everything in Settings.
+        </Text>
+        <PsstButton kind="filled" label="Pick screenshots" onPress={() => router.push("/bring")} />
+      </View>
+    ) : null;
 
   return (
-    <Screen>
-      <TabHeader title="Home" subtitle="Your handful for today" />
-      {today === undefined ? (
-        <Loading label="Getting today's handful" />
-      ) : (
-        <ScrollView contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.xxl }}>
-          {today.reading.pending > 0 ? (
-            <Pressable accessibilityRole="button" onPress={() => router.push("/import")}>
-              <InfoCard>
-                <Text style={type.heading}>Still reading: {today.reading.read} of {today.reading.total}</Text>
-                <Text style={type.caption}>You can look around while I finish.</Text>
-              </InfoCard>
-            </Pressable>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
+        <View style={{ gap: 16 }}>
+          <Header />
+          {today && today.reading.failed > 0 ? <FailedCard count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
+          {screen.kind === "loading" ? <LoadingView /> : null}
+          {screen.kind === "reading" ? <ReadingView pending={screen.pending} /> : null}
+          {screen.kind === "empty" ? <EmptyView /> : null}
+          {screen.kind === "focus" ? (
+            <Rise key={screen.focus.id}>
+              <View style={{ gap: 8, marginBottom: 16 }}>
+                <Headline item={screen.focus} now={now} tz={tz} />
+                <Text style={[text.body, { color: p.ink2 }]}>{captionFor(screen)}</Text>
+              </View>
+              <FocusCard
+                item={screen.focus}
+                now={now}
+                tz={tz}
+                onOpen={() => open(screen.focus)}
+                onPrimary={() => act(screen.focus, actionsFor(screen.focus, now, tz).primaryKind)}
+                onSecondary={() => act(screen.focus, actionsFor(screen.focus, now, tz).secondaryKind)}
+                onRemoveReading={() => removeReading(screen.focus)}
+              />
+            </Rise>
           ) : null}
-          {today.reading.failed > 0 ? (
-            <InfoCard>
-              <Text style={type.heading}>
-                Couldn't read {today.reading.failed} new {today.reading.failed === 1 ? "screenshot" : "screenshots"}
-              </Text>
-              <Text style={type.body}>Your screenshot is still on your phone.</Text>
-              <Button variant="secondary" label="Try again" onPress={() => retryAll({})} />
-            </InfoCard>
-          ) : null}
-
-          {today.justIn.length > 0 ? (
-            <Section title="Just in">
-              {today.justIn.map((c) => (
-                <TodayCard key={c._id} card={c} caption={justInCaption(c.category)} onAction={onAction} />
-              ))}
-            </Section>
-          ) : null}
-          {today.missed.length > 0 ? (
-            <Section title="You might have missed">
-              {today.missed.map((c) => (
-                <TodayCard key={c._id} card={c} onAction={onAction} />
-              ))}
-            </Section>
-          ) : null}
-          {today.handful.length > 0 ? (
-            <Section title="Brought to you today">
-              {today.handful.map((c) => (
-                <TodayCard key={c._id} card={c} onAction={onAction} />
-              ))}
-            </Section>
-          ) : null}
-          {today.thin ? (
-            <Section title="Nothing urgent today">
-              <TodayCard card={today.thin} onAction={onAction} />
-            </Section>
-          ) : null}
-          {today.cleared ? (
-            <View style={{ gap: spacing.lg }}>
-              <Notice title="That's today's handful" body="Nothing else needs you right now." />
-              <Button label="Browse your rooms" onPress={() => router.navigate("/rooms")} />
-            </View>
-          ) : null}
-        </ScrollView>
-      )}
-      {reminders.sheet}
-      {toast.node}
-    </Screen>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={{ gap: spacing.lg }}>
-      <Text style={[type.title, { color: colors.ink }]}>{title}</Text>
-      {children}
-    </View>
+          {screen.kind === "done" ? <DoneView /> : null}
+          <HandfulRows rows={rows} now={now} tz={tz} title={rowTitle} onOpen={open} onRemind={remind} onSkip={skip} />
+          {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
+        </View>
+        {footer}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
