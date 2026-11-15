@@ -34,7 +34,7 @@ export function useReminders() {
       <Text style={[type.body, { color: colors.inkSoft }]}>It will look like this:</Text>
       <SpeechBubble tail="bottom-left">{nudgeSample(pending?.title)}</SpeechBubble>
       <Button label="Turn on notifications" onPress={() => finish(true)} />
-      <Button variant="secondary" label="Not now, keep it in Today" onPress={() => finish(false)} />
+      <Button variant="secondary" label="Not now, keep it on Home" onPress={() => finish(false)} />
       <Text style={[type.caption, { marginTop: spacing.xs }]}>Either way, the reminder is saved.</Text>
     </Sheet>
   );

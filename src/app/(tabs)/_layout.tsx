@@ -15,9 +15,10 @@ export default function TabsLayout() {
         tabBarIconStyle: { display: "none" },
       }}
     >
-      <Tabs.Screen name="today" options={{ title: "Today" }} />
+      <Tabs.Screen name="today" options={{ title: "Home" }} />
       <Tabs.Screen name="rooms" options={{ title: "Rooms" }} />
       <Tabs.Screen name="ask" options={{ title: "Ask" }} />
+      <Tabs.Screen name="you" options={{ title: "You" }} />
     </Tabs>
   );
 }
