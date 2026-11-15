@@ -9,7 +9,7 @@ import { InfoCard, Loading, Notice, Screen, TabHeader, tzOffset, useToast } from
 import { justInCaption, TodayCard, type TodayCardData } from "@/components/tabs/TodayCard";
 import { TOAST_DELETED } from "@/components/tabs/helpers";
 
-export default function Today() {
+export default function Home() {
   const today = useQuery(api.today.get, { tzOffsetMinutes: tzOffset() });
   const done = useMutation(api.shots.done);
   const keep = useMutation(api.shots.keep);
@@ -35,7 +35,7 @@ export default function Today() {
 
   return (
     <Screen>
-      <TabHeader title="Today" subtitle="Your handful for today" />
+      <TabHeader title="Home" subtitle="Your handful for today" />
       {today === undefined ? (
         <Loading label="Getting today's handful" />
       ) : (
