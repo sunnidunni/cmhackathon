@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { ActCards } from "@/components/act/ActCards";
 import { ReminderRows, RememberCard } from "@/components/today/Extras";
 import { FocusCard, Headline } from "@/components/today/FocusCard";
 import { HandfulRows } from "@/components/today/HandfulRows";
@@ -169,6 +170,7 @@ export default function Today() {
         <View style={{ gap: 16 }}>
           <Header />
           {today && today.reading.failed > 0 ? <FailedCard count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
+          <ActCards />
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
