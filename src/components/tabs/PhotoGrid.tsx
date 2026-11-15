@@ -1,21 +1,25 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { FlatList, Pressable, Text, useWindowDimensions, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { runOnJS } from "react-native-reanimated";
-import { colors, radii, ScreenshotSticker, spacing, tiltFor, type } from "@/design";
-import { COLUMNS, groupByLevel, stepLevel, type GridLevel } from "./grid";
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { colors, ScreenshotSticker, spacing, tiltFor, type } from "@/design";
+import { COLUMNS, groupByLevel, type GridLevel } from "./grid";
+import { buildRows, rowLayouts, snapLevel, type Row } from "./gridRows";
 import { tzOffset } from "./ui";
 
 export type GridItem = { _id: string; title: string; imageUrl: string | null; takenAt: number; caption?: string | null };
 
 const PAD = spacing.xl;
-const GAP = spacing.sm;
+const HEADER_H = 48;
+const TITLE_H = 44;
+const CAPTION_H = 17;
+const STICKER_BORDER = 5;
 
 // Cached by screenshot id, recycled by id, with a short fade so a scroll or level change never flashes blank.
 function Thumb({ item, width, height }: { item: GridItem; width: number; height: number }) {
-  if (!item.imageUrl) return null;
+  if (!item.imageUrl) return <View style={{ width, height, backgroundColor: colors.paperDeep }} />;
   return (
     <Image
       source={{ uri: item.imageUrl, cacheKey: item._id }}
@@ -28,59 +32,119 @@ function Thumb({ item, width, height }: { item: GridItem; width: number; height:
   );
 }
 
-// A Photos-style library: date lines above each group, and a pinch moves one level (days, months, years).
+function measure(level: GridLevel, width: number) {
+  const cols = COLUMNS[level];
+  const gap = level === "day" ? spacing.md : 2;
+  const cell = Math.floor((width - PAD * 2 - gap * (cols - 1)) / cols);
+  if (level !== "day") return { cols, gap, cell, thumbW: cell, thumbH: cell, rowH: cell + gap };
+  const thumbW = Math.min(120, cell - 12);
+  const thumbH = Math.round(thumbW * 1.9);
+  return { cols, gap, cell, thumbW, thumbH, rowH: thumbH + STICKER_BORDER * 2 + spacing.sm + TITLE_H + CAPTION_H + spacing.xl };
+}
+
+// A Photos-style library: date lines above each group, only the rows on screen are drawn, and the
+// grid follows a pinch, then settles one level up or down (days, months, years) with a fade.
 export function PhotoGrid({ items, header }: { items: GridItem[]; header?: React.ReactNode }) {
   const [level, setLevel] = useState<GridLevel>("day");
+  const [top, setTop] = useState(0);
+  const levelRef = useRef(level);
+  levelRef.current = level;
   const { width } = useWindowDimensions();
-  const cols = COLUMNS[level];
-  const cell = Math.floor((width - PAD * 2 - GAP * (cols - 1)) / cols);
-  const groups = groupByLevel(items, level, tzOffset(), Date.now());
+  const m = measure(level, width);
+
+  const rows = useMemo(
+    () => buildRows(groupByLevel(items, level, tzOffset(), Date.now()), m.cols),
+    [items, level, m.cols],
+  );
+  const layouts = useMemo(() => rowLayouts(rows, { header: HEADER_H, row: m.rowH }, top), [rows, m.rowH, top]);
+
+  const pinchScale = useSharedValue(1);
+  const fade = useSharedValue(1);
 
   const onPinchEnd = (scale: number) => {
-    if (scale > 1.15) setLevel((l) => stepLevel(l, "out"));
-    else if (scale < 0.87) setLevel((l) => stepLevel(l, "in"));
+    const next = snapLevel(levelRef.current, scale);
+    if (next === levelRef.current) return;
+    fade.value = 0;
+    setLevel(next);
+    fade.value = withTiming(1, { duration: 220 });
   };
-  const pinch = Gesture.Pinch().onEnd((e) => {
-    runOnJS(onPinchEnd)(e.scale);
-  });
+
+  const pinch = Gesture.Pinch()
+    .onUpdate((e) => {
+      pinchScale.value = Math.min(1.6, Math.max(0.6, e.scale));
+    })
+    .onEnd((e) => {
+      runOnJS(onPinchEnd)(e.scale);
+    })
+    .onFinalize(() => {
+      pinchScale.value = withTiming(1, { duration: 220 });
+    });
+
+  const animated = useAnimatedStyle(() => ({
+    flex: 1,
+    opacity: fade.value,
+    transform: [{ scale: pinchScale.value }],
+  }));
+
+  const renderRow = ({ item: row }: { item: Row<GridItem> }) => {
+    if (row.type === "header") {
+      return (
+        <View style={{ height: HEADER_H, justifyContent: "flex-end", paddingBottom: spacing.sm }}>
+          <Text style={type.heading}>{row.label}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={{ height: m.rowH, flexDirection: "row", gap: m.gap }}>
+        {row.items.map((item) => (
+          <Pressable
+            key={item._id}
+            accessibilityRole="button"
+            accessibilityLabel={item.title || "Screenshot"}
+            onPress={() => router.push(`/shot/${item._id}`)}
+            style={{ width: m.cell, gap: spacing.sm }}
+          >
+            {level === "day" ? (
+              <>
+                <ScreenshotSticker width={m.thumbW} tilt={tiltFor(item._id)}>
+                  <Thumb item={item} width={m.thumbW} height={m.thumbH} />
+                </ScreenshotSticker>
+                <Text style={[type.bodyBold, { height: TITLE_H }]} numberOfLines={2}>{item.title}</Text>
+                {item.caption ? <Text style={type.caption} numberOfLines={1}>{item.caption}</Text> : null}
+              </>
+            ) : (
+              <Thumb item={item} width={m.cell} height={m.cell} />
+            )}
+          </Pressable>
+        ))}
+      </View>
+    );
+  };
 
   return (
     <GestureDetector gesture={pinch}>
-      <View style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: PAD, paddingTop: spacing.sm, gap: spacing.lg }}>
-          {header}
-          {groups.map((g) => (
-            <View key={g.key} style={{ gap: spacing.md }}>
-              <Text style={type.heading}>{g.label}</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GAP, rowGap: level === "day" ? spacing.lg : GAP }}>
-                {g.items.map((item) => (
-                  <Pressable
-                    key={item._id}
-                    accessibilityRole="button"
-                    accessibilityLabel={item.title || "Screenshot"}
-                    onPress={() => router.push(`/shot/${item._id}`)}
-                    style={{ width: cell, gap: spacing.sm }}
-                  >
-                    {level === "day" ? (
-                      <>
-                        <ScreenshotSticker width={Math.min(120, cell - 12)} tilt={tiltFor(item._id)}>
-                          <Thumb item={item} width={Math.min(120, cell - 12)} height={Math.round(Math.min(120, cell - 12) * 1.9)} />
-                        </ScreenshotSticker>
-                        <Text style={type.bodyBold} numberOfLines={2}>{item.title}</Text>
-                        {item.caption ? <Text style={type.caption}>{item.caption}</Text> : null}
-                      </>
-                    ) : (
-                      <View style={{ width: cell, height: Math.round(cell * 1.7), borderRadius: radii.sm, overflow: "hidden", backgroundColor: colors.paperDeep }}>
-                        <Thumb item={item} width={cell} height={Math.round(cell * 1.7)} />
-                      </View>
-                    )}
-                  </Pressable>
-                ))}
-              </View>
+      <Animated.View style={animated}>
+        <FlatList
+          data={rows}
+          keyExtractor={(r) => r.key}
+          renderItem={renderRow}
+          extraData={m}
+          getItemLayout={(_, index) => ({ ...layouts[index], index })}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={7}
+          removeClippedSubviews
+          contentContainerStyle={{ paddingHorizontal: PAD, paddingBottom: PAD }}
+          ListHeaderComponent={
+            <View
+              onLayout={(e) => setTop(Math.round(e.nativeEvent.layout.height))}
+              style={{ paddingTop: spacing.sm, gap: spacing.lg }}
+            >
+              {header}
             </View>
-          ))}
-        </ScrollView>
-      </View>
+          }
+        />
+      </Animated.View>
     </GestureDetector>
   );
 }
