@@ -1,7 +1,9 @@
 import { useMutation, useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
+import { SymbolView } from "expo-symbols";
+import { AccessibilityInfo, Alert, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
@@ -26,23 +28,48 @@ const asId = (id: string) => id as Id<"screenshots">;
 
 function Header() {
   const p = usePalette();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-      <Text accessibilityRole="header" style={[text.headline, { fontSize: 24, color: p.ink }]}>
-        Psst
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Settings"
-        onPress={() => router.push("/settings")}
-        style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair, alignItems: "center", justifyContent: "center" }}
-      >
+  const [solid, setSolid] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    AccessibilityInfo.isReduceTransparencyEnabled().then(setSolid, () => undefined);
+  }, []);
+  const glass = !solid && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
+  const icon = (
+    <SymbolView
+      name="gearshape"
+      size={22}
+      tintColor={p.ink}
+      fallback={
         <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={p.ink} strokeWidth={1.8} strokeLinecap="round">
           <Path d="M4 8h9M19 8h1M4 16h1M11 16h9" />
           <Circle cx={16} cy={8} r={2.4} />
           <Circle cx={8} cy={16} r={2.4} />
         </Svg>
-      </Pressable>
+      }
+    />
+  );
+  const button = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Settings"
+      onPress={() => router.push("/settings")}
+      style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
+    >
+      {icon}
+    </Pressable>
+  );
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+      <Text accessibilityRole="header" style={[text.headline, { fontSize: 24, color: p.ink }]}>
+        Psst
+      </Text>
+      {glass ? (
+        <GlassView isInteractive style={{ width: 44, height: 44, borderRadius: 22 }}>
+          {button}
+        </GlassView>
+      ) : (
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair }}>{button}</View>
+      )}
     </View>
   );
 }
