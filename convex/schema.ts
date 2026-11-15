@@ -33,6 +33,7 @@ export default defineSchema({
     plan: v.optional(v.union(v.literal("free"), v.literal("paid"))),
     pushToken: v.optional(v.string()),
     createdAt: v.optional(v.number()),
+    lastOpenedAt: v.optional(v.number()),
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),
@@ -67,6 +68,8 @@ export default defineSchema({
     error: v.optional(v.string()),
     memoryStored: v.optional(v.boolean()),
     readAt: v.optional(v.number()),
+    doneAt: v.optional(v.number()),
+    openedAt: v.optional(v.number()),
   })
     .index("by_status", ["status"])
     .index("by_user_category", ["userId", "category"])
@@ -84,9 +87,19 @@ export default defineSchema({
       v.literal("sent"),
       v.literal("dismissed"),
     ),
+    whenKey: v.optional(v.string()),
+    sentAt: v.optional(v.number()),
+    scheduledId: v.optional(v.id("_scheduled_functions")),
   })
     .index("by_user_dueAt", ["userId", "dueAt"])
     .index("by_screenshot", ["screenshotId"]),
+
+  dailyPicks: defineTable({
+    userId: v.id("users"),
+    day: v.string(),
+    ids: v.array(v.id("screenshots")),
+    thin: v.boolean(),
+  }).index("by_user_day", ["userId", "day"]),
 
   questions: defineTable({
     userId: v.id("users"),
