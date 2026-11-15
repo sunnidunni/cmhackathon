@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { Footnote, Headline, Lead, Page, Tick } from "@/components/onboarding/page";
@@ -7,20 +7,23 @@ import { hasPhotoAccess, usePhotoAccess } from "@/lib/photos";
 
 export default function Priming() {
   const p = usePalette();
+  const { replay } = useLocalSearchParams<{ replay?: string }>();
+  const toBring = () => router.replace(replay ? "/bring?replay=1" : "/bring");
   const { access, request, openSettings } = usePhotoAccess();
   const [declined, setDeclined] = useState(false);
   const [busy, setBusy] = useState(false);
   const denied = declined || access === "denied";
 
   useEffect(() => {
-    if (hasPhotoAccess(access)) router.replace("/bring");
-  }, [access]);
+    if (!replay && hasPhotoAccess(access)) router.replace("/bring");
+  }, [access, replay]);
 
   async function ask() {
+    if (replay && hasPhotoAccess(access)) return toBring();
     setBusy(true);
     const result = await request().catch(() => "denied" as const);
     setBusy(false);
-    if (hasPhotoAccess(result)) router.replace("/bring");
+    if (hasPhotoAccess(result)) toBring();
     else setDeclined(true);
   }
 
