@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Switch, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { bringInHeadline, howManyLine } from "@/components/onboarding/format";
 import { KeeperFace, PsstButton, SoftCard, Skeleton, text, usePalette } from "@/components/onboarding/kit";
 import { Footnote, Headline, KeeperRow, Lead, Page } from "@/components/onboarding/page";
@@ -13,7 +13,6 @@ export default function Bring() {
   const { markStarted } = useImportStarted();
   const { access, openLimitedPicker } = usePhotoAccess();
   const { count, limit } = useBringCount();
-  const [readNew, setReadNew] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function start() {
@@ -42,7 +41,7 @@ export default function Bring() {
               <View style={{ flex: 1 }}>
                 <Text style={[text.bodyBold, { color: p.ink }]}>{`Psst sees the ${count} you picked. That works.`}</Text>
                 <Text style={[text.caption, { color: p.ink2 }]} onPress={openLimitedPicker} accessibilityRole="button">
-                  Change the selection
+                  Give access to all screenshots
                 </Text>
               </View>
             </View>
@@ -53,24 +52,15 @@ export default function Bring() {
             <Text style={[text.bodyBold, { color: p.ink }]}>How many</Text>
             {count === null ? <Skeleton w="70%" h={18} /> : <Text style={[text.caption, { color: p.ink2 }]}>{howManyLine(count, limit)}</Text>}
           </View>
-          <View style={{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: p.hair, paddingVertical: 14, flexDirection: "row", alignItems: "center", gap: 16 }}>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[text.bodyBold, { color: p.ink }]}>Read new screenshots</Text>
-              <Text style={[text.caption, { color: p.ink2 }]}>
-                {"Off. Turn on to read new ones when you open Psst. Each is sent to be read."}
-              </Text>
-            </View>
-            <Switch
-              accessibilityLabel="Read new screenshots"
-              value={readNew}
-              onValueChange={setReadNew}
-              trackColor={{ true: p.ink, false: p.fill2 }}
-            />
+          <View style={{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: p.hair, paddingVertical: 14 }}>
+            <Text style={[text.caption, { color: p.ink2 }]}>
+              Psst will read new screenshots when you open it. You can turn this off in Settings.
+            </Text>
           </View>
         </View>
       </View>
       <View style={{ gap: 8 }}>
-        <Footnote>Screenshots go to our server and the model that reads them. Nowhere else.</Footnote>
+        <Footnote>Screenshots are sent to our server and an AI model to be read.</Footnote>
         <PsstButton label="Bring in my screenshots" onPress={start} disabled={busy} />
       </View>
     </Page>

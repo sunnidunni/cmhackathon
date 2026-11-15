@@ -46,10 +46,9 @@ export default function Priming() {
     <Text key="a" style={[text.lead, { color: p.ink, flex: 1 }]}>
       We <Text style={{ textDecorationLine: "underline" }}>only</Text> read your Screenshots album.
     </Text>,
-    <Text key="b" style={[text.lead, { color: p.ink, flex: 1 }]}>Your other photos are never opened, even if iOS says Full Access.</Text>,
-    <Text key="c" style={[text.lead, { color: p.ink, flex: 1 }]}>
-      Each screenshot goes to our server to be read once. You can delete everything in Settings.
-    </Text>,
+    <Text key="b" style={[text.lead, { color: p.ink, flex: 1 }]}>Your other photos stay on your phone.</Text>,
+    <Text key="c" style={[text.lead, { color: p.ink, flex: 1 }]}>Screenshots are sent to our server and an AI model to be read.</Text>,
+    <Text key="d" style={[text.lead, { color: p.ink, flex: 1 }]}>{"We don't sell your data. Delete everything anytime in Settings."}</Text>,
   ];
   return (
     <Page>
