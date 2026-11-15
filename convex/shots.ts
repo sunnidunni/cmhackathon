@@ -30,6 +30,7 @@ export const detail = query({
       title: row.title ?? "",
       summary: row.summary ?? "",
       reason: row.reason ?? "",
+      amount: row.amount ?? null,
       category: row.category ?? "unsorted",
       userMoved: row.userMoved === true,
       lineKey: row.reactionKey ?? null,

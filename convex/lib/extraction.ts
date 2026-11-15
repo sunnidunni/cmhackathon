@@ -1,8 +1,10 @@
 import { CATEGORIES, PLAYFUL_KEYS, type Category } from "./lines";
+import { cleanTitle } from "./titles";
 
 export type ExtractedDate = { when: string; what: string; confident: boolean };
 export type Extraction = {
   title: string;
+  amount: string;
   text: string;
   summary: string;
   category: Category;
@@ -19,7 +21,8 @@ export function buildPrompt(todayIso: string) {
     .map((c) => `${c}: ${PLAYFUL_KEYS[c].join(", ")}`)
     .join("\n");
   return `You read one phone screenshot and file it. Today's date is ${todayIso}. Return JSON only, matching the schema.
-- title: a short title (under 60 characters). Include the key amount or name when there is one.
+- title: a name for the thing, five words or fewer, such as "Brightside Power bill" or "Harvest Lantern Night". No price, no date, no time, and never the word "due".
+- amount: the one main amount of money shown (for example "$142.37", the amount due or the price), exactly as written, or an empty string when there is none.
 - text: all readable text in the image, in reading order.
 - summary: one or two plain sentences.
 - category: deadlines (flyers, invitations, events, appointments, sign-ups, anything with a due date that is not a payment), chats (any screenshot of a messaging conversation, even when it mentions a plan, a date or a time), money (bills, prices, payments, receipts, tickets, flights), ideas (recipes, quotes, articles, AI answers, things to try or remember), or unsorted.
@@ -34,9 +37,10 @@ ${keys}`;
 export const EXTRACTION_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "text", "summary", "category", "reason", "dates", "importance", "reactionKey"],
+  required: ["title", "amount", "text", "summary", "category", "reason", "dates", "importance", "reactionKey"],
   properties: {
     title: { type: "string" },
+    amount: { type: "string" },
     text: { type: "string" },
     summary: { type: "string" },
     category: { type: "string", enum: [...CATEGORIES] },
@@ -112,9 +116,12 @@ export function parseExtraction(raw: string, screenshotId?: string): Extraction 
     ];
   });
 
+  const text = str(o.text);
+  const amount = str(o.amount).trim();
   return {
-    title: str(o.title).trim() || "Untitled screenshot",
-    text: str(o.text),
+    title: cleanTitle(str(o.title)) || "Untitled screenshot",
+    amount: /^\$\d[\d,]*(\.\d{2})?$/.test(amount) && text.includes(amount) ? amount : "",
+    text,
     summary: str(o.summary),
     category,
     reason: str(o.reason),
