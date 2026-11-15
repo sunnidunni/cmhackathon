@@ -58,7 +58,7 @@ function senderOf(shot: DetectInput): string | null {
 const CHAT_ASK = /\b(?:can|could|would|will) you(?: please)?(?: also)? (order|buy|bring|grab|pick up)\s+([^.?!\n]{2,60})/i;
 const CHAT_PLEASE = /\bplease (order|buy|bring|grab|pick up)\s+([^.?!\n]{2,60})/i;
 const SUMMARY_ASK = /\basks?(?: you)? (?:if you can |to |for you to )(order|buy|bring|grab|pick up)\s+([^.?!\n]{2,60})/i;
-const ANSWERED = /\b(on it|got it|sure thing|will do|i'll|i will|yep|yes|okay|ok)\b/i;
+const ANSWERED = /\b(on it|got it|sure thing|will do|i'll|i will|yep|yes|okay|ok|no|nope|sorry|unable|not able)\b|can['’]?t|cannot|won['’]?t/i;
 
 function chatRequest(shot: DetectInput, saved: string): ActScenario | null {
   if (shot.room !== "chats") return null;
@@ -70,14 +70,17 @@ function chatRequest(shot: DetectInput, saved: string): ActScenario | null {
   const who = senderOf(shot);
   if (!who) return null;
   const verb = asked[1].toLowerCase();
-  const rest = asked[2].trim().replace(/\s+/g, " ").replace(/\bme\b/gi, "you").replace(/\bmy\b/gi, "your");
-  const body = "Yes, I can " + verb + " " + rest + ".";
+  const phrase = asked[2].trim().replace(/\s+/g, " ");
+  const asker: Record<string, string> = { me: "them", my: "their" };
+  const reply: Record<string, string> = { me: "you", my: "your", your: "my" };
+  const swap = (map: Record<string, string>) => phrase.replace(/\b(me|my|your)\b/gi, (w) => map[w.toLowerCase()] ?? w);
+  const body = "Yes, I can " + verb + " " + swap(reply) + ".";
   const steps: ActStep[] = [{ kind: "draft-message", to: who, via: "iMessage", body }];
   return {
     id: "real:chat:" + shot.id,
     keeper: "murmur",
     source: { shotId: shot.id, image: shot.image ?? null, title: shot.title },
-    noticed: who + " asked you to " + verb + " " + rest + ".",
+    noticed: who + " asked you to " + verb + " " + swap(asker) + ".",
     why: "From a screenshot saved " + saved + ". The message asks you to bring or buy something.",
     ready: "I wrote a reply to " + who + ". You choose whether it goes.",
     cta: "Review the reply",
@@ -93,21 +96,19 @@ function chatRequest(shot: DetectInput, saved: string): ActScenario | null {
 
 const DELAY_WORDS = /\b(delayed|delay|rescheduled|pushed back|now (?:departs|departing|boarding|leaves|leaving|arrives|arriving))\b/i;
 const TRAVEL_WORDS = /\b(flight|train|bus|ferry|departure|departs|boarding|gate|airline|arrival|arrives)\b/i;
-const NEW_TIME = /\bnow (?:departs|departing|boarding|leaves|leaving|arrives|arriving)(?: at)? (\d{1,2}(?::\d{2})?\s?[AP]M)/i;
+const NEW_TIME = /\bnow (?:departs|departing|boarding|leaves|leaving)(?: at)? (\d{1,2}(?::\d{2})?\s?[AP]M)/i;
 const DELAY_BY = /\bdelayed(?: by)? (\d{1,3}|an?) ?(minutes?|mins?|hours?|hrs?)\b/i;
 const PICKUP = /\b([A-Z][a-z]+) (?:is|will be|'s) (?:picking you up|meeting you|waiting for you|collecting you)\b/;
 
-const NEW_DEPARTURE = /\bnew (?:departure|time|boarding)(?: time)?:? (\d{1,2}(?::\d{2})?\s?[AP]M)/i;
-const WAS_TIME = /\((?:was|from) (\d{1,2}(?::\d{2})?\s?[AP]M)\)/i;
+const NEW_DEPARTURE = /\bnew (?:departure|time|boarding)(?: time)?(?: is)?:? (\d{1,2}(?::\d{2})?\s?[AP]M)/i;
+const WAS_TIME = /(?:\(was|\bwas|instead of|\bfrom) (\d{1,2}(?::\d{2})?\s?[AP]M)/i;
 
 function travelDelay(shot: DetectInput, saved: string, now: Date): ActScenario | null {
   const hay = shot.title + ". " + shot.summary + ". " + (shot.text ?? "");
   if (!DELAY_WORDS.test(hay) || !TRAVEL_WORDS.test(hay)) return null;
-  const day = shot.dates
-    .filter((d) => d.confident)
-    .map((d) => parse(d.when))
-    .find((p): p is Parts => p !== null);
-  if (!day) return null;
+  const entry = shot.dates.find((d) => d.confident && parse(d.when) !== null);
+  const day = entry ? parse(entry.when) : null;
+  if (!entry || !day) return null;
   let original: Parts | null = null;
   let moved: Parts | null = null;
   const fresh = NEW_DEPARTURE.exec(hay);
@@ -117,7 +118,7 @@ function travelDelay(shot: DetectInput, saved: string, now: Date): ActScenario |
   if (freshClock && wasClock) {
     moved = { ...day, h: freshClock.h, min: freshClock.min };
     original = { ...day, h: wasClock.h, min: wasClock.min };
-  } else if (day.h !== null) {
+  } else if (day.h !== null && !/\b(new|delayed|updated)\b/i.test(entry.what)) {
     original = day;
     const abs = NEW_TIME.exec(hay);
     const clock = abs ? clock12(abs[1]) : null;
@@ -133,7 +134,7 @@ function travelDelay(shot: DetectInput, saved: string, now: Date): ActScenario |
   const contact = PICKUP.exec(hay)?.[1] ?? null;
   const steps: ActStep[] = [{ kind: "move-reminder", from: "Reminder for " + fmtWhen(original), to: "Reminder for " + newTime }];
   const body = "Heads up, my trip is delayed. The new time is " + newTime + ".";
-  if (contact) steps.push({ kind: "notify-contact", to: contact, via: "iMessage", body });
+  if (contact) steps.push({ kind: "draft-message", to: contact, via: "iMessage", body });
   return {
     id: "real:delay:" + shot.id,
     keeper: "tock",
@@ -154,7 +155,7 @@ function travelDelay(shot: DetectInput, saved: string, now: Date): ActScenario |
   };
 }
 
-const BILL_WORDS = /\b(amount due|payment due|balance due|due (?:on |by )?(?:mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|pay by)\b/i;
+const BILL_WORDS = /\b(amount due|payment due|balance due|due (?:on |by )?(?:mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*|pay by)\b/i;
 const NOT_A_BILL = /\b(refund|receipt|paid in full|total paid|order confirmed|delivered)\b/i;
 
 function bill(shot: DetectInput, saved: string, now: Date): ActScenario | null {
@@ -170,7 +171,10 @@ function bill(shot: DetectInput, saved: string, now: Date): ActScenario | null {
   const remindAt: Parts = { y: dayBefore.getFullYear(), m: dayBefore.getMonth() + 1, d: dayBefore.getDate(), h: 9, min: 0 };
   if (instant(remindAt) <= now.getTime()) return null;
   const amount = shot.amount ?? /\$\d[\d,]*(?:\.\d{2})?/.exec(shot.summary)?.[0] ?? null;
-  const billerRaw = /^([A-Z][A-Z&' -]{3,40})\./.exec(shot.text ?? "")?.[1] ?? shot.title;
+  const billerRaw =
+    /^([A-Z][A-Z&' -]{3,40})\./.exec(shot.text ?? "")?.[1] ??
+    /^([A-Z][\w&']*(?: [A-Z][\w&']*){0,3}) (?:shows|says|has|lists|sent|reports)\b/.exec(shot.summary)?.[1] ??
+    shot.title;
   const biller = billerRaw === billerRaw.toUpperCase() ? titleCase(billerRaw) : billerRaw;
   const account = /\bAccount\s+([A-Z0-9-]{3,})/.exec(shot.text ?? "")?.[1];
   const dueLabel = fmtDay(due);
@@ -230,7 +234,7 @@ function calendar(shot: DetectInput, saved: string, now: Date): ActScenario | nu
     noticed: event.what + " is " + when + ".",
     why: "From a screenshot saved " + saved + ". It shows a booking with a date and a time.",
     ready: leaveBy ? "I can add it to your calendar with a leave-by time." : "I can add it to your calendar.",
-    cta: "Add to calendar",
+    cta: "Review event",
     steps: [step],
     confirm: {
       title: "Add to your calendar?",

@@ -155,6 +155,20 @@ describe("chat that asks you to bring or buy something", () => {
     expect(detect({ ...ask, summary: "A group chat plans a picnic.", text: "Can you bring the lemonade?" }, NOW)).toBeNull();
   });
 
+  test("stays quiet when the chat already shows a refusal", () => {
+    expect(detect({ ...ask, text: "Sam. Can you bring the lemonade? No, I can't." }, NOW)).toBeNull();
+    expect(detect({ ...ask, text: "Sam. Can you bring the lemonade? Sorry, not this time." }, NOW)).toBeNull();
+  });
+
+  test("swaps second-person words in the reply, not in the explanation", () => {
+    const act = detect(shot({ id: "c3", text: "Sam. Can you bring your laptop tomorrow?" }), NOW);
+    expect(act?.steps[0]).toMatchObject({ body: "Yes, I can bring my laptop tomorrow." });
+    expect(act?.noticed).toBe("Sam asked you to bring your laptop tomorrow.");
+    const asked = detect(shot({ id: "c4", text: "Priya. Could you grab me a coffee and my keys?" }), NOW);
+    expect(asked?.noticed).toBe("Priya asked you to grab them a coffee and their keys.");
+    expect(asked?.steps[0]).toMatchObject({ body: "Yes, I can grab you a coffee and your keys." });
+  });
+
   test("ignores a request that is not about buying or bringing", () => {
     expect(detect(shot({ text: "Noah. Can you send your half of rent?" }), NOW)).toBeNull();
   });
@@ -170,13 +184,13 @@ describe("travel delay", () => {
     dates: [{ when: "2026-11-22T18:55:00", what: "Skyloom flight SL 208 boarding", confident: true }],
   });
 
-  test("moves the reminder and tells the person picking you up", () => {
+  test("moves the reminder and drafts a note to the person picking you up", () => {
     const act = detect(flight, NOW);
     expect(act?.keeper).toBe("tock");
     expect(act?.id).toBe("real:delay:t1");
     expect(act?.steps).toEqual([
       { kind: "move-reminder", from: "Reminder for Nov 22, 6:55 PM", to: "Reminder for Nov 22, 7:40 PM" },
-      { kind: "notify-contact", to: "Maya", via: "iMessage", body: "Heads up, my trip is delayed. The new time is Nov 22, 7:40 PM." },
+      { kind: "draft-message", to: "Maya", via: "iMessage", body: "Heads up, my trip is delayed. The new time is Nov 22, 7:40 PM." },
     ]);
     expect(act?.confirm.button).toBe("Send and move reminder");
   });
@@ -198,6 +212,13 @@ describe("travel delay", () => {
 });
 
 describe("caution", () => {
+  test("the utility bill is found from the summary alone, with full weekday and month names", () => {
+    const row = manifest.find((r) => r.file.includes("utility-bill")) as Row;
+    const act = detect({ ...asShot(row), text: null }, NOW);
+    expect(act?.id).toBe("real:bill:15-utility-bill");
+    expect(act?.noticed).toBe("Willow Grid Energy, $51.30, is due Nov 21.");
+  });
+
   test("a past appointment produces nothing", () => {
     const row = manifest.find((r) => r.file.includes("dentist")) as Row;
     expect(detect(asShot(row), new Date(2026, 10, 25, 9, 0))).toBeNull();
@@ -247,6 +268,16 @@ describe("detect over the act demo manifest", () => {
     expect(act?.keeper).toBe("tock");
     expect(act?.steps).toEqual([{ kind: "move-reminder", from: "Reminder for Nov 15, 5:45 PM", to: "Reminder for Nov 15, 7:25 PM" }]);
     expect(act?.why).toContain("From a screenshot saved Nov 14.");
+  });
+
+  test("works from the summary alone, the way the hook sends it", () => {
+    const act = detect({ ...delay, text: null }, NOW);
+    expect(act?.steps).toEqual([{ kind: "move-reminder", from: "Reminder for Nov 15, 5:45 PM", to: "Reminder for Nov 15, 7:25 PM" }]);
+  });
+
+  test("never mistakes the arrival time for the new departure", () => {
+    const vague = { ...delay, text: null, summary: "Cascadia Air CA 482 is delayed and now arrives at 9:55 PM." };
+    expect(detect(vague, NOW)).toBeNull();
   });
 
   test("a delay whose new time has already passed produces nothing", () => {
