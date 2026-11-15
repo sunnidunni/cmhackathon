@@ -1,36 +1,65 @@
 import { useMutation } from "convex/react";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Linking, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../convex/_generated/api";
-import { Body, Screen } from "@/components/onboarding/ui";
-import { Button, colors, radii, ScreenHeader, SketchFrame, spacing, type } from "@/design";
+import { ActionRow, Footer, Group, SectionLabel, SwitchRow } from "@/components/settings/rows";
+import { fonts, KEEPER_IDS, KEEPERS, KeeperFace, SoftCard, text, usePalette } from "@/design/psst";
+import { useAutoRead } from "@/lib/auto-read";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
 import { DEV_TOOLS, useLibraryDiagnostics, usePhotoAccess, useReadAllPhotos } from "@/lib/photos";
 import { useSync } from "@/lib/sync";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+const ACCESS_VALUE = { full: "Full", limited: "Selected", denied: "Off", undetermined: "Not asked" } as const;
+const ACCESS_DETAIL = {
+  full: "iOS calls this Full Access.",
+  limited: "You shared only some of your photos.",
+  denied: "Psst can't see your screenshots yet.",
+  undetermined: "Psst hasn't asked yet.",
+} as const;
+
+const PRIVACY_LINES = [
+  "We only read your Screenshots album.",
+  "Your other photos stay on your phone.",
+  "Screenshots are sent to our server and an AI model to be read.",
+  "We don't sell your data.",
+  "Delete everything anytime in Settings.",
+];
+
+function CloseButton() {
+  const pal = usePalette();
+  const bar = { position: "absolute", width: 16, height: 2, borderRadius: 1, backgroundColor: pal.ink } as const;
   return (
-    <SketchFrame fill={colors.white} radius={radii.lg} seed={title} style={{ padding: spacing.lg, gap: spacing.sm }}>
-      <Text style={type.heading}>{title}</Text>
-      {children}
-    </SketchFrame>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Close"
+      hitSlop={4}
+      onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      style={({ pressed }) => ({
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: pressed ? pal.fill2 : pal.white,
+        borderWidth: 1,
+        borderColor: pal.hair,
+      })}
+    >
+      <View style={[bar, { transform: [{ rotate: "45deg" }] }]} />
+      <View style={[bar, { transform: [{ rotate: "-45deg" }] }]} />
+    </Pressable>
   );
 }
 
-const ACCESS_LINE = {
-  full: "Psst can see all your photos and reads only your Screenshots album.",
-  limited: "Psst can only see some of your photos.",
-  denied: "Photo access is off, so Psst can't read your screenshots.",
-  undetermined: "Photo access hasn't been asked for yet.",
-} as const;
-
 export default function Settings() {
+  const pal = usePalette();
   const { access, openLimitedPicker, openSettings } = usePhotoAccess();
   const { status, error, syncNow } = useSync();
   const removeAll = useMutation(api.shots.removeAll);
+  const { enabled: autoRead, setEnabled: setAutoRead } = useAutoRead();
   const [notify, setNotify] = useState(false);
-  const [leaves, setLeaves] = useState(false);
+  const [checked, setChecked] = useState<string | null>(null);
   const [readAll, setReadAll] = useReadAllPhotos();
   const diag = useLibraryDiagnostics();
 
@@ -45,6 +74,16 @@ export default function Settings() {
     if (!ok) Linking.openSettings();
   }
 
+  async function checkNow() {
+    setChecked(null);
+    try {
+      const { uploaded } = await syncNow();
+      setChecked(uploaded === 0 ? "Nothing new." : uploaded === 1 ? "Read 1 new screenshot." : `Read ${uploaded} new screenshots.`);
+    } catch {
+      setChecked(null);
+    }
+  }
+
   function confirmDelete() {
     Alert.alert(
       "Delete everything?",
@@ -56,69 +95,139 @@ export default function Settings() {
     );
   }
 
+  const checkDetail =
+    status === "syncing" ? "Checking now." : status === "error" ? (error ?? "Couldn't check. Try again.") : (checked ?? undefined);
+
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={{ gap: spacing.lg, paddingBottom: spacing.xxl }}>
-        <ScreenHeader
-          title="Settings"
-          right={<Button label="Done" variant="secondary" onPress={() => router.back()} />}
-        />
-        <Card title="Reminders">
-          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-            <Text style={[type.body, { flex: 1 }]}>Reminder notifications</Text>
-            <Switch value={notify} onValueChange={toggleNotify} trackColor={{ true: colors.sun }} />
-          </View>
-          <Body>A notification holds only a short line from Psst and the title of the screenshot, such as "Psst: your flyer is due tomorrow. Want to see it?"</Body>
-        </Card>
+    <>
+      <Stack.Screen
+        options={{
+          presentation: "formSheet",
+          headerShown: false,
+          sheetGrabberVisible: true,
+          sheetAllowedDetents: [0.94, 1],
+          sheetInitialDetentIndex: 0,
+          sheetExpandsWhenScrolledToEdge: true,
+          contentStyle: { backgroundColor: pal.paper },
+        }}
+      />
+      <ScrollView
+        style={{ flex: 1, backgroundColor: pal.paper }}
+        contentContainerStyle={{ padding: 20, paddingTop: 28, paddingBottom: 48, gap: 24 }}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+          <Text accessibilityRole="header" maxFontSizeMultiplier={1.67} style={[text.headline, { flex: 1, color: pal.ink }]}>
+            Choose what Psst does for you.
+          </Text>
+          <CloseButton />
+        </View>
 
-        <Card title="Photo access">
-          <Body>{access ? ACCESS_LINE[access] : "Checking photo access."}</Body>
-          <Body>Psst reads only your Screenshots album.</Body>
-          {status === "syncing" ? <Body>Checking for new screenshots</Body> : null}
-          {status === "error" ? <Body>{error ?? "Couldn't sync. Check your connection and try again"}</Body> : null}
-          <Button label="Sync now" variant="secondary" onPress={() => syncNow().catch(() => {})} disabled={status === "syncing"} />
-          {access === "limited" ? (
-            <Button label="Give access to all screenshots" onPress={() => openLimitedPicker()} />
-          ) : null}
-          {access === "denied" ? <Button label="Open settings" onPress={() => openSettings()} /> : null}
-        </Card>
+        <View style={{ gap: 8 }}>
+          <SectionLabel>Reading</SectionLabel>
+          <Group>
+            <SwitchRow
+              first
+              title="Read new screenshots automatically"
+              detail={autoRead ? "On. When you open Psst, each new one is sent to be read." : "Off. New screenshots wait until you check."}
+              value={autoRead}
+              onValueChange={setAutoRead}
+              testID="auto-read-switch"
+            />
+            <ActionRow
+              title="Check for new screenshots now"
+              detail={checkDetail}
+              onPress={checkNow}
+              disabled={status === "syncing"}
+              chevron={false}
+              trailing={status === "syncing" ? <ActivityIndicator color={pal.ink2} /> : undefined}
+            />
+          </Group>
+        </View>
 
-        <Card title="What leaves your phone">
-          <Pressable accessibilityRole="button" onPress={() => setLeaves(!leaves)}>
-            <Text style={type.body}>{leaves ? "Hide" : "Show me"}</Text>
-          </Pressable>
-          {leaves ? (
-            <Body>
-              Each screenshot is shrunk and sent to our server, where it is read to find its title, dates and room. The
-              text and the file are stored so you can ask about them. Your other photos never leave your phone. Delete
-              everything removes it all.
-            </Body>
-          ) : null}
-        </Card>
+        <View style={{ gap: 8 }}>
+          <SectionLabel>Reminders</SectionLabel>
+          <Group>
+            <SwitchRow
+              first
+              title="Reminder notifications"
+              detail="One per reminder you set."
+              value={notify}
+              onValueChange={toggleNotify}
+              testID="notifications-switch"
+            />
+          </Group>
+          <Footer>We'll remind you once per item. You can snooze or turn reminders off.</Footer>
+        </View>
 
-        <Card title="Upgrade">
-          <Body>Bring in more than 50 screenshots.</Body>
-          <Button label="Upgrade" variant="secondary" onPress={() => router.push("/upgrade")} />
-        </Card>
+        <View style={{ gap: 8 }}>
+          <SectionLabel>Privacy & photo access</SectionLabel>
+          <Group>
+            <ActionRow
+              first
+              title="Photo access"
+              detail={access ? ACCESS_DETAIL[access] : "Checking."}
+              value={access ? ACCESS_VALUE[access] : undefined}
+              onPress={() => (access === "limited" ? openLimitedPicker() : openSettings())}
+            />
+            <ActionRow title="Change in iOS Settings" onPress={() => openSettings()} />
+          </Group>
+          <SoftCard style={{ gap: 8, marginTop: 8 }}>
+            <Text accessibilityRole="header" style={[text.bodyBold, { color: pal.ink }]}>
+              What leaves your phone
+            </Text>
+            {PRIVACY_LINES.map((line) => (
+              <Text key={line} style={[text.body, { color: pal.ink2 }]}>
+                {line}
+              </Text>
+            ))}
+          </SoftCard>
+        </View>
 
-        <Button label="Delete everything" variant="secondary" onPress={confirmDelete} />
+        <View style={{ gap: 8 }}>
+          <SectionLabel>Psst</SectionLabel>
+          <Group>
+            <View
+              accessible
+              accessibilityLabel="The keepers: Tock, Murmur, Penny Pocket, Mote"
+              style={{ minHeight: 64, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 }}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={[text.bodyBold, { color: pal.ink }]}>The keepers</Text>
+                <Text style={[text.caption, { color: pal.ink2 }]}>{KEEPER_IDS.map((id) => KEEPERS[id].name).join(", ")}</Text>
+              </View>
+              <View style={{ flexDirection: "row" }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+                {KEEPER_IDS.map((id, i) => (
+                  <View key={id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
+                    <KeeperFace id={id} size={32} />
+                  </View>
+                ))}
+              </View>
+            </View>
+            <ActionRow title="Upgrade" detail="Bring in more than 50 screenshots." onPress={() => router.push("/upgrade")} />
+          </Group>
+        </View>
+
+        <Group>
+          <ActionRow first title="Delete everything" tone="danger" onPress={confirmDelete} />
+        </Group>
 
         {DEV_TOOLS ? (
-          <Card title="Developer">
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-              <Text style={[type.body, { flex: 1 }]}>Read all photos</Text>
-              <Switch value={readAll} onValueChange={setReadAll} testID="read-all-switch" trackColor={{ true: colors.sun }} />
-            </View>
-            <Text style={type.caption} testID="diagnostics">
+          <View style={{ gap: 8 }}>
+            <SectionLabel>Developer</SectionLabel>
+            <Group>
+              <SwitchRow first title="Read all photos" value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
+            </Group>
+            <Text style={[text.caption, { color: pal.ink2, fontFamily: fonts.ui }]} testID="diagnostics">
               {diag === null
                 ? "Reading library…"
                 : typeof diag === "string"
                   ? `Diagnostics failed: ${diag}`
                   : `Smart albums: ${diag.smartAlbums.join(", ") || "none"}\nScreenshots album: ${diag.screenshotsAlbumCount ?? "missing"} · screenshot subtype: ${diag.screenshotSubtypeCount} · all images: ${diag.allImagesCount}`}
             </Text>
-          </Card>
+          </View>
         ) : null}
       </ScrollView>
-    </Screen>
+    </>
   );
 }

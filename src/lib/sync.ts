@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useSyncExternalStore } from "react";
 import { api } from "../../convex/_generated/api";
 import { convex } from "./convex";
+import { getRemovedAssets } from "./auto-read";
 import { getReadAllPhotos, listCandidates, prepareForUpload } from "./photos";
 import { chunk, planUploads, scanSize } from "./sync-plan";
 
@@ -42,7 +43,14 @@ async function syncOnce(): Promise<SyncResult> {
   for (const part of chunk(ids, 100)) {
     unknown.push(...(await convex.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds: part })));
   }
-  const plan = new Set(planUploads(ids, unknown, limit));
+  const removed = new Set(await getRemovedAssets());
+  const plan = new Set(
+    planUploads(
+      ids,
+      unknown.filter((id) => !removed.has(id)),
+      limit,
+    ),
+  );
   const queue = assets.filter((a) => plan.has(a.id));
   let uploaded = 0;
   let failed = 0;
