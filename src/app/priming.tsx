@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { Footnote, Headline, Lead, Page, Tick } from "@/components/onboarding/page";
@@ -7,20 +7,23 @@ import { hasPhotoAccess, usePhotoAccess } from "@/lib/photos";
 
 export default function Priming() {
   const p = usePalette();
+  const { replay } = useLocalSearchParams<{ replay?: string }>();
+  const toBring = () => router.replace(replay ? "/bring?replay=1" : "/bring");
   const { access, request, openSettings } = usePhotoAccess();
   const [declined, setDeclined] = useState(false);
   const [busy, setBusy] = useState(false);
-  const denied = declined || access === "denied";
+  const denied = (declined && !hasPhotoAccess(access)) || access === "denied";
 
   useEffect(() => {
-    if (hasPhotoAccess(access)) router.replace("/bring");
-  }, [access]);
+    if (!replay && hasPhotoAccess(access)) router.replace("/bring");
+  }, [access, replay]);
 
   async function ask() {
+    if (replay && hasPhotoAccess(access)) return toBring();
     setBusy(true);
     const result = await request().catch(() => "denied" as const);
     setBusy(false);
-    if (hasPhotoAccess(result)) router.replace("/bring");
+    if (hasPhotoAccess(result)) toBring();
     else setDeclined(true);
   }
 
@@ -40,7 +43,7 @@ export default function Priming() {
             <Keeper id="murmur" size={128} />
           </View>
           <Headline>{"Psst can't see your screenshots yet."}</Headline>
-          <Lead>{"Nothing has been brought in. You can choose screenshots later. You can pick a few screenshots instead, or change photo access in iOS Settings → Psst → Photos."}</Lead>
+          <Lead>{"Nothing has been brought in. In iOS Settings → Psst → Photos, choose Selected Photos or Full Access, then come back."}</Lead>
           <KeeperLine id="murmur">{"Fine by me. I'll wait by the door."}</KeeperLine>
         </View>
       </Page>
@@ -73,7 +76,7 @@ export default function Priming() {
             <Tick />
             <Text style={[text.bodyBold, { color: p.ink }]}>Screenshots: read</Text>
           </View>
-          <Text style={[text.body, { color: p.ink2 }]}>Photos: stay on your phone</Text>
+          <Text style={[text.body, { color: p.ink2 }]}>Your other photos stay on your phone.</Text>
         </View>
         <View>
           <Text style={[text.body, { color: p.ink2, paddingBottom: 10 }]}>iOS calls this Full Access, which covers your whole photo library. You can pick a few screenshots instead.</Text>

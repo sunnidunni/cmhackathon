@@ -7,7 +7,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { usePalette } from "@/design/psst";
 import { fixtureShot } from "@/components/remind/fixture";
 import { isConvexId } from "@/components/remind/ids";
-import { defaultReminder } from "@/components/remind/plan";
+import { defaultReminder, demoNow } from "@/components/remind/plan";
 import { RemindBody } from "@/components/remind/RemindBody";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
 import { FIXTURES } from "@/lib/fixtures";
@@ -24,7 +24,7 @@ export default function Remind() {
   const fetched = useQuery(api.shots.detail, real ? { id: shotId } : "skip");
   const shot = real ? fetched : (fixtureShot(id) ?? null);
   const actions = useReminderActions();
-  const [now] = useState(Date.now);
+  const [now] = useState(() => (real ? Date.now() : demoNow(tz())));
   const [notifOn, setNotifOn] = useState<boolean | null>(null);
   const [priming, setPriming] = useState(false);
   const [saving, setSaving] = useState(false);

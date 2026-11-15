@@ -6,6 +6,7 @@ import { KeeperFace, KEEPERS, text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { setReminderMoved, useActState } from "@/lib/act/store";
 import type { ActScenario } from "@/lib/act/types";
+import { useDetectedActs } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
 import { ActCard } from "./ActCard";
 import { isReminderStep, reminderCopy } from "./pages";
@@ -39,7 +40,8 @@ function ActRow({ scenario }: { scenario: ActScenario }) {
 export function ActCards() {
   const p = usePalette();
   const { dismissed, completed, undone } = useActState();
-  const acts = (FIXTURES ? DEMO_ACTS : []).filter((a) => a.steps.length > 0);
+  const detected = useDetectedActs();
+  const acts = (FIXTURES ? DEMO_ACTS : detected).filter((a) => a.steps.length > 0);
   const [first, ...rest] = acts.filter((a) => !dismissed.has(a.id) && !completed.has(a.id));
   const moved = acts.flatMap((a) => {
     const step = a.steps.find(isReminderStep);
@@ -48,11 +50,13 @@ export function ActCards() {
   if (!first && moved.length === 0) return null;
   return (
     <View style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={[text.caption, { color: p.ink2 }]}>Ready for you</Text>
       {first ? (
-        <Fade key={first.id}>
-          <ActCard scenario={first} />
-        </Fade>
+        <>
+          <Text accessibilityRole="header" style={[text.caption, { color: p.ink2 }]}>Ready for you</Text>
+          <Fade key={first.id}>
+            <ActCard scenario={first} />
+          </Fade>
+        </>
       ) : null}
       {rest.length > 0 ? (
         <View>

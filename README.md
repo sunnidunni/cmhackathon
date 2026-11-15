@@ -1,4 +1,4 @@
-# Psst (cmhackathon)
+# Psst (yc-cm-hackathon)
 
 ## Install on your iPhone from your Mac (free Apple ID, no paid account)
 You need Xcode from the App Store, opened once, with your Apple ID added in Xcode → Settings → Accounts. You also need Node 20 or newer.
