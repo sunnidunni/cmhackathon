@@ -99,7 +99,7 @@ export default function Today() {
   const [refreshing, setRefreshing] = useState(false);
   const [removed, setRemoved] = useState(false);
   const [focusMemory, saveFocus] = useFocusMemory();
-  const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory);
+  const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory ?? null);
   useEffect(() => {
     if (!demo && memory && !sameMemory(memory, focusMemory)) saveFocus(memory);
   }, [demo, memory, focusMemory, saveFocus]);

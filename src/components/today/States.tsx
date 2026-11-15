@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { Keeper, KeeperFace, PsstButton, Skeleton, SoftCard, text, usePalette } from "@/design/psst";
+import { Keeper, KeeperFace, PsstButton, Skeleton, text, usePalette } from "@/design/psst";
 
 export function ScreenTitle({ children }: { children: string }) {
   const p = usePalette();

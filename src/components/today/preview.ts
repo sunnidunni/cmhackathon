@@ -51,6 +51,7 @@ export function previewToday(kind: string, tz: number): { data: TodayData | unde
     "td-1": { handful: [dentist, bill, wifi] },
     "td-2": { justIn: [flyer], handful: [dentist, bill] },
     "td-3": { handful: [dentist, bill, wifi], reading: { ...reading, pending: 1 } },
+    "td-14": { handful: [dentist, bill, wifi], reading: { ...reading, failed: 4 } },
     "td-4": { handful: [dentistSet, bill, wifi] },
     "td-7": { cleared: true, reminders: [reminderRow("r1", dentist, local(2026, 11, 23, 9, 0, tz)), reminderRow("r2", bill, local(2026, 11, 20, 9, 0, tz))] },
     "td-10": { reading: { read: 0, total: 0, pending: 0, failed: 0 } },

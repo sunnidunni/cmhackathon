@@ -11,4 +11,4 @@ export function chooseFocus(items: Item[], memory: FocusMemory | null, day: stri
   return { focus, next: focus ? { day, id: focus.id } : memory };
 }
 
-export const sameMemory = (a: FocusMemory | null, b: FocusMemory | null) => a?.day === b?.day && a?.id === b?.id;
+export const sameMemory = (a: FocusMemory | null, b: FocusMemory | null | undefined) => a?.day === b?.day && a?.id === b?.id;
