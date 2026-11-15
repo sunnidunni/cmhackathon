@@ -1,7 +1,7 @@
 import { useAction, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { Image } from "expo-image";
-import { Stack } from "expo-router";
+import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -45,12 +45,17 @@ export default function Ask() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      <Stack.Screen options={{ headerShown: true, title: "Ask", headerBackTitle: "Back" }} />
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.topBar}>
+        <Text style={styles.back} onPress={() => router.back()} accessibilityRole="button">
+          Back
+        </Text>
+        <Text style={styles.title}>Ask</Text>
+        <View style={styles.backSpacer} />
+      </View>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={100}
       >
         {history === undefined ? (
           <LoadingView label="Loading your questions…" />
@@ -158,6 +163,18 @@ function SourceCard({ source }: { source: Source }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "white" },
   flex: { flex: 1 },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+  },
+  back: { fontSize: 17, color: "#3D5AFE", width: 60 },
+  backSpacer: { width: 60 },
+  title: { fontSize: 17, fontWeight: "600" },
   content: { padding: 20, gap: 20 },
   empty: { gap: 12 },
   h1: { fontSize: 24, fontWeight: "700" },

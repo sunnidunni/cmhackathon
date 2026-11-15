@@ -30,8 +30,8 @@ Cloud machines have no Xcode. Use `tools.mobile.build`:
 tools.mobile.build({ action: "start", platform: "ios", app: "cmhackathon", source: { type: "workspace", path: "cmhackathon", commands: [
   "npm ci",
   "npx expo prebuild --platform ios --clean",
-  "set -o pipefail && EXPO_PUBLIC_DEV_TOOLS=1 xcodebuild -workspace ios/Rooms.xcworkspace -scheme Rooms -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGN_IDENTITY=- | tail -200"
-], output_path: "ios/build/Build/Products/Release-iphonesimulator/Rooms.app" } })
+  "set -o pipefail && EXPO_PUBLIC_CONVEX_URL=https://frugal-grasshopper-744.convex.cloud EXPO_PUBLIC_DEV_TOOLS=1 EXPO_PUBLIC_READ_ALL_PHOTOS=1 xcodebuild -workspace ios/Psst.xcworkspace -scheme Psst -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build CODE_SIGN_IDENTITY=- | tail -200"
+], output_path: "ios/build/Build/Products/Release-iphonesimulator/Psst.app" } })
 ```
 - `CODE_SIGN_IDENTITY=-` ad-hoc signs the simulator app. Do not use `CODE_SIGNING_ALLOWED=NO`: an unsigned app has no keychain entitlement, expo-secure-store fails, and anonymous sign-in hangs.
 - Set `EXPO_PUBLIC_CONVEX_URL` on the xcodebuild line too if you want it explicit; otherwise it comes from `.env`.
@@ -51,6 +51,6 @@ Leave both unset for the demo build on the real iPhone.
 ### Run on a real iPhone (free personal team, needs a Mac with Xcode)
 1. `npm ci`
 2. `npx expo run:ios --device` and pick the phone (connected by cable, Developer Mode on).
-3. If signing fails, open `ios/Rooms.xcworkspace` in Xcode, Signing & Capabilities, Team: your Personal Team. Bundle id is `com.sunnidunni.cmhackathon.rooms`; change it in `app.json` if Apple says it is taken.
+3. If signing fails, open `ios/Psst.xcworkspace` in Xcode, Signing & Capabilities, Team: your Personal Team. Bundle id is `com.sunnidunni.cmhackathon.rooms`; change it in `app.json` if Apple says it is taken.
 4. On the phone: Settings, General, VPN & Device Management, trust the developer.
 The app has no push-notification entitlement, so free signing works. Do not add remote push (expo-notifications remote) without a paid account; local notifications are fine.
