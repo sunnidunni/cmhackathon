@@ -3,7 +3,7 @@ import * as Notifications from "expo-notifications";
 import { addListener as addLibraryListener } from "expo-media-library";
 import { type Href, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import { api } from "../../convex/_generated/api";
 import { screenshotIdFromData, shotRoute } from "./notification-plan";
 import { getAutoRead } from "./auto-read";
@@ -63,7 +63,7 @@ export function AppLifecycle() {
   }, [isAuthenticated, appOpened]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || Platform.OS === "web") return;
     const open = (response: Notifications.NotificationResponse | null) => {
       const id = screenshotIdFromData(response?.notification.request.content.data);
       if (!id) return;
