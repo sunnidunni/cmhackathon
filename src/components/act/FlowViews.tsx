@@ -47,7 +47,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
     return (
       <SoftCard style={{ gap: 12 }}>
         <Row label="To">
-          <Text style={[text.bodyBold, { color: p.ink }]}>{`${step.to} · ${step.via}`}</Text>
+          <Text style={[text.bodyBold, { color: p.ink }]}>{`${step.to} · Messages`}</Text>
         </Row>
         <Row label="Message, exactly as it will go">
           <Text style={[text.lead, { color: p.ink }]}>{edit.body}</Text>
