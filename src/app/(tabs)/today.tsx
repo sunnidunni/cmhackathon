@@ -203,7 +203,6 @@ export default function Today() {
           ) : null}
           {screen.kind === "done" ? <DoneView /> : null}
           <HandfulRows rows={rows} now={now} tz={tz} title={rowTitle} onOpen={open} onRemind={remind} onSkip={skip} onMenu={menu} />
-          {today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
           <ReminderRows rows={reminderRows} now={now} tz={tz} onOpen={(id) => router.push(`/shot/${id}`)} />
           {resurfaced ? (
             <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
@@ -211,6 +210,7 @@ export default function Today() {
           <TodoSection demo={FIXTURES && preview ? previewTodos(preview) : null} />
           {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Psst. Your original screenshot stays in Photos.</Text> : null}
           {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
+          {today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
         </View>
         {footer}
       </ScrollView>
