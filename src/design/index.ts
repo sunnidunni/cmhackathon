@@ -9,3 +9,6 @@ export { ScreenshotSticker } from "./ScreenshotSticker";
 export { RoomBadge } from "./RoomBadge";
 export { Button } from "./Button";
 export { ScreenHeader } from "./ScreenHeader";
+export { SketchFrame } from "./SketchFrame";
+export { Doodle } from "./Doodle";
+export { seedFrom } from "./sketch";
