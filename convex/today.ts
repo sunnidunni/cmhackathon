@@ -6,6 +6,12 @@ import { toCard } from "./lib/cards";
 import { computePick, pickIsStale } from "./lib/handful";
 import { localDay } from "./lib/time";
 
+function dayHash(s: string) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
 export const get = query({
   args: { tzOffsetMinutes: v.number() },
   handler: async (ctx, { tzOffsetMinutes: tz }) => {
@@ -56,6 +62,38 @@ export const get = query({
     const handful = await Promise.all(handfulRows.map((r) => toCard(ctx, r, reminders, "handful", now, tz)));
     const thin = thinRow ? await toCard(ctx, thinRow, reminders, "thin", now, tz) : null;
 
+    const DAY = 86400000;
+    const resurfacedRow = rows
+      .filter(
+        (r) =>
+          ready(r) &&
+          (r.category ?? "unsorted") === "ideas" &&
+          r.takenAt <= now - 2 * DAY &&
+          (r.openedAt ?? 0) < now - 7 * DAY,
+      )
+      .map((r) => ({ r, h: dayHash(day + (r._id as string)) }))
+      .sort((a, b) => a.h - b.h)[0]?.r;
+    const resurfaced = resurfacedRow ? await toCard(ctx, resurfacedRow, reminders, "thin", now, tz) : null;
+
+    const remindersOut = [];
+    for (const rem of reminders
+      .filter((x) => x.status === "scheduled")
+      .sort((a, b) => a.dueAt - b.dueAt)
+      .slice(0, 20)) {
+      const row = byId.get(rem.screenshotId as string);
+      if (!row) continue;
+      remindersOut.push({
+        reminderId: rem._id,
+        screenshotId: row._id,
+        title: row.title ?? "",
+        imageUrl: await ctx.storage.getUrl(row.storageId),
+        category: row.category ?? "unsorted",
+        dueAt: rem.dueAt,
+        when: rem.whenKey ?? null,
+        what: (row.dates ?? []).find((d) => d.when === rem.whenKey)?.what ?? null,
+      });
+    }
+
     const visible = rows.filter((r) => r.hidden !== true);
     const count = (s: string) => visible.filter((r) => r.status === s).length;
     return {
@@ -64,6 +102,8 @@ export const get = query({
       missed,
       handful,
       thin,
+      reminders: remindersOut,
+      resurfaced,
       cleared: justIn.length + missed.length + handful.length === 0 && thin === null,
       reading: {
         read: count("ready"),
