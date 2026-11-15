@@ -8,6 +8,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { Button, Character, colors, radii, SpeechBubble, spacing, Sticker, type } from "@/design";
 import { formatWhen, lineFor, reminderCaption, ROOM_ORDER, roomName, type Room } from "@/components/tabs/helpers";
 import { useReminders } from "@/components/tabs/reminders";
+import { ZoomViewer } from "@/components/tabs/ZoomViewer";
 import { designRoom, InfoCard, Loading, Notice, Screen, Sheet, useToast } from "@/components/tabs/ui";
 import { DEV_TOOLS } from "@/lib/dev-flags";
 
@@ -21,6 +22,7 @@ export default function Detail() {
   const toast = useToast();
   const reminders = useReminders();
   const [moveOpen, setMoveOpen] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const found = shot !== undefined && shot !== null;
 
   useEffect(() => {
@@ -63,7 +65,9 @@ export default function Detail() {
         <View style={{ alignItems: "center" }}>
           <Sticker tilt={-1} border={6} radius={radii.md}>
             {shot.imageUrl ? (
-              <Image source={{ uri: shot.imageUrl }} style={{ width: 240, height: 420 }} contentFit="contain" />
+              <Pressable accessibilityRole="imagebutton" accessibilityLabel="Open full size" onPress={() => setZoomOpen(true)}>
+                <Image source={{ uri: shot.imageUrl }} style={{ width: 240, height: 420 }} contentFit="contain" />
+              </Pressable>
             ) : (
               <View style={{ width: 240, height: 200, alignItems: "center", justifyContent: "center", backgroundColor: colors.paperDeep }}>
                 <Text style={type.caption}>Image not available</Text>
@@ -164,6 +168,7 @@ export default function Detail() {
           />
         ))}
       </Sheet>
+      {shot.imageUrl ? <ZoomViewer uri={shot.imageUrl} visible={zoomOpen} onClose={() => setZoomOpen(false)} /> : null}
       {reminders.sheet}
       {toast.node}
     </Screen>
