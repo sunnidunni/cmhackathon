@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Text, View } from "react-native";
 import { Character } from "./Character";
+import { Doodle } from "./Doodle";
 import { SpeechBubble } from "./SpeechBubble";
-import { RoomKey, spacing, type } from "./theme";
+import { colors, RoomKey, spacing, type } from "./theme";
 
 export function ScreenHeader({
   title,
@@ -16,12 +18,20 @@ export function ScreenHeader({
   line?: string;
   right?: React.ReactNode;
 }) {
+  const [titleWidth, setTitleWidth] = useState(0);
   return (
     <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.md, gap: spacing.md }}>
       <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
         <View style={{ flexShrink: 1 }}>
-          <Text style={type.display}>{title}</Text>
-          {subtitle ? <Text style={[type.caption, { marginTop: 2 }]}>{subtitle}</Text> : null}
+          <View style={{ alignSelf: "flex-start" }} onLayout={(e) => setTitleWidth(Math.round(e.nativeEvent.layout.width))}>
+            {titleWidth > 0 ? (
+              <View style={{ position: "absolute", left: -4, bottom: -2 }}>
+                <Doodle kind="underline" width={titleWidth + 10} color={colors.sun} strokeWidth={7} />
+              </View>
+            ) : null}
+            <Text style={type.display}>{title}</Text>
+          </View>
+          {subtitle ? <Text style={[type.caption, { marginTop: 4 }]}>{subtitle}</Text> : null}
         </View>
         {right}
       </View>
