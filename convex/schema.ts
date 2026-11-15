@@ -68,6 +68,7 @@ export default defineSchema({
     error: v.optional(v.string()),
     memoryStored: v.optional(v.boolean()),
     amount: v.optional(v.string()),
+    todosExtracted: v.optional(v.boolean()),
     readAt: v.optional(v.number()),
     doneAt: v.optional(v.number()),
     openedAt: v.optional(v.number()),

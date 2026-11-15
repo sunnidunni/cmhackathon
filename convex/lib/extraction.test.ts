@@ -162,3 +162,19 @@ describe("serious lines", () => {
     expect(PLAYFUL_KEYS.unsorted).toContain(keyFor({ category: "unsorted" }));
   });
 });
+
+describe("todos from a screenshot", () => {
+  const todos = (v: unknown) => parseExtraction(JSON.stringify({ ...base, todos: v })).todos;
+  test("trims, de-duplicates, caps at two and drops junk", () => {
+    expect(todos(["  Pay the Brightside Power bill ", "pay the brightside power bill", "Reply to Maya", "Third one"])).toEqual([
+      "Pay the Brightside Power bill",
+      "Reply to Maya",
+    ]);
+    expect(todos(["", "   ", 5, null, "x".repeat(90)])).toEqual([]);
+  });
+  test("a bad or missing value is an empty list", () => {
+    expect(todos("pay")).toEqual([]);
+    expect(todos(undefined)).toEqual([]);
+    expect(parseExtraction(JSON.stringify(base)).todos).toEqual([]);
+  });
+});
