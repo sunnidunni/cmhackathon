@@ -8,11 +8,7 @@
     "scheme": "cmhackathon",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": {
-        "light": "./assets/images/psst-icon-default.png",
-        "dark": "./assets/images/psst-icon-dark.png",
-        "tinted": "./assets/images/psst-icon-tinted.png"
-      },
+      "icon": "./assets/images/psst-icon-default.png",
       "bundleIdentifier": "com.sunnidunni.cmhackathon.rooms",
       "supportsTablet": false
     },
@@ -35,11 +31,7 @@
         {
           "backgroundColor": "#FBFAF7",
           "image": "./assets/images/splash-wordmark.png",
-          "imageWidth": 220,
-          "dark": {
-            "backgroundColor": "#17151D",
-            "image": "./assets/images/splash-wordmark-dark.png"
-          }
+          "imageWidth": 220
         }
       ],
       "expo-secure-store",
