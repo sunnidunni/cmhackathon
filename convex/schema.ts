@@ -95,6 +95,14 @@ export default defineSchema({
     .index("by_user_dueAt", ["userId", "dueAt"])
     .index("by_screenshot", ["screenshotId"]),
 
+  todos: defineTable({
+    userId: v.id("users"),
+    text: v.string(),
+    done: v.boolean(),
+    screenshotId: v.optional(v.id("screenshots")),
+    createdAt: v.number(),
+  }).index("by_user_createdAt", ["userId", "createdAt"]),
+
   dailyPicks: defineTable({
     userId: v.id("users"),
     day: v.string(),
