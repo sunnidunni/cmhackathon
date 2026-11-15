@@ -1,8 +1,8 @@
 import { useAction, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useEffect, useRef, useState } from "react";
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
 import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult } from "@/components/ask/AnswerBlock";
 import { Composer } from "@/components/ask/Composer";
@@ -22,7 +22,18 @@ export default function Ask() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
   const [slowFor, setSlowFor] = useState<number | null>(null);
+  const [keyboardUp, setKeyboardUp] = useState(false);
+  const insets = useSafeAreaInsets();
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow", () => setKeyboardUp(true));
+    const hide = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide", () => setKeyboardUp(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   async function send(question: string) {
     const q = question.trim();
@@ -75,7 +86,9 @@ export default function Ask() {
             </View>
           ) : null}
         </ScrollView>
-        <Composer value={input} onChange={setInput} onSend={() => send(input)} busy={pending?.status === "looking"} />
+        <View style={{ paddingBottom: keyboardUp ? 0 : Math.max(insets.bottom, 83) - 8 }}>
+          <Composer value={input} onChange={setInput} onSend={() => send(input)} busy={pending?.status === "looking"} />
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
