@@ -3,7 +3,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from "@/components/act/FlowViews";
+import { ConfirmPage, DonePage, EditPage, MovePage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
 import { buildPages, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
@@ -73,23 +73,23 @@ export default function Act() {
       );
     if (page.kind === "edit")
       return <EditPage scenario={scenario} step={step} edit={editFor(page.step)} onChange={(e) => setEdits((all) => ({ ...all, [page.step]: e }))} onNext={() => go(index + 1)} />;
-    if (page.kind === "confirm")
+    if (page.kind === "confirm") {
+      const before = scenario.steps[page.step - 1];
+      const reply = step.kind === "order" && before?.kind === "draft-message" && before.reply ? { to: before.to, text: before.reply } : undefined;
       return (
         <ConfirmPage
           scenario={scenario}
           step={step}
           final={page.final}
           edit={editFor(page.step)}
-          onEdit={() => go(index - 1)}
+          reply={reply}
+          onEdit={step.kind === "order" ? undefined : () => go(index - 1)}
           onConfirm={() => {
             feedback("success");
             go(index + 1);
           }}
         />
       );
-    if (page.kind === "reply" && step.kind === "draft-message") {
-      const next = scenario.steps[page.step + 1];
-      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} nextLabel={next?.kind === "order" ? "Set up the order" : nextLabel(next)} onNext={() => go(index + 1)} />;
     }
     return null;
   };

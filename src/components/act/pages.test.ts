@@ -12,8 +12,9 @@ beforeAll(async () => {
 });
 
 describe("act pages", () => {
-  it("pizza walks draft, confirm, pretend reply, order, confirm, done", () => {
-    expect(buildPages(act("mom-pizza").steps).map((p) => p.kind)).toEqual(["edit", "confirm", "reply", "edit", "confirm", "done"]);
+  it("pizza is three steps: draft, confirm the text, then one order confirm", () => {
+    expect(buildPages(act("mom-pizza").steps).map((p) => p.kind)).toEqual(["edit", "confirm", "confirm", "done"]);
+    expect(buildPages(act("mom-pizza").steps)[2]).toMatchObject({ kind: "confirm", step: 1, final: true });
   });
   it("delay moves the reminder, then drafts and confirms the text", () => {
     const pages = buildPages(act("flight-delay").steps);
