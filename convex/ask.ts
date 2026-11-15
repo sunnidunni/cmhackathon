@@ -10,7 +10,7 @@ import { addMemory, searchMemory, type MemoryHit } from "./lib/memoryClient";
 export type { Source };
 export const NOT_FOUND_ANSWER = "I couldn't find that in your screenshots.";
 
-const SYSTEM = `You answer questions about the user's own screenshots. Use only the context you are given. Answer in at most two plain sentences. Never guess a date, time, or price. The question may say "that" or "it": that means the most recent screenshot unless the earlier conversation says otherwise. If the context does not answer the question, set found to false. sourceIds lists the screenshot ids you used, taken from the context; use an empty list when found is false.`;
+const SYSTEM = `You answer questions about the user's own screenshots. Use only the context you are given. Answer in at most two plain sentences, using only what the context says. Never guess a date, time, or price. When the question is about when something is due or happens, give the date and also any time shown for it on the same screenshot, for example "RSVP by November 16, 2026. The event starts at 6:30 PM that day." If a date is marked not certain, say it is not certain (for example "it looks like November 21, but the year isn't shown") and do not guess the year. The question may say "that" or "it": that means the most recent screenshot unless the earlier conversation says otherwise. If the context does not answer the question, set found to false. sourceIds lists the screenshot ids you used, taken from the context; use an empty list when found is false.`;
 
 const line = (b: { id: string; title: string; summary: string; text: string; dates: string[] }) =>
   `[id ${b.id}] ${b.title}. ${b.summary}${b.dates.length ? ` Dates: ${b.dates.join("; ")}.` : ""}${b.text ? ` Text: ${b.text}` : ""}`;
