@@ -3,7 +3,7 @@ import type { api } from "../../../convex/_generated/api";
 import { computeDueAt, localDay, parseWhen } from "../../../convex/lib/time";
 import { psstLine } from "../../design/psst/lines";
 import type { KeeperId } from "@/design/psst";
-import { chooseFocus, type FocusMemory } from "./focus";
+import { chooseFocus, skippedToday, type FocusMemory } from "./focus";
 
 export type TodayData = FunctionReturnType<typeof api.today.get>;
 type Card = TodayData["handful"][number];
@@ -154,7 +154,8 @@ export function buildScreen(
   memory: FocusMemory | null = null,
 ): { screen: Screen; items: Item[]; memory: FocusMemory | null } {
   if (!today) return { screen: { kind: "loading" }, items: [], memory };
-  const items = buildItems(today, fallback).filter((i) => !skipped.has(i.id));
+  const gone = skippedToday(memory, today.day);
+  const items = buildItems(today, fallback).filter((i) => !skipped.has(i.id) && !gone.includes(i.id));
   const { focus, next } = chooseFocus(items, memory, today.day);
   const waitingJustIn = !items.some((i) => i.section === "justIn" && !i.handled);
   if (today.reading.pending > 0 && waitingJustIn) return { screen: { kind: "reading", pending: today.reading.pending, rows: items.slice(0, 3) }, items, memory };
