@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { LoadingView, MessageView } from "@/components/state-views";
+import { useStickerFonts } from "@/design";
 import { convex } from "@/lib/convex";
 import { DEV_TOOLS } from "@/lib/dev-flags";
 import { secureStorage, storageError } from "@/lib/secure-storage";
@@ -49,6 +50,7 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  useStickerFonts();
   return (
     <ConvexAuthProvider client={convex} storage={secureStorage}>
       <AnonymousSession>
