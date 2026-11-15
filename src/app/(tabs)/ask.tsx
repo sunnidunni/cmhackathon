@@ -62,7 +62,7 @@ export default function Ask() {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
-      <Text style={[text.largeTitle, { color: p.ink, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }]} accessibilityRole="header">
+      <Text maxFontSizeMultiplier={1.67} style={[text.largeTitle, { color: p.ink, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }]} accessibilityRole="header">
         Ask
       </Text>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>

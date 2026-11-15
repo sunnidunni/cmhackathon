@@ -83,7 +83,7 @@ export default function BringIn() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
         <View style={styles.center}>
-          <Text style={[text.headline, { color: p.ink }]}>{failedLabel(state.failed)}.</Text>
+          <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>{failedLabel(state.failed)}.</Text>
           <Text style={[text.body, { color: p.ink2 }]}>Check your connection and try again. The ones already in are still here.</Text>
         </View>
         <View style={styles.footer}>
@@ -99,7 +99,7 @@ export default function BringIn() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
         <View style={styles.center}>
-          <Text style={[text.headline, { color: p.ink }]}>No screenshots to read yet.</Text>
+          <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>No screenshots to read yet.</Text>
           <Text style={[text.body, { color: p.ink2 }]}>Take a screenshot and Psst reads it.</Text>
         </View>
         <View style={styles.footer}>
@@ -112,7 +112,7 @@ export default function BringIn() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+        <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
           {done ? `${screenshotsIn(total)} in.\nMeet your keepers.` : "Reading your screenshots."}
         </Text>
         {done ? null : (

@@ -38,7 +38,7 @@ export default function KeepersCard() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={[styles.card, { backgroundColor: dark ? p.white : SHOT_ART.cream, borderColor: p.hair }]}>
           <Text style={[text.caption, { color: p.ink2, letterSpacing: 1.2 }]}>{`PSST · ${day}`}</Text>
-          <Text accessibilityRole="header" style={[text.headline, { color: p.ink, fontSize: 38, lineHeight: 41, marginTop: 8, width: 160 }]}>
+          <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.headline, { color: p.ink, fontSize: 38, lineHeight: 41, marginTop: 8, width: 160 }]}>
             Your keepers.
           </Text>
           <View style={styles.stamp}>
