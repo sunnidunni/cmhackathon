@@ -73,6 +73,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
         ) : null}
       </ScrollView>
       <View style={{ padding: 16, paddingBottom: 42, gap: 4 }}>
+        {plan && !failed && !isSet ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{`Your reminder arrives ${when.replace(" ", " at ")}.`}</Text> : null}
         {plan ? (
           <PsstButton kind="filled" label={failed ? "Try again" : isSet ? "Done" : `Remind me ${when}`} onPress={failed ? onRetry : onConfirm} disabled={saving} />
         ) : (

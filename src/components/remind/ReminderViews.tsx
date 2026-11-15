@@ -104,7 +104,7 @@ export function Priming({ preview, onAllow, onSkip }: { preview: { body: string;
       <View accessibilityViewIsModal style={{ backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 42, gap: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Decor><Keeper id="tock" size={72} /></Decor>
-          <Text style={[text.headlineCard, { color: p.ink, flex: 1 }]}>{`Your reminder arrives ${preview.time.replace(" ", " at ")}.`}</Text>
+          <Text style={[text.headlineCard, { color: p.ink, flex: 1 }]}>Tock can tap you on the shoulder.</Text>
         </View>
         <Preview label="What you'll get" body={preview.body} time={preview.time} />
         <Text style={[text.caption, { color: p.ink2 }]}>{"We'll remind you once per item. You can snooze or turn reminders off."}</Text>
