@@ -4,7 +4,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { usePalette } from "@/components/ask/kit";
+import { usePalette } from "@/design/psst";
 import { defaultReminder } from "@/components/remind/plan";
 import { RemindBody } from "@/components/remind/RemindBody";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";

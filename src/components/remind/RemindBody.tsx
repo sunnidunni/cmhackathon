@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from "react-native";
 import type { ShotDetail } from "@/components/ask/AnswerBlock";
-import { PsstButton, text, usePalette } from "@/components/ask/kit";
+import { PsstButton, text, usePalette } from "@/design/psst";
 import { dayLabel, defaultReminder, previewText, whenLabel } from "./plan";
 import { Banner, Headline, Options, Preview, Priming, TodayPreview } from "./ReminderViews";
 
@@ -69,7 +69,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, saving, prim
       </ScrollView>
       <View style={{ padding: 16, paddingBottom: 42, gap: 4 }}>
         {plan ? (
-          <PsstButton kind="filled" label={failed ? "Try again" : isSet ? "Done" : "Set reminder"} onPress={failed ? onRetry : onConfirm} disabled={saving} />
+          <PsstButton kind="filled" label={failed ? "Try again" : isSet ? "Done" : `Set reminder · ${when}`} onPress={failed ? onRetry : onConfirm} disabled={saving} />
         ) : (
           <PsstButton kind="filled" label="Done" onPress={onClose} />
         )}

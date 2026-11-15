@@ -6,11 +6,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
 import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult } from "@/components/ask/AnswerBlock";
 import { Composer } from "@/components/ask/Composer";
+import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
-import { text, usePalette } from "@/components/ask/kit";
+import { text, usePalette } from "@/design/psst";
+import { FIXTURES } from "@/lib/fixtures";
 
 type Exchange = FunctionReturnType<typeof api.ask.history>[number];
-type Pending = { question: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string } };
+type Pending = { question: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean };
 
 export default function Ask() {
   const p = usePalette();
@@ -31,7 +33,8 @@ export default function Ask() {
       const result = await askAction({ question: q });
       setPending({ question: q, status: "done", sentAt, result });
     } catch {
-      setPending({ question: q, status: "failed", sentAt });
+      if (FIXTURES) setPending({ question: q, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true });
+      else setPending({ question: q, status: "failed", sentAt });
     }
   }
 
@@ -66,7 +69,7 @@ export default function Ask() {
               <QuestionBubble question={shownPending.question} />
               {shownPending.status === "looking" ? <LookingBlock count={rooms?.count} /> : null}
               {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question)} /> : null}
-              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest /> : null}
+              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? demoShots : undefined} /> : null}
             </View>
           ) : null}
         </ScrollView>

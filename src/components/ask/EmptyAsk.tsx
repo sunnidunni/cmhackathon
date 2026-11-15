@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { DEV_TOOLS } from "@/lib/dev-flags";
-import { KeeperFace, KeeperLine, PsstButton, text, usePalette } from "./kit";
+import { Keeper, KeeperLine, PsstButton, text, usePalette } from "@/design/psst";
 
 const TRY = DEV_TOOLS ? "When does pottery sign-up close?" : "When is that due?";
 const MORE = ["What's the Wi-Fi password?", "What are my flight details?", "What was that recipe?"];
@@ -34,8 +34,10 @@ export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | u
           <KeeperLine id="murmur" style={{ flex: 1, paddingBottom: 12 }}>
             {count === 0 ? "Nothing to ask about yet." : `Ask about any of your ${count} screenshots. I show my work.`}
           </KeeperLine>
-          <View style={{ marginRight: -16, marginBottom: -8 }}>
-            <KeeperFace id="murmur" size={72} />
+          <View style={{ marginRight: -24, marginBottom: -24 }}>
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <Keeper id="murmur" size={120} />
+            </View>
           </View>
         </View>
       ) : null}

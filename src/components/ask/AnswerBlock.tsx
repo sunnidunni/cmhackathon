@@ -1,12 +1,18 @@
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
-import { useState } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { FunctionReturnType } from "convex/server";
 import { defaultReminder, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
-import { KEEPERS, KeeperFace, PsstButton, ShotSticker, text, usePalette, useKeeperColors, type KeeperId } from "./kit";
+import { KEEPERS, KeeperFace, PsstButton, ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
+
+const Decor = ({ children }: { children: ReactNode }) => (
+  <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    {children}
+  </View>
+);
 
 export type AskSource = { screenshotId: Id<"screenshots">; title: string | null; imageUrl: string | null };
 export type AskResult = { answer: string; found: boolean; sources: AskSource[] };
@@ -15,6 +21,20 @@ export type ShotDetail = NonNullable<FunctionReturnType<typeof api.shots.detail>
 export type Shots = Record<string, ShotDetail>;
 
 const tz = () => new Date().getTimezoneOffset();
+
+// Dev fixture answers (FIXTURES on, ask failed) are drawn from the demo world: no navigation to ids that are not in Convex, and "now" is the demo Sunday.
+const DemoCtx = createContext(false);
+const DEMO_NOW = Date.parse("2026-11-15T10:00:00-08:00");
+const useNow = () => {
+  const demo = useContext(DemoCtx);
+  return useState(() => (demo ? DEMO_NOW : Date.now()))[0];
+};
+const useGo = () => {
+  const demo = useContext(DemoCtx);
+  return (path: string) => {
+    if (!demo) router.push(path as never);
+  };
+};
 const ROOM_KEEPER: Record<string, KeeperId> = { deadlines: "tock", chats: "murmur", money: "penny", ideas: "mote" };
 const ROOM_NAME: Record<string, string> = { deadlines: "Deadlines", chats: "Chats", money: "Money", ideas: "Ideas", unsorted: "Unsorted" };
 const TRY_LINE: Record<KeeperId, string> = {
@@ -41,8 +61,9 @@ function useShot(id: Id<"screenshots"> | undefined, shots?: Shots) {
 
 function SourceRow({ source, card, shots }: { source: AskSource; card: boolean; shots?: Shots }) {
   const p = usePalette();
+  const go = useGo();
   const shot = useShot(source.screenshotId, shots);
-  const [now] = useState(Date.now);
+  const now = useNow();
   const date = shot ? nextConfidentDate(shot.dates, now, tz()) ?? shot.dates.find((d) => d.confident) ?? null : null;
   const room = shot?.category ?? null;
   const dot = room && ROOM_KEEPER[room] ? KEEPERS[ROOM_KEEPER[room]].main : p.hair2;
@@ -51,10 +72,10 @@ function SourceRow({ source, card, shots }: { source: AskSource; card: boolean; 
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Open ${source.title ?? "screenshot"}`}
-      onPress={() => router.push(`/shot/${source.screenshotId}`)}
+      onPress={() => go(`/shot/${source.screenshotId}`)}
       style={{ minHeight: 64, flexDirection: "row", alignItems: "center", gap: 12, padding: card ? 8 : 0, paddingVertical: card ? 8 : 10, borderRadius: 16, borderWidth: card ? 1 : 0, borderColor: p.hair, backgroundColor: card ? p.white : "transparent" }}
     >
-      <ShotSticker uri={source.imageUrl} title={source.title ?? "Screenshot"} size={card ? 44 : 40} />
+      <ShotSticker uri={source.imageUrl} title={source.title ?? "Screenshot"} size={card ? 48 : 40} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={[text.bodyBold, { color: p.ink }]} numberOfLines={2}>{source.title ?? "Untitled screenshot"}</Text>
         {subtitle ? <Text style={[text.caption, { color: p.ink2 }]} numberOfLines={2}>{subtitle}</Text> : null}
@@ -74,8 +95,9 @@ function SourceRow({ source, card, shots }: { source: AskSource; card: boolean; 
 function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boolean; shots?: Shots }) {
   const p = usePalette();
   const source = result.sources[0];
+  const go = useGo();
   const shot = useShot(source?.screenshotId, shots);
-  const [now] = useState(Date.now);
+  const now = useNow();
   const reminder = shot ? defaultReminder(shot.dates, now, tz()) : null;
   const existing = reminder ? shot?.dates.find((d) => d.when === reminder.date.when)?.reminder : null;
   const isSet = existing?.state === "scheduled";
@@ -87,7 +109,7 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
         {shot ? <Text style={{ color: p.ink2 }}>{` · from a screenshot saved ${savedLabel(shot.takenAt, now, tz())}`}</Text> : null}
       </Text>
       {source ? (
-        <Pressable accessibilityRole="link" onPress={() => router.push(`/shot/${source.screenshotId}`)} style={{ minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }}>
+        <Pressable accessibilityRole="link" onPress={() => go(`/shot/${source.screenshotId}`)} style={{ minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }}>
           <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Wrong date?</Text>
         </Pressable>
       ) : null}
@@ -99,7 +121,7 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
           <PsstButton
             kind={isSet ? "outline" : "filled"}
             label={isSet ? `Reminder set for ${reminder.label}` : `Remind me ${reminder.label}`}
-            onPress={() => router.push(`/remind/${source.screenshotId}`)}
+            onPress={() => go(`/remind/${source.screenshotId}`)}
           />
           <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
             {`The day before it ${closes ? "closes" : "happens"}. One reminder. Change it or turn it off later.`}
@@ -112,6 +134,7 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
 
 function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
   const p = usePalette();
+  const go = useGo();
   const first = result.sources[0];
   const shot = useShot(first?.screenshotId, shots);
   const room = shot?.category && shot.category !== "unsorted" ? shot.category : null;
@@ -133,10 +156,10 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
       {room && keeper ? (
         <View style={{ gap: 12 }}>
           <View style={{ backgroundColor: colors.tint, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <KeeperFace id={keeper} size={40} />
+            <Decor><KeeperFace id={keeper} size={40} /></Decor>
             <Text style={[text.voice, { color: colors.deep, flex: 1 }]}>{TRY_LINE[keeper]}</Text>
           </View>
-          <PsstButton kind="filled" keeper={keeper} label={`Look in ${ROOM_NAME[room]}`} onPress={() => router.push(`/room/${room}`)} />
+          <PsstButton kind="filled" keeper={keeper} label={`Look in ${ROOM_NAME[room]}`} onPress={() => go(`/room/${room}`)} />
         </View>
       ) : (
         <PsstButton kind="outline" label="Look in Rooms" onPress={() => router.push("/rooms")} />
@@ -145,13 +168,18 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
   );
 }
 
-export function AnswerBlock({ result, latest, shots }: { result: AskResult; latest: boolean; shots?: Shots }) {
-  return result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />;
+export function AnswerBlock({ result, latest, shots, demo = false }: { result: AskResult; latest: boolean; shots?: Shots; demo?: boolean }) {
+  return (
+    <DemoCtx.Provider value={demo}>
+      {demo ? <Text style={[text.caption, { color: "#A3162B" }]}>Dev fixture: the server did not answer, so this is the demo answer.</Text> : null}
+      {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />}
+    </DemoCtx.Provider>
+  );
 }
 
 export function LookingBlock({ count }: { count: number | undefined }) {
   const p = usePalette();
-  const bar = (w: string | number, h = 14) => <View style={{ width: w as never, height: h, borderRadius: 7, backgroundColor: p.fill2 }} />;
+  const bar = (w: `${number}%`, h = 14) => <Skeleton w={w} h={h} />;
   return (
     <View accessibilityState={{ busy: true }} accessibilityLabel="Looking through your screenshots" style={{ gap: 14 }}>
       <Text style={[text.headline, { color: p.ink }]}>
@@ -162,7 +190,7 @@ export function LookingBlock({ count }: { count: number | undefined }) {
         {bar("62%")}
       </View>
       <View style={{ flexDirection: "row", gap: 12, padding: 8, borderRadius: 16, borderWidth: 1, borderColor: p.hair }}>
-        <View style={{ width: 44, height: 66, borderRadius: 8, backgroundColor: p.fill2 }} />
+        <Skeleton w={44} h={66} />
         <View style={{ flex: 1, gap: 10, justifyContent: "center" }}>
           {bar("70%", 12)}
           {bar("40%", 12)}
@@ -178,7 +206,7 @@ export function FailedBlock({ onRetry }: { onRetry: () => void }) {
   return (
     <View style={{ gap: 14 }}>
       <View style={{ backgroundColor: colors.tint, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <KeeperFace id="murmur" size={48} />
+        <Decor><KeeperFace id="murmur" size={48} /></Decor>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[text.bodyBold, { color: p.ink }]}>The server didn&apos;t answer.</Text>
           <Text style={[text.caption, { color: p.ink2 }]}>Your question is saved above. Nothing was lost.</Text>

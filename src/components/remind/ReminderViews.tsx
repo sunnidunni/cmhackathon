@@ -1,16 +1,23 @@
 import { SymbolView } from "expo-symbols";
+import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette } from "@/components/ask/kit";
+import { Keeper, KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette } from "@/design/psst";
+
+const Decor = ({ children }: { children: ReactNode }) => (
+  <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    {children}
+  </View>
+);
 
 export type OptionRow = { key: string; title: string; sub: string; selected: boolean; available: boolean };
 
 export function Headline() {
   const p = usePalette();
   return (
-    <Text style={[text.headline, { color: p.ink }]}>
+    <Text style={[text.headlineCard, { color: p.ink }]}>
       Choose when Tock{" "}
       <View style={{ transform: [{ translateY: 4 }] }}>
-        <KeeperFace id="tock" size={26} />
+        <Decor><KeeperFace id="tock" size={26} /></Decor>
       </View>{" "}
       should remind you.
     </Text>
@@ -49,7 +56,7 @@ export function Preview({ label, body, time }: { label: string; body: string; ti
     <View style={{ gap: 8 }}>
       <Text style={[text.caption, { color: p.ink2 }]}>{label}</Text>
       <View style={{ flexDirection: "row", gap: 12, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair, borderRadius: 18, padding: 12 }}>
-        <KeeperFace id="murmur" size={36} />
+        <Decor><KeeperFace id="murmur" size={36} /></Decor>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <Text style={[text.caption, { color: p.ink, fontWeight: "700" }]}>Psst</Text>
@@ -71,7 +78,7 @@ export function TodayPreview({ title, sub, imageUrl }: { title: string; sub: str
         <Text style={[text.bodyBold, { color: p.ink }]} numberOfLines={2}>{title}</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>{sub}</Text>
       </View>
-      <KeeperFace id="tock" size={32} />
+      <Decor><KeeperFace id="tock" size={32} /></Decor>
     </View>
   );
 }
@@ -81,7 +88,7 @@ export function Banner({ kind, title, body }: { kind: "off" | "error"; title: st
   const tock = useKeeperColors("tock");
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, padding: 14, backgroundColor: kind === "error" ? tock.tint : p.fill }}>
-      <KeeperFace id="tock" size={40} />
+      <Decor><KeeperFace id="tock" size={40} mood={kind === "error" ? "anxious" : "rest"} /></Decor>
       <Text style={[text.body, { color: p.ink, flex: 1 }]}>
         <Text style={{ fontWeight: "700" }}>{title}</Text>
         {" " + body}
@@ -96,8 +103,8 @@ export function Priming({ preview, onAllow, onSkip }: { preview: { body: string;
     <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0, justifyContent: "flex-end", backgroundColor: "rgba(33,29,43,0.35)" }}>
       <View accessibilityViewIsModal style={{ backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 42, gap: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <KeeperFace id="tock" size={56} />
-          <Text style={[text.headline, { color: p.ink, flex: 1 }]}>Tock can tap you on the shoulder.</Text>
+          <Decor><Keeper id="tock" size={72} /></Decor>
+          <Text style={[text.headlineCard, { color: p.ink, flex: 1 }]}>Tock can tap you on the shoulder.</Text>
         </View>
         <Preview label="What you'll get" body={preview.body} time={preview.time} />
         <Text style={[text.caption, { color: p.ink2 }]}>{"We'll remind you once per item. You can snooze or turn reminders off."}</Text>

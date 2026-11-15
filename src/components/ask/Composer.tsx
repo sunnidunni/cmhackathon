@@ -1,7 +1,7 @@
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
 import { SymbolView } from "expo-symbols";
 import { Pressable, Text, TextInput } from "react-native";
-import { text, usePalette } from "./kit";
+import { text, usePalette } from "@/design/psst";
 
 export function Composer({ value, onChange, onSend, busy }: { value: string; onChange: (v: string) => void; onSend: () => void; busy: boolean }) {
   const p = usePalette();
