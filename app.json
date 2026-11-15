@@ -4,11 +4,15 @@
     "slug": "cmhackathon",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/psst-icon-default.png",
     "scheme": "cmhackathon",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png",
+      "icon": {
+        "light": "./assets/images/psst-icon-default.png",
+        "dark": "./assets/images/psst-icon-dark.png",
+        "tinted": "./assets/images/psst-icon-tinted.png"
+      },
       "bundleIdentifier": "com.sunnidunni.cmhackathon.rooms",
       "supportsTablet": false
     },
@@ -29,9 +33,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FDB92E",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200
+          "backgroundColor": "#FBFAF7",
+          "image": "./assets/images/splash-wordmark.png",
+          "imageWidth": 220,
+          "dark": {
+            "backgroundColor": "#17151D",
+            "image": "./assets/images/splash-wordmark-dark.png"
+          }
         }
       ],
       "expo-secure-store",
