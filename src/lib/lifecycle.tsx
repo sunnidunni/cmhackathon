@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { AppState } from "react-native";
 import { api } from "../../convex/_generated/api";
 import { screenshotIdFromData, shotRoute } from "./notification-plan";
+import { getPhotoAccess, hasPhotoAccess } from "./photos";
 import { getImportStarted, runSync } from "./sync";
 
 const LIBRARY_CHANGE_DEBOUNCE_MS = 1500;
@@ -24,27 +25,35 @@ export function AppLifecycle() {
     const syncIfStarted = async () => {
       if (await getImportStarted()) await runSync().catch(() => undefined);
     };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let library: { remove(): void } | undefined;
+    let disposed = false;
+    // Registering a photo-library observer makes iOS show the photo prompt when access is still
+    // undetermined, so only listen once access has been granted on the priming screen.
+    const listenToLibrary = async () => {
+      if (library || !hasPhotoAccess(await getPhotoAccess().catch(() => null)) || disposed) return;
+      try {
+        library = addLibraryListener(() => {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            if (AppState.currentState === "active") void syncIfStarted();
+          }, LIBRARY_CHANGE_DEBOUNCE_MS);
+        });
+      } catch {
+        library = undefined;
+      }
+    };
     const onActive = () => {
       appOpened({ tzOffsetMinutes: new Date().getTimezoneOffset() }).catch(() => undefined);
       void syncIfStarted();
+      void listenToLibrary();
     };
     onActive();
     const appState = AppState.addEventListener("change", (s) => {
       if (s === "active") onActive();
     });
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let library: { remove(): void } | undefined;
-    try {
-      library = addLibraryListener(() => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          if (AppState.currentState === "active") void syncIfStarted();
-        }, LIBRARY_CHANGE_DEBOUNCE_MS);
-      });
-    } catch {
-      library = undefined;
-    }
     return () => {
+      disposed = true;
       appState.remove();
       library?.remove();
       clearTimeout(timer);

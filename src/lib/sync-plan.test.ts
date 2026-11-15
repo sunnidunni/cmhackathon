@@ -19,6 +19,18 @@ describe("planUploads", () => {
   });
 });
 
+describe("plan limits (DER-19)", () => {
+  const library = Array.from({ length: 80 }, (_, i) => `a${i}`);
+  test("a free user (limit 50) stops at the newest 50", () => {
+    expect(scanSize(50)).toBe(50);
+    expect(planUploads(library.slice(0, scanSize(50)), library, 50)).toEqual(library.slice(0, 50));
+  });
+  test("a paid user (limit null) imports past 50", () => {
+    expect(scanSize(null)).toBeGreaterThan(library.length);
+    expect(planUploads(library.slice(0, scanSize(null)), library, null)).toHaveLength(80);
+  });
+});
+
 test("scanSize uses the cap or the ceiling", () => {
   expect(scanSize(50)).toBe(50);
   expect(scanSize(null)).toBe(UNCAPPED_SCAN);
