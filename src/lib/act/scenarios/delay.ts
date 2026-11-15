@@ -1,9 +1,10 @@
 import type { ActScenario } from "../types";
+import { FLIGHT_DELAY_IMAGE } from "./images";
 
 export const scenario: ActScenario = {
   id: "flight-delay",
   keeper: "tock",
-  source: { image: null, title: "Flight alert", at: "2:14 PM" },
+  source: { image: FLIGHT_DELAY_IMAGE, title: "Flight alert", at: "2:14 PM" },
   noticed: "Your flight to Seattle is delayed 1 h 40 min.",
   why: "Your screenshot says CA 482 now leaves 7:25 PM, was 5:45 PM.",
   didOnOwn: "Tock moved your airport reminder from 3:30 PM to 5:10 PM.",

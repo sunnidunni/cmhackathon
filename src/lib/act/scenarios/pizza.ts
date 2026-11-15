@@ -1,9 +1,10 @@
 import type { ActScenario } from "../types";
+import { MOM_PIZZA_IMAGE } from "./images";
 
 export const scenario: ActScenario = {
   id: "mom-pizza",
   keeper: "murmur",
-  source: { image: null, title: "Text from Mom", at: "5:02 PM" },
+  source: { image: MOM_PIZZA_IMAGE, title: "Text from Mom", at: "5:02 PM" },
   noticed: "Mom asked about pizza.",
   why: "Your screenshot at 5:02 PM is a text from Mom about dinner tonight.",
   ready: "I wrote a reply. Nothing is sent.",

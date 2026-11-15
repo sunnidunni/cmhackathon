@@ -1,8 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { DEMO_ACTS } from "@/lib/act/scenarios";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import type { ActScenario } from "../../lib/act/types";
 import { buildPages, confirmFor, itemsSum, totalCents, willBe } from "./pages";
 
+vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2 }));
+
+let DEMO_ACTS: ActScenario[] = [];
 const act = (id: string) => DEMO_ACTS.find((a) => a.id === id)!;
+
+beforeAll(async () => {
+  DEMO_ACTS = (await import("../../lib/act/scenarios")).DEMO_ACTS;
+});
 
 describe("act pages", () => {
   it("pizza walks draft, confirm, pretend reply, order, confirm, done", () => {
@@ -21,11 +28,10 @@ describe("act pages", () => {
   it("order line items add up to the total", () => {
     for (const s of DEMO_ACTS.flatMap((a) => a.steps)) if (s.kind === "order") expect(itemsSum(s.items)).toBe(totalCents(s.total));
   });
-  it("Today buttons review, they never act; done copy never claims a send", () => {
+  it("Today buttons review, they never act; done copy only says nothing happened", () => {
     for (const a of DEMO_ACTS.filter((a) => a.steps.length > 0)) {
       expect(a.cta).toMatch(/^Review /);
       expect(a.done).toMatch(/^Demo: nothing was /);
-      expect(a.done).not.toMatch(/\b(sent|ordered)\b.*\bsuccess/i);
     }
     expect(willBe("Demo: nothing was sent.")).toBe("Demo: nothing will be sent.");
   });

@@ -52,7 +52,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
         <Row label="Message, exactly as it will go">
           <Text style={[text.lead, { color: p.ink }]}>{edit.body}</Text>
         </Row>
-        <Text style={[text.caption, { color: p.ink2 }]}>A text can't be unsent.</Text>
+        <Text style={[text.caption, { color: p.ink2 }]}>A text can&apos;t be unsent.</Text>
       </SoftCard>
     );
   if (step.kind === "email-draft")
@@ -67,7 +67,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
         <Row label="Message, exactly as it will go">
           <Text style={[text.lead, { color: p.ink }]}>{edit.body}</Text>
         </Row>
-        <Text style={[text.caption, { color: p.ink2 }]}>An email can't be unsent.</Text>
+        <Text style={[text.caption, { color: p.ink2 }]}>An email can&apos;t be unsent.</Text>
       </SoftCard>
     );
   if (step.kind === "order")
