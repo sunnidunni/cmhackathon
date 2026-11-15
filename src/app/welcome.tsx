@@ -53,8 +53,8 @@ export default function Welcome() {
     <Page
       footer={
         <View style={{ gap: 8 }}>
-          <Footnote>Nothing is read until you choose in the iOS prompt. About two minutes.</Footnote>
-          <PsstButton kind="filled" label="Show me how" onPress={() => setStep("explainer")} />
+          <Footnote>Takes about a minute. Nothing is read yet.</Footnote>
+          <PsstButton kind="filled" label="Get started" onPress={() => setStep("explainer")} />
         </View>
       }
     >
@@ -62,7 +62,7 @@ export default function Welcome() {
         <KeeperRow size={76} />
         <View style={{ gap: 12 }}>
           <Headline large>Psst. You saved these for a reason.</Headline>
-          <Lead>Four keepers file your screenshots into four rooms. They bring back the few that matter today.</Lead>
+          <Lead>Psst reads your screenshots, files them into four rooms, and brings back the few that matter today.</Lead>
         </View>
       </View>
     </Page>

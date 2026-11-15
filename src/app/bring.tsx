@@ -48,7 +48,7 @@ export default function Bring() {
               <View style={{ flex: 1 }}>
                 <Text style={[text.bodyBold, { color: p.ink }]}>{`We only read the ${count} you picked. Your other photos stay on your phone.`}</Text>
                 <Text style={[text.caption, { color: p.ink2 }]} onPress={async () => { await openLimitedPicker(); recount(); }} accessibilityRole="button">
-                  Add more
+                  Pick more screenshots
                 </Text>
               </View>
             </View>

@@ -109,7 +109,8 @@ export function Priming({ preview, onAllow, onSkip }: { preview: { body: string;
         <Preview label="What you'll get" body={preview.body} time={preview.time} />
         <Text style={[text.caption, { color: p.ink2 }]}>{"We'll remind you once per item. You can snooze or turn reminders off."}</Text>
         <PsstButton kind="filled" keeper="tock" label="Turn on notifications" onPress={onAllow} />
-        <PsstButton kind="text" label="Not now, keep it in Today" onPress={onSkip} />
+        <PsstButton kind="text" label="Not now, show it in Today" onPress={onSkip} />
+        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Your reminder is saved either way.</Text>
       </View>
     </View>
   );

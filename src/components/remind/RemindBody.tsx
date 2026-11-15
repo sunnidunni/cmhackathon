@@ -53,15 +53,15 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
         {shot && plan ? (
           <>
             <Text style={[text.lead, { color: p.ink2 }]}>{`${plan.date.what} ${whenLabel(plan.date.when)}.`}</Text>
-            {failed ? <Banner kind="error" title="Couldn't set the reminder." body="Nothing changed. Your pick is kept below." /> : null}
+            {failed ? <Banner kind="error" title="Couldn't set the reminder." body="Nothing changed, and your pick is still selected. Check your connection, then try again." /> : null}
             {cancelFailed ? <Banner kind="error" title="Couldn't turn off the reminder." body="It's still on. Try again." /> : null}
-            {off ? <Banner kind="off" title="Saved, no notification." body={`Notifications are off. The reminder will wait at the top of Today on ${plan.day} at ${plan.clock}.`} /> : null}
+            {off ? <Banner kind="off" title="Saved, no notification." body={`Notifications are off. Your reminder will show at the top of Today on ${plan.day} at ${plan.clock}.`} /> : null}
             {isSet && notifOn ? <Text style={[text.bodyBold, { color: p.ink }]}>{`Reminder set for ${plan.day} at ${plan.clock}.`}</Text> : null}
             <Options rows={options} />
             {off ? (
               <>
                 <TodayPreview title={shot.title || "Screenshot"} sub={`${plan.date.what} ${whenLabel(plan.date.when)}`} imageUrl={shot.imageUrl} />
-                <Text style={[text.caption, { color: p.ink2 }]}>No notification is sent while notifications are off. You can turn them on in Settings.</Text>
+                <Text style={[text.caption, { color: p.ink2 }]}>Psst won&apos;t send notifications while they&apos;re off. Your reminder still shows in Today.</Text>
               </>
             ) : (
               <>
@@ -73,8 +73,9 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
         ) : null}
       </ScrollView>
       <View style={{ padding: 16, paddingBottom: 42, gap: 4 }}>
+        {plan && !failed && !isSet ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{`Your reminder arrives ${when.replace(" ", " at ")}.`}</Text> : null}
         {plan ? (
-          <PsstButton kind="filled" label={failed ? "Try again" : isSet ? "Done" : `Set reminder · ${when}`} onPress={failed ? onRetry : onConfirm} disabled={saving} />
+          <PsstButton kind="filled" label={failed ? "Try again" : isSet ? "Done" : `Remind me ${when}`} onPress={failed ? onRetry : onConfirm} disabled={saving} />
         ) : (
           <PsstButton kind="filled" label="Done" onPress={onClose} />
         )}

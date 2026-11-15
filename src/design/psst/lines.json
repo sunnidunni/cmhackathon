@@ -1,6 +1,6 @@
 {
   "tock.intro": {
-    "text": "I keep dates. One reminder each, never a second ping.",
+    "text": "I keep dates. One reminder each, at the time you pick.",
     "where": "Import reveal, Tock's row",
     "voice": "keeper: Tock",
     "placeholders": []
@@ -71,7 +71,7 @@
     ]
   },
   "murmur.intro": {
-    "text": "I keep chats. I read them and repeat nothing.",
+    "text": "I keep chats. I never quote them back.",
     "where": "Import reveal, Murmur's row",
     "voice": "keeper: Murmur",
     "placeholders": []
@@ -134,7 +134,7 @@
     "placeholders": []
   },
   "penny.intro": {
-    "text": "I keep prices and receipts. I never guess an amount.",
+    "text": "I keep prices and receipts. Unclear amounts stay blank.",
     "where": "Import reveal, Penny's row",
     "voice": "keeper: Penny Pocket",
     "placeholders": []
@@ -160,7 +160,7 @@
     ]
   },
   "penny.refund": {
-    "text": "There's a {amount} refund on {title}. Nobody chased it yet.",
+    "text": "{amount} refund marked pending on the {date} receipt.",
     "where": "Today focus card, receipt with a refund line",
     "voice": "keeper: Penny Pocket",
     "placeholders": [
@@ -210,7 +210,7 @@
     "placeholders": []
   },
   "mote.intro": {
-    "text": "I keep ideas for later. Quiet unless you ask.",
+    "text": "I keep ideas. One may come back to Today on a quiet day.",
     "where": "Import reveal, Mote's row",
     "voice": "keeper: Mote",
     "placeholders": []
