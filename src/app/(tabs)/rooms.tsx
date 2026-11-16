@@ -2,10 +2,12 @@ import { router } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
+import { useWindUp } from "@/components/tabs/WindUp";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { AllRow, LimitedAccessCard, RoomCard, ROOM_KEYS, UnsortedRow } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
 import { usePhotoAccess } from "@/lib/photos";
+import { runSync } from "@/lib/sync";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 
 export default function Rooms() {
@@ -13,6 +15,7 @@ export default function Rooms() {
   const insets = useSafeAreaInsets();
   const list = useSafeQuery(api.rooms.list, {}, []);
   const { access, openLimitedPicker } = usePhotoAccess();
+  const windUp = useWindUp(runSync);
 
   const demoOn = useDemoFallback();
   const real = list ? list.reduce((sum, r) => sum + r.count, 0) : null;
@@ -25,10 +28,11 @@ export default function Rooms() {
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, paddingBottom: 24, gap: 16, flexGrow: 1 }}>
+      <ScrollView refreshControl={windUp.control} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, paddingBottom: 24, gap: 16, flexGrow: 1 }}>
         <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.largeTitle, { color: p.ink }]}>
           Rooms
         </Text>
+        {windUp.banner}
         <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>{empty ? "Your rooms are empty for now." : "Your screenshots live in four rooms."}</Text>
         {access === "limited" ? <LimitedAccessCard onPress={() => openLimitedPicker()} /> : null}
         {[ROOM_KEYS.slice(0, 2), ROOM_KEYS.slice(2)].map((pair) => (
