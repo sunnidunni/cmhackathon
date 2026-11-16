@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import Animated, { FadeInDown, FadeOut, useReducedMotion } from "react-native-reanimated";
+import { play as playSfx, sfxForReaction } from "@/lib/sfx";
 import { UndoToast } from "@/components/rooms/UndoToast";
 import { filedLine, freshJustIn } from "./filed";
 import type { Item } from "./model";
@@ -23,6 +24,7 @@ export function useFiledToast(items: Item[] | null): Item | null {
   }
   useEffect(() => {
     if (!shown) return;
+    if (shown.roomName !== "Unsorted") playSfx(sfxForReaction(shown.keeper, "filed"));
     const t = setTimeout(() => setShown(null), HOLD_MS);
     return () => clearTimeout(t);
   }, [shown]);
