@@ -2,7 +2,7 @@ import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useConvexAuth } from "convex/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { LoadingView, MessageView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
 import { usePalette, usePsstFonts } from "@/design/psst";
@@ -52,16 +52,30 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
   return <LoadingView label="Getting things ready…" />;
 }
 
+type SheetOptions = NonNullable<ComponentProps<typeof Stack.Screen>["options"]>;
+
 export default function RootLayout() {
   useStickerFonts();
   usePsstFonts();
   const pal = usePalette();
+  const sheet = useMemo<SheetOptions>(
+    () => ({ presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.95], sheetCornerRadius: 24, contentStyle: { backgroundColor: pal.paper } }),
+    [pal.paper],
+  );
+  const settingsSheet = useMemo<SheetOptions>(
+    () => ({ presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.94, 1], sheetInitialDetentIndex: 0, sheetExpandsWhenScrolledToEdge: true, contentStyle: { backgroundColor: pal.paper } }),
+    [pal.paper],
+  );
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
         <AnonymousSession>
           <AppLifecycle />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }}>
+            <Stack.Screen name="remind/[id]" options={sheet} />
+            <Stack.Screen name="act/[id]" options={sheet} />
+            <Stack.Screen name="settings" options={settingsSheet} />
+          </Stack>
         </AnonymousSession>
       </ConvexAuthProvider>
     </GestureHandlerRootView>

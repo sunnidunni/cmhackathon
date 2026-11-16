@@ -1,5 +1,5 @@
 import { useMutation } from "convex/react";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../convex/_generated/api";
@@ -114,17 +114,6 @@ export default function Settings() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          presentation: "formSheet",
-          headerShown: false,
-          sheetGrabberVisible: true,
-          sheetAllowedDetents: [0.94, 1],
-          sheetInitialDetentIndex: 0,
-          sheetExpandsWhenScrolledToEdge: true,
-          contentStyle: { backgroundColor: pal.paper },
-        }}
-      />
       <ScrollView
         style={{ flex: 1, backgroundColor: pal.paper }}
         contentContainerStyle={{ padding: 20, paddingTop: 28, paddingBottom: 48, gap: 24 }}
