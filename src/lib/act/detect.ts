@@ -75,7 +75,7 @@ function chatRequest(shot: DetectInput, saved: string): ActScenario | null {
   const reply: Record<string, string> = { me: "you", my: "your", your: "my" };
   const swap = (map: Record<string, string>) => phrase.replace(/\b(me|my|your)\b/gi, (w) => map[w.toLowerCase()] ?? w);
   const body = "Yes, I can " + verb + " " + swap(reply) + ".";
-  const steps: ActStep[] = [{ kind: "draft-message", to: who, via: "iMessage", body }];
+  const steps: ActStep[] = [{ kind: "draft-message", to: who, via: "Messages", body }];
   return {
     id: "real:chat:" + shot.id,
     keeper: "murmur",
@@ -87,7 +87,7 @@ function chatRequest(shot: DetectInput, saved: string): ActScenario | null {
     steps,
     confirm: {
       title: "Send this to " + who + "?",
-      lines: ["To: " + who + ", iMessage", "\"" + body + "\""],
+      lines: ["To: " + who + ", Messages", "\"" + body + "\""],
       button: "Send to " + who,
     },
     done: "Demo: nothing was sent.",
@@ -142,10 +142,10 @@ function travelDelay(shot: DetectInput, saved: string, now: Date): ActScenario |
     why: "From a screenshot saved " + saved + ". It shows a delay. The new time is " + newTime + ".",
     ready: "I wrote " + contact + " the new time. You choose whether it goes.",
     cta: "Review the message",
-    steps: [{ kind: "draft-message", to: contact, via: "iMessage", body }],
+    steps: [{ kind: "draft-message", to: contact, via: "Messages", body }],
     confirm: {
       title: "Send this to " + contact + "?",
-      lines: ["To: " + contact + ", iMessage", "\"" + body + "\""],
+      lines: ["To: " + contact + ", Messages", "\"" + body + "\""],
       button: "Send to " + contact,
     },
     done: "Demo: nothing was sent.",
