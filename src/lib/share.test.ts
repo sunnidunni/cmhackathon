@@ -57,4 +57,17 @@ describe("shareScreenshot", () => {
     share.mockRejectedValue(new Error("boom"));
     await expect(shareScreenshot({ uri: "file:///shot.png" })).rejects.toThrow("boom");
   });
+
+  test("without a uri only the reading is shared", async () => {
+    await shareScreenshot({ title: "Pottery night", message: "Sign-up closes Fri, Nov 20" });
+    expect(share).toHaveBeenCalledWith(
+      { message: "Pottery night\nSign-up closes Fri, Nov 20", title: "Pottery night" },
+      { subject: "Pottery night", dialogTitle: "Pottery night" },
+    );
+  });
+
+  test("with no uri and no text there is nothing to share", async () => {
+    await expect(shareScreenshot({ uri: null, title: " ", message: null })).resolves.toBe(false);
+    expect(share).not.toHaveBeenCalled();
+  });
 });

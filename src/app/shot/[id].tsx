@@ -205,13 +205,13 @@ export default function Detail() {
               </View>
             </View>
 
-            {shot.imageUrl ? (
+            {shot.title || shot.summary ? (
               <PsstButton
                 kind="text"
                 label="Share this screenshot"
                 onPress={() => {
                   setError(null);
-                  shareScreenshot({ uri: shot.imageUrl!, title: shot.title, message: shot.summary }).catch(() => setError("That didn't work. Try again in a moment."));
+                  shareScreenshot({ uri: isDemo ? shot.imageUrl : null, title: shot.title, message: shot.summary }).catch(() => setError("That didn't work. Try again in a moment."));
                 }}
               />
             ) : null}
