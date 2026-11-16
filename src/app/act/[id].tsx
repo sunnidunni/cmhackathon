@@ -81,7 +81,7 @@ export default function Act() {
           fixture={fixture}
           onEdit={() => go(index - 1)}
           onConfirm={() => {
-            feedback("success");
+            feedback(fixture ? "success" : "light");
             go(index + 1);
           }}
         />

@@ -163,7 +163,17 @@ export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { 
         <Receipt step={step} edit={edit} fixture={fixture} />
       )}
       <Text style={[text.body, { color: p.ink2 }]}>
-        {message ? "You can change the words. Nothing is sent until you confirm on the next screen." : step.kind === "order" ? "Nothing is bought until you confirm on the next screen." : "Nothing is added until you confirm on the next screen."}
+        {fixture
+          ? message
+            ? "You can change the words. Nothing is sent until you confirm on the next screen."
+            : step.kind === "order"
+              ? "Nothing is bought until you confirm on the next screen."
+              : "Nothing is added until you confirm on the next screen."
+          : message
+            ? "You can change the words. Psst can't send this yet."
+            : step.kind === "calendar"
+              ? "Psst can't add this to your calendar yet."
+              : "Nothing is bought until you confirm on the next screen."}
       </Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label={label} disabled={message && edit.body.trim().length === 0} onPress={onNext} />
     </View>
@@ -186,7 +196,7 @@ export function ConfirmPage({ scenario, step, final, edit, fixture, onConfirm, o
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}
-        label={c.button}
+        label={fixture ? c.button : "Got it"}
         disabled={tapped}
         onPress={() => {
           if (tapped) return;
@@ -194,7 +204,7 @@ export function ConfirmPage({ scenario, step, final, edit, fixture, onConfirm, o
           onConfirm();
         }}
       />
-      <PsstButton kind="text" label="Edit" onPress={onEdit} />
+      <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} />
     </View>
   );
 }
