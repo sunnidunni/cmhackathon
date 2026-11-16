@@ -8,7 +8,7 @@ export default function PrepareActions() {
     <>
       <Stack.Screen
         options={{
-          title: "Let Psst prepare actions",
+          title: "Let Shots prepare actions",
           presentation: "formSheet",
           headerShown: false,
           sheetGrabberVisible: true,

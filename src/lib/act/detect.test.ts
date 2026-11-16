@@ -85,7 +85,7 @@ describe("detect over the demo manifest", () => {
     const act = detect(asShot(manifest.find((r) => r.file.includes("utility-bill")) as Row), NOW);
     expect(act?.steps.map((x) => x.kind)).toEqual(["email-draft"]);
     expect(act?.noticed).toBe("Willow Grid Energy, $51.30, is due Nov 21.");
-    expect(act?.ready).toBe("I wrote a note to Willow Grid Energy. Psst can't send it yet, and I won't pay it.");
+    expect(act?.ready).toBe("I wrote a note to Willow Grid Energy. Shots can't send it yet, and I won't pay it.");
     expect(act?.confirm.price).toBeUndefined();
     expect(act?.steps[0]).toMatchObject({ kind: "email-draft", to: "Willow Grid Energy billing", subject: "Question about my bill (account WG-4182)" });
   });
@@ -141,7 +141,7 @@ describe("chat that asks you to bring or buy something", () => {
     expect(act?.noticed).toBe("Sam asked you to bring the lemonade on Saturday.");
     expect(act?.confirm.lines[0]).toBe("To: Sam, Messages");
     expect(act?.done).toBe("Nothing was sent.");
-    expect(act?.ready).toBe("I wrote a reply to Sam. Psst can't send it yet.");
+    expect(act?.ready).toBe("I wrote a reply to Sam. Shots can't send it yet.");
   });
 
   test("works from the summary alone when the text is missing", () => {

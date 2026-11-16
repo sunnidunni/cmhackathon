@@ -16,8 +16,8 @@ const ACCESS_VALUE = { full: "Full", limited: "Selected", denied: "Off", undeter
 const ACCESS_DETAIL = {
   full: "iOS calls this Full Access.",
   limited: "You shared only some of your photos.",
-  denied: "Psst can't see your screenshots yet.",
-  undetermined: "Psst hasn't asked yet.",
+  denied: "Shots can't see your screenshots yet.",
+  undetermined: "Shots hasn't asked yet.",
 } as const;
 
 const PRIVACY_LINES = [
@@ -79,7 +79,7 @@ export default function Settings() {
 
   async function setAutoReadSaved(on: boolean) {
     if (await setAutoRead(on)) return;
-    Alert.alert("Couldn't save this", "Psst will use your choice until it closes, then it may switch back. Try again.");
+    Alert.alert("Couldn't save this", "Shots will use your choice until it closes, then it may switch back. Try again.");
   }
 
   async function checkNow() {
@@ -96,7 +96,7 @@ export default function Settings() {
   function confirmDelete() {
     Alert.alert(
       "Delete everything?",
-      "This removes every screenshot, reminder and answer from Psst and our server. The photos stay on your phone. Reading new screenshots turns off until you turn it back on.",
+      "This removes every screenshot, reminder and answer from Shots and our server. The photos stay on your phone. Reading new screenshots turns off until you turn it back on.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -123,7 +123,7 @@ export default function Settings() {
       >
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
           <Text accessibilityRole="header" maxFontSizeMultiplier={1.67} style={[text.headline, { flex: 1, color: pal.ink }]}>
-            Choose what Psst does for you.
+            Choose what Shots does for you.
           </Text>
           <CloseButton />
         </View>
@@ -171,7 +171,7 @@ export default function Settings() {
             <SwitchRow
               first
               title="Sounds"
-              detail={sounds ? "On. Small sounds for keepers and confirmations. Your silent switch still mutes them." : "Off. Psst stays quiet."}
+              detail={sounds ? "On. Small sounds for keepers and confirmations. Your silent switch still mutes them." : "Off. Shots stays quiet."}
               value={sounds}
               onValueChange={(on) => void setSounds(on)}
               testID="sounds-switch"
@@ -204,7 +204,7 @@ export default function Settings() {
         </View>
 
         <View style={{ gap: 8 }}>
-          <SectionLabel>Psst</SectionLabel>
+          <SectionLabel>Shots</SectionLabel>
           <Group>
             <View
               accessible
@@ -234,11 +234,11 @@ export default function Settings() {
         <View style={{ gap: 8 }}>
           <SectionLabel>More</SectionLabel>
           <Group>
-            <ActionRow first title="About Psst" onPress={() => router.push("/about")} />
+            <ActionRow first title="About Shots" onPress={() => router.push("/about")} />
             <ActionRow title="What happens to your screenshots" onPress={() => router.push("/privacy")} />
             <ActionRow title="Activity" onPress={() => router.push("/activity")} />
-            <ActionRow title="Let Psst prepare actions" onPress={() => router.push("/settings/actions")} />
-            <ActionRow title="Your week with Psst" onPress={() => router.push("/recap")} />
+            <ActionRow title="Let Shots prepare actions" onPress={() => router.push("/settings/actions")} />
+            <ActionRow title="Your week with Shots" onPress={() => router.push("/recap")} />
           </Group>
         </View>
 

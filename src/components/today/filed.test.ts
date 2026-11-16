@@ -45,6 +45,6 @@ describe("filedLine", () => {
     expect(filedLine(item({ date: null }))).toBe("Filed in Deadlines.");
   });
   it("unsorted gets the app line", () => {
-    expect(filedLine(item({ roomName: "Unsorted", keeper: "mote" }))).toBe("Psst couldn't place this one. You decide where it goes.");
+    expect(filedLine(item({ roomName: "Unsorted", keeper: "mote" }))).toBe("Shots couldn't place this one. You decide where it goes.");
   });
 });

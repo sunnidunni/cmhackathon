@@ -69,7 +69,7 @@ function Header() {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
       <Text accessibilityRole="header" allowFontScaling={false} style={[text.headline, { fontSize: 24, color: p.ink }]}>
-        Psst
+        shots.
       </Text>
       {glass ? (
         <GlassView isInteractive style={{ width: 44, height: 44, borderRadius: 22 }}>
@@ -161,7 +161,7 @@ export default function Today() {
   const menu = (item: Item) =>
     Alert.alert(item.title, undefined, [
       item.actions.primary === "remind" ? { text: "Remind me", onPress: () => remind(item) } : { text: "Not today", onPress: () => skip(item) },
-      { text: "Delete from Psst", style: "destructive" as const, onPress: () => confirmRemove(item, "Delete from Psst?") },
+      { text: "Delete from Shots", style: "destructive" as const, onPress: () => confirmRemove(item, "Delete from Shots?") },
       { text: "Cancel", style: "cancel" as const },
     ]);
 
@@ -218,7 +218,7 @@ export default function Today() {
           <ActCards />
           <ReminderRows rows={reminderRows} now={now} tz={tz} onOpen={(id) => router.push(`/shot/${id}`)} />
           {resurfaced ? (
-            <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
+            <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Shots?")} />
           ) : null}
           <TodoSection day={today?.day} shown={rendered.map((i) => i.id)} demo={FIXTURES && preview ? previewTodos(preview) : null} />
           {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Psst. Your original screenshot stays in Photos.</Text> : null}

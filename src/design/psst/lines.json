@@ -315,13 +315,13 @@
     ]
   },
   "system.partial": {
-    "text": "Psst can see only the screenshots you picked. That works.",
+    "text": "Shots can see only the screenshots you picked. That works.",
     "where": "Rooms, partial photo access card",
     "voice": "app",
     "placeholders": []
   },
   "system.denied": {
-    "text": "Psst can't see your screenshots yet.",
+    "text": "Shots can't see your screenshots yet.",
     "where": "Photo access denied, one button that asks again",
     "voice": "app",
     "placeholders": []
@@ -417,7 +417,7 @@
     ]
   },
   "system.filed.unsorted": {
-    "text": "Psst couldn't place this one. You decide where it goes.",
+    "text": "Shots couldn't place this one. You decide where it goes.",
     "where": "Today toast when a new screenshot is filed",
     "voice": "app",
     "placeholders": []

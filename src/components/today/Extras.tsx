@@ -51,7 +51,7 @@ export function RememberCard({ item, onOpen, onKeep, onDelete }: { item: Item; o
           <PsstButton kind="outline" label="Keep it" onPress={onKeep} />
         </View>
         <View style={{ flex: 1 }}>
-          <PsstButton kind="text" label="Delete from Psst" onPress={onDelete} />
+          <PsstButton kind="text" label="Delete from Shots" onPress={onDelete} />
         </View>
       </View>
     </SoftCard>

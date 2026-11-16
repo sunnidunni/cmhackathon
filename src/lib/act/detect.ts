@@ -82,7 +82,7 @@ function chatRequest(shot: DetectInput, saved: string): ActScenario | null {
     source: { shotId: shot.id, image: shot.image ?? null, title: shot.title },
     noticed: who + " asked you to " + verb + " " + swap(asker) + ".",
     why: "From a screenshot saved " + saved + ". The message asks you to bring or buy something.",
-    ready: "I wrote a reply to " + who + ". Psst can't send it yet.",
+    ready: "I wrote a reply to " + who + ". Shots can't send it yet.",
     cta: "Review the reply",
     steps,
     confirm: {
@@ -140,7 +140,7 @@ function travelDelay(shot: DetectInput, saved: string, now: Date): ActScenario |
     source: { shotId: shot.id, image: shot.image ?? null, title: shot.title },
     noticed: shot.title + ": now " + newTime + ".",
     why: "From a screenshot saved " + saved + ". It shows a delay. The new time is " + newTime + ".",
-    ready: "I wrote " + contact + " the new time. Psst can't send it yet.",
+    ready: "I wrote " + contact + " the new time. Shots can't send it yet.",
     cta: "Review the message",
     steps: [{ kind: "draft-message", to: contact, via: "Messages", body }],
     confirm: {
@@ -182,7 +182,7 @@ function bill(shot: DetectInput, saved: string, now: Date): ActScenario | null {
     source: { shotId: shot.id, image: shot.image ?? null, title: shot.title },
     noticed: biller + (amount ? ", " + amount + "," : "") + " is due " + dueLabel + ".",
     why: "From a screenshot saved " + saved + ". It shows a bill with a due date still ahead.",
-    ready: "I wrote a note to " + biller + ". Psst can't send it yet, and I won't pay it.",
+    ready: "I wrote a note to " + biller + ". Shots can't send it yet, and I won't pay it.",
     cta: "Review the note",
     steps,
     confirm: {

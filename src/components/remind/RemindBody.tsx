@@ -79,7 +79,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
             {off ? (
               <>
                 <TodayPreview title={shot.title || "Screenshot"} sub={`${plan.date.what} ${whenLabel(plan.date.when)}`} imageUrl={shot.imageUrl} />
-                <Text style={[text.caption, { color: p.ink2 }]}>Psst won&apos;t send notifications while they&apos;re off. Your reminder still shows in Today.</Text>
+                <Text style={[text.caption, { color: p.ink2 }]}>Shots won&apos;t send notifications while they&apos;re off. Your reminder still shows in Today.</Text>
               </>
             ) : (
               <>

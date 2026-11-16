@@ -160,7 +160,7 @@ describe("simulated steps", () => {
   test("the confirm note tells the truth for the three real effects only", () => {
     expect(confirmNote(text)).toContain("Nothing is sent until you press Send");
     expect(confirmNote(email)).toContain("Nothing is sent until you press Send");
-    expect(confirmNote(event)).toBe("Psst asks for calendar access, then adds this event.");
+    expect(confirmNote(event)).toBe("Shots asks for calendar access, then adds this event.");
     expect(confirmNote({ kind: "move-reminder", from: "a", to: "b" })).toBeNull();
   });
   test("an event the calendar did not confirm with an id does not count", async () => {
@@ -168,7 +168,7 @@ describe("simulated steps", () => {
     expect(await runEffect(event)).toBe("fallback");
   });
   test("the end copy says opened for composers and added only for a saved event", () => {
-    expect(realEffectEnd(text, "opened")).toEqual({ title: "Opened in Messages.", body: "Psst can't see whether you sent it." });
+    expect(realEffectEnd(text, "opened")).toEqual({ title: "Opened in Messages.", body: "Shots can't see whether you sent it." });
     expect(realEffectEnd(text, "done")).toEqual({ title: "Opened in Messages.", body: "Messages says it was sent." });
     expect(realEffectEnd(email, "opened")?.title).toBe("Opened in Mail.");
     expect(realEffectEnd(event, "done")?.title).toBe("Added to your calendar.");
