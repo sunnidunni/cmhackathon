@@ -215,7 +215,7 @@ function calendar(shot: DetectInput, saved: string, now: Date): ActScenario | nu
   const where = GATE.exec(text)?.[1] ?? VENUE.exec(text)?.[1] ?? ADDRESS.exec(text)?.[1] ?? AT_PLACE.exec(text)?.[1];
   const leave = where ? shift(start, isFlight ? -120 : -45) : null;
   const leaveBy = leave ? fmtClock(leave.h as number, leave.min) : undefined;
-  const when = fmtWhen(start);
+  const when = start.y === now.getFullYear() || start.h === null ? fmtWhen(start) : fmtDay(start) + ", " + start.y + ", " + fmtClock(start.h, start.min);
   const step: ActStep = { kind: "calendar", title: event.what, when, ...(where ? { where } : {}), ...(leaveBy ? { leaveBy } : {}) };
   return {
     id: "real:calendar:" + shot.id,

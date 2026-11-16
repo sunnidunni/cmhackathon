@@ -1,4 +1,4 @@
-// Scripted: the claim send, the airline reply, the approval and the payout timeline. Real: send the email with expo-mail-composer; claim status and payout would come from the airline or a claims partner.
+// Scripted: the airline reply, approval and payout timeline. Live: the claim email opens in Mail through expo-mail-composer (runEffect); Psst can't see whether it was sent. The address is a demo address.
 import type { ActScenario } from "../types";
 import { FLIGHT_LATE_IMAGE } from "./images";
 

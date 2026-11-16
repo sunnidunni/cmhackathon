@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
+import { confirmNote } from "@/lib/act/effects";
 import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
 import { Fade } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
@@ -172,7 +173,7 @@ export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { 
   );
 }
 
-export function ConfirmPage({ scenario, step, final, edit, fixture, reply, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; reply?: { to: string; text: string }; onConfirm: () => void; onEdit?: () => void }) {
+export function ConfirmPage({ scenario, step, final, edit, fixture, reply, openLabel, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; reply?: { to: string; text: string }; openLabel: string | null; onConfirm: () => void; onEdit?: () => void }) {
   const p = usePalette();
   const [tapped, setTapped] = useState(false);
   const c = confirmFor(scenario, step, final);
@@ -190,11 +191,11 @@ export function ConfirmPage({ scenario, step, final, edit, fixture, reply, onCon
       {c.lines.map((l) => (
         <Text key={l} style={[text.body, { color: p.ink2 }]}>{l}</Text>
       ))}
-      {fixture ? null : <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{realLine(step)}</Text>}
+      {fixture ? null : <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{openLabel ? confirmNote(step) : realLine(step)}</Text>}
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}
-        label={fixture ? c.button : "Got it"}
+        label={fixture ? c.button : (openLabel ?? "Got it")}
         disabled={tapped}
         onPress={() => {
           if (tapped) return;
@@ -241,11 +242,11 @@ function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]>
   );
 }
 
-export function DonePage({ scenario, fixture, onClose }: { scenario: ActScenario; fixture: boolean; onClose: () => void }) {
+export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scenario: ActScenario; fixture: boolean; end: { title: string; body: string } | null; onClose: () => void }) {
   const p = usePalette();
   const last = lastAction(scenario.steps);
   const line = doneLine(scenario, last, fixture);
-  const end = realEnd(last);
+  const end = effectEnd ?? realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
       <Keeper id={scenario.keeper} size={fixture && scenario.timeline ? 88 : 120} mood="react" />
