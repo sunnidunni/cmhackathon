@@ -258,7 +258,8 @@ export default function Detail() {
                 label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Choose a reminder time"}
                 disabled={!primary}
                 onPress={() => {
-                  if (!primary || isDemo) return;
+                  if (!primary) return;
+                  if (isDemo) return router.push(`/remind/${id}` as never);
                   setError(null);
                   reminders.remind(shotId, primary.when, shot.title || undefined).catch(() => setError("That didn't save. Try again in a moment."));
                 }}

@@ -61,6 +61,10 @@ export default function Ask() {
     const sentAt = Date.now();
     const sent = withFocus(q, focusTitle);
     setPending({ question: q, sent, status: "looking", sentAt });
+    if (FIXTURES && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
+      return;
+    }
     if (isOffline()) {
       const fixture = fixtureFor(q);
       const result = fixture ? { ...fixture.result, questionId: "demo" } : { answer: "I can't reach your screenshots right now.", found: false, sources: [], questionId: "offline" };
