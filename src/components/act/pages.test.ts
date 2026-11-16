@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ActScenario, ActStep } from "../../lib/act/types";
-import { buildPages, confirmFor, itemsSum, nextLabel, reminderCopy, totalCents, demoLine } from "./pages";
+import { buildPages, confirmFor, doneLine, itemsSum, lastAction, nextLabel, reminderCopy, totalCents, demoLine } from "./pages";
 
 vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2, BILL_IMAGE: 3, CONCERT_IMAGE: 4 }));
 
@@ -52,5 +52,16 @@ describe("act pages", () => {
   it("labels the next button from the next step", () => {
     expect(nextLabel({ kind: "draft-message", to: "Sam (picking you up)", via: "Messages", body: "x" })).toBe("Next: text to Sam");
     expect(nextLabel({ kind: "calendar", title: "t", when: "w" })).toBe("Next: calendar event");
+  });
+  it("done copy: product voice on fixtures, honest on real and detected acts", () => {
+    const pizza = act("mom-pizza");
+    const delay = act("flight-delay");
+    expect(doneLine(pizza, lastAction(pizza.steps), true)).toBe("Order placed · $41.75");
+    expect(doneLine(delay, lastAction(delay.steps), true)).toBe("Sent to Sam.");
+    expect(doneLine(pizza, lastAction(pizza.steps), false)).toBe("Demo: nothing was ordered or charged.");
+    expect(doneLine({ ...delay, doneFixture: "Claim sent to the airline." }, lastAction(delay.steps), true)).toBe("Claim sent to the airline.");
+    expect(doneLine({ ...delay, doneFixture: "Claim sent to the airline." }, lastAction(delay.steps), false)).toBe("Demo: nothing was sent.");
+    expect(doneLine(act("bill-willow-grid"), lastAction(act("bill-willow-grid").steps), true)).toBe("Email ready to send.");
+    expect(doneLine(act("concert-calendar"), undefined, true)).toBeTruthy();
   });
 });

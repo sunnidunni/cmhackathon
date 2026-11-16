@@ -58,6 +58,25 @@ export function confirmFor(scenario: ActScenario, step: ActStep, final: boolean)
   return scenario.confirm;
 }
 
+const firstName = (to: string) => to.split(" (")[0];
+
+export const lastAction = (steps: ActStep[]) => steps.filter((s) => !isReminderStep(s)).pop();
+
+// What a finished step reads like on the fixture (demo) world: product copy, no tutorial scaffolding.
+export function stepDone(step: ActStep) {
+  if (step.kind === "draft-message") return `Sent to ${firstName(step.to)}.`;
+  if (step.kind === "order") return `Order placed · ${step.total}`;
+  if (step.kind === "calendar") return "Added to your calendar.";
+  if (step.kind === "email-draft") return "Email ready to send.";
+  return "Done.";
+}
+
+// The one place that decides how an act ends. Real and detected acts never claim anything happened.
+export function doneLine(scenario: ActScenario, step: ActStep | undefined, fixtures: boolean) {
+  if (!fixtures) return scenario.done;
+  return scenario.doneFixture ?? (step ? stepDone(step) : scenario.done);
+}
+
 export function demoLine(step: ActStep, tense: "will" | "was") {
   const what = step.kind === "order" ? "ordered or charged" : step.kind === "calendar" ? "added to your calendar" : "sent";
   return `Demo: nothing ${tense === "will" ? "will be" : "was"} ${what}.`;
