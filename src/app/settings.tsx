@@ -222,6 +222,7 @@ export default function Settings() {
               <SwitchRow first title="Read all photos" value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
               <ActionRow title="Reset demos" onPress={resetActs} />
               <ActionRow title="Replay onboarding" detail="Plays the walkthrough on demo data. Nothing of yours is changed." onPress={() => router.push("/welcome?replay=1")} />
+              <ActionRow title="Keepers" onPress={() => router.push("/keepers")} />
             </Group>
             <Text style={[text.caption, { color: pal.ink2, fontFamily: fonts.ui }]} testID="diagnostics">
               {diag === null
