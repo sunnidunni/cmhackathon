@@ -1,12 +1,14 @@
 import { useConvexAuth, useQuery } from "convex/react";
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import { ActionRow, Group, SectionLabel, SwitchRow } from "@/components/settings/rows";
 import { fonts, text, usePalette } from "@/design/psst";
 import { convex } from "@/lib/convex";
-import { getConnectionError } from "@/lib/connection-error";
+import { useConnectionError } from "@/lib/connection-error";
+import { FIXTURES } from "@/lib/fixtures";
 import { useLibraryDiagnostics, useReadAllPhotos } from "@/lib/photos";
 import { buildLine, connectionLine, planLine, progressLine } from "./status";
 
@@ -28,6 +30,9 @@ export function DevPanel({ onClose, openRoute }: { onClose: () => void; openRout
   const me = useQuery(api.users.me, isAuthenticated ? {} : "skip");
   const info = useQuery(api.sync.importInfo, isAuthenticated ? {} : "skip");
   const progress = useQuery(api.sync.progress, isAuthenticated ? {} : "skip");
+  const lastError = useConnectionError();
+  const [socket, setSocket] = useState(() => convex.connectionState().isWebSocketConnected);
+  useEffect(() => convex.subscribeToConnectionState((s) => setSocket(s.isWebSocketConnected)), []);
   const [readAll, setReadAll] = useReadAllPhotos();
   const diag = useLibraryDiagnostics(true);
   const go = openRoute ?? ((path) => router.push(path));
@@ -64,10 +69,10 @@ export function DevPanel({ onClose, openRoute }: { onClose: () => void; openRout
         <Group>
           <Line label="Convex address" value={process.env.EXPO_PUBLIC_CONVEX_URL ?? "unavailable"} />
           <View style={rule}>
-            <Line label="Connection" value={connectionLine({ socket: convex.connectionState().isWebSocketConnected, loading: isLoading, authenticated: isAuthenticated })} />
+            <Line label="Connection" value={connectionLine({ socket, loading: isLoading, authenticated: isAuthenticated })} />
           </View>
           <View style={rule}>
-            <Line label="Last connection error" value={getConnectionError() ?? "none"} />
+            <Line label="Last connection error" value={lastError ?? "none"} />
           </View>
         </Group>
       </View>
@@ -103,7 +108,7 @@ export function DevPanel({ onClose, openRoute }: { onClose: () => void; openRout
         <SectionLabel>Shortcuts</SectionLabel>
         <Group>
           <ActionRow first title="Design" onPress={() => go("/design")} />
-          <ActionRow title="Kit" onPress={() => go("/kit")} />
+          {FIXTURES ? <ActionRow title="Kit" onPress={() => go("/kit")} /> : null}
         </Group>
       </View>
     </ScrollView>
