@@ -34,6 +34,7 @@ export function AlbumPickSheet({ visible, screenshotId, onClose }: { visible: bo
                 <Pressable
                   key={a._id}
                   accessibilityRole="checkbox"
+                  accessibilityLabel={a.name}
                   accessibilityState={{ checked: a.inAlbum }}
                   onPress={() => toggle(a._id, !a.inAlbum)}
                   style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56, borderTopWidth: 1, borderColor: p.hair }}
