@@ -7,6 +7,7 @@ import { PsstButton, text, usePalette } from "@/design/psst";
 import { AllRow, LimitedAccessCard, RoomCard, ROOM_KEYS, UnsortedRow } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
 import { usePhotoAccess } from "@/lib/photos";
+import { AlbumsSection } from "@/components/albums/AlbumsSection";
 
 export default function Rooms() {
   const p = usePalette();
@@ -42,6 +43,7 @@ export default function Rooms() {
           <UnsortedRow count={unsorted.count} newest={unsorted.newest} onPress={() => router.push("/room/unsorted")} />
         ) : null}
         {total !== null && total > 0 ? <AllRow count={total} onPress={() => router.push("/room/all")} /> : null}
+        {real !== null && real > 0 ? <AlbumsSection /> : null}
         {empty ? (
           <View style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>
             <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
