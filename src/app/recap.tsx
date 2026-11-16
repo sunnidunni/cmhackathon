@@ -28,7 +28,7 @@ export default function Recap() {
     scroller.current?.scrollTo({ x: next * width, animated: !reduce });
   };
 
-  const onTap = (e: GestureResponderEvent) => goTo(e.nativeEvent.locationX < width / 3 ? index - 1 : index + 1);
+  const onTap = (e: GestureResponderEvent) => goTo(e.nativeEvent.pageX < width / 3 ? index - 1 : index + 1);
 
   const onSettle = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const i = Math.round(e.nativeEvent.contentOffset.x / width);
@@ -88,9 +88,11 @@ export default function Recap() {
           style={styles.screen}
         >
           {[TotalCard, RoomsCard, KeeperOfWeekCard, ClosingCard].map((Card, i) => (
-            <Pressable key={i} onPress={onTap} style={{ width }} accessibilityHint="Tap the right side for the next card, the left side to go back">
-              <Card active={index === i} />
-            </Pressable>
+            <ScrollView key={i} style={{ width }} contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}>
+              <Pressable onPress={onTap} style={styles.page} accessibilityHint="Tap the right side for the next card, the left side to go back">
+                <Card active={index === i} />
+              </Pressable>
+            </ScrollView>
           ))}
         </ScrollView>
         <View style={styles.footer}>
@@ -116,6 +118,7 @@ export default function Recap() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  page: { flexGrow: 1 },
   top: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
   close: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   footer: { paddingHorizontal: 20, paddingBottom: 8, gap: 6 },

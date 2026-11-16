@@ -135,7 +135,7 @@ export function recapSummary(): string {
 }
 
 const styles = StyleSheet.create({
-  card: { flex: 1, justifyContent: "center", paddingHorizontal: 28 },
+  card: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 28, paddingVertical: 24 },
   kicker: { letterSpacing: 1.4, marginBottom: 12, fontFamily: fonts.uiBold },
   big: { fontFamily: fonts.display, fontSize: 132, lineHeight: 136, letterSpacing: -4 },
   avatars: { flexDirection: "row", gap: 10, marginTop: 28 },
