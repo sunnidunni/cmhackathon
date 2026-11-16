@@ -91,6 +91,6 @@ export function reminderCaption(reminder: { state: "scheduled" | "sent" | "dismi
   return "Remind me";
 }
 
-export const nudgeSample = (title?: string) => `Psst: your ${title ?? "reminder"} is due tomorrow. Want to see it?`;
+export const nudgeSample = (title?: string) => `Shots: your ${title ?? "reminder"} is due tomorrow. Want to see it?`;
 
-export const TOAST_DELETED = "Deleted from Psst. The photo stays on your phone";
+export const TOAST_DELETED = "Deleted from Shots. The photo stays on your phone";

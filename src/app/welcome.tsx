@@ -62,7 +62,7 @@ export default function Welcome() {
       <View style={{ flexGrow: 1, justifyContent: "center", gap: 28 }}>
         <KeeperRow size={76} />
         <View style={{ gap: 12 }}>
-          <Headline large>Psst. You saved these for a reason.</Headline>
+          <Headline large>Shots. You saved these for a reason.</Headline>
           <Lead>Shots reads your screenshots, files them into four rooms, and brings back the few that matter today.</Lead>
         </View>
       </View>

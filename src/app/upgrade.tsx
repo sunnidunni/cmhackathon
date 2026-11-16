@@ -45,7 +45,7 @@ export default function Upgrade() {
       <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.lg, alignItems: "center" }} showsVerticalScrollIndicator={false}>
         <View style={{ alignItems: "flex-start", alignSelf: "stretch", gap: spacing.xs }}>
           <SpeechBubble tail="bottom-left">
-            {plan === undefined ? "One moment…" : paid ? "Psst. It's all yours now." : "Psst. Want all of them?"}
+            {plan === undefined ? "One moment…" : paid ? "Shots. It's all yours now." : "Shots. Want all of them?"}
           </SpeechBubble>
           <View style={{ marginLeft: spacing.md }}>
             <Character room="money" size={104} expression={paid ? "happy" : "neutral"} />
@@ -58,7 +58,7 @@ export default function Upgrade() {
           <View style={{ alignSelf: "stretch", gap: spacing.sm }} testID="upgrade-paid">
             <Text style={type.display}>You&apos;re all set</Text>
             <Text style={type.body}>
-              Bring in your whole screenshot library, not just the newest 50. Thank you for supporting Psst.
+              Bring in your whole screenshot library, not just the newest 50. Thank you for supporting Shots.
             </Text>
           </View>
         ) : (

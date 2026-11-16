@@ -134,7 +134,7 @@ export default function Settings() {
             <SwitchRow
               first
               title="Read new screenshots automatically"
-              detail={autoRead ? "On. When you open Psst, each new one is sent to be read." : "Off. New screenshots wait until you check."}
+              detail={autoRead ? "On. When you open Shots, each new one is sent to be read." : "Off. New screenshots wait until you check."}
               value={autoRead}
               onValueChange={setAutoReadSaved}
               testID="auto-read-switch"
