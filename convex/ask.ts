@@ -5,6 +5,7 @@ import { action, query } from "./_generated/server";
 import { toSources, type Source } from "./askData";
 import { requireUserId } from "./lib/auth";
 import { askModel } from "./lib/llm";
+import { suggestionsFrom } from "./lib/suggestions";
 import { addMemory, searchMemory, type MemoryHit } from "./lib/memoryClient";
 
 export type { Source };
@@ -76,6 +77,19 @@ export const ask = action({
       if (r.status === "rejected") console.error("Supermemory add failed", String(r.reason));
 
     return { questionId, answer, found, sources };
+  },
+});
+
+export const suggestions = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const rows = await ctx.db
+      .query("screenshots")
+      .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(200);
+    return suggestionsFrom(rows.map((r) => ({ ...r, id: r._id })));
   },
 });
 

@@ -24,6 +24,7 @@ import type * as lib_llm from "../lib/llm.js";
 import type * as lib_memoryClient from "../lib/memoryClient.js";
 import type * as lib_notificationText from "../lib/notificationText.js";
 import type * as lib_plan from "../lib/plan.js";
+import type * as lib_suggestions from "../lib/suggestions.js";
 import type * as lib_time from "../lib/time.js";
 import type * as lib_titles from "../lib/titles.js";
 import type * as lib_whop_signature from "../lib/whop_signature.js";
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   "lib/memoryClient": typeof lib_memoryClient;
   "lib/notificationText": typeof lib_notificationText;
   "lib/plan": typeof lib_plan;
+  "lib/suggestions": typeof lib_suggestions;
   "lib/time": typeof lib_time;
   "lib/titles": typeof lib_titles;
   "lib/whop_signature": typeof lib_whop_signature;
