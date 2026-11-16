@@ -54,6 +54,9 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
 
 type SheetOptions = NonNullable<ComponentProps<typeof Stack.Screen>["options"]>;
 
+// The glass back chevron is the native stack header's own back button, left over a transparent bar.
+const backHeader: SheetOptions = { headerShown: true, headerTransparent: true, title: "", headerBackButtonDisplayMode: "minimal", headerShadowVisible: false };
+
 export default function RootLayout() {
   useStickerFonts();
   usePsstFonts();
@@ -75,6 +78,8 @@ export default function RootLayout() {
             <Stack.Screen name="remind/[id]" options={sheet} />
             <Stack.Screen name="act/[id]" options={sheet} />
             <Stack.Screen name="settings" options={settingsSheet} />
+            <Stack.Screen name="shot/[id]" options={backHeader} />
+            <Stack.Screen name="room/[key]" options={backHeader} />
           </Stack>
         </AnonymousSession>
       </ConvexAuthProvider>
