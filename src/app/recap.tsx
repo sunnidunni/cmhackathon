@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { Stack, router } from "expo-router";
+import { router } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useRef, useState } from "react";
 import { Pressable, ScrollView, Share, type ScrollViewInstance, StyleSheet, Text, View, useWindowDimensions, type GestureResponderEvent, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
@@ -55,7 +55,6 @@ export default function Recap() {
 
   return (
     <View style={[styles.screen, { backgroundColor: backgrounds[index] }]}>
-      <Stack.Screen options={{ headerShown: false, presentation: "fullScreenModal", title: "Your week" }} />
       <SafeAreaView style={styles.screen} edges={["top", "bottom"]}>
         <View style={styles.top}>
           <RecapProgress count={RECAP_CARD_COUNT} index={index} />

@@ -95,6 +95,9 @@ function BackButton() {
 // A solid "Back" pill in the native stack header, over a transparent bar; the header keeps it inside the safe area.
 const backHeader: SheetOptions = { headerShown: true, headerTransparent: true, title: "", headerShadowVisible: false, headerLeft: () => <BackButton /> };
 
+const devModal: SheetOptions = { presentation: "modal", headerShown: false };
+const recapModal: SheetOptions = { headerShown: false, presentation: "fullScreenModal", title: "Your week" };
+
 export default function RootLayout() {
   useStickerFonts();
   usePsstFonts();
@@ -110,6 +113,14 @@ export default function RootLayout() {
     () => ({ presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.94, 1], sheetInitialDetentIndex: 0, sheetExpandsWhenScrolledToEdge: true, contentStyle: { backgroundColor: pal.paper } }),
     [pal.paper],
   );
+  const notificationsSheet = useMemo<SheetOptions>(
+    () => ({ presentation: "formSheet", headerShown: false, sheetAllowedDetents: [0.6, 1], sheetInitialDetentIndex: 0, sheetGrabberVisible: true, sheetCornerRadius: 24, sheetExpandsWhenScrolledToEdge: true, contentStyle: { backgroundColor: pal.paper } }),
+    [pal.paper],
+  );
+  const actionsSheet = useMemo<SheetOptions>(
+    () => ({ title: "Let Shots prepare actions", presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.94, 1], sheetInitialDetentIndex: 0, sheetExpandsWhenScrolledToEdge: true, contentStyle: { backgroundColor: pal.paper } }),
+    [pal.paper],
+  );
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
@@ -122,6 +133,10 @@ export default function RootLayout() {
                 <Stack.Screen name="act/[id]" options={sheet} />
                 <Stack.Screen name="act/flight-status" options={sheet} />
                 <Stack.Screen name="settings" options={settingsSheet} />
+                <Stack.Screen name="settings/actions" options={actionsSheet} />
+                <Stack.Screen name="notifications" options={notificationsSheet} />
+                <Stack.Screen name="dev" options={devModal} />
+                <Stack.Screen name="recap" options={recapModal} />
                 <Stack.Screen name="shot/[id]" options={backHeader} />
                 <Stack.Screen name="room/[key]" options={backHeader} />
               </Stack>
