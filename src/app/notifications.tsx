@@ -68,22 +68,22 @@ export default function Notifications() {
           contentStyle: { backgroundColor: pal.paper },
         }}
       />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingTop: 24, paddingHorizontal: 16, paddingBottom: insets.bottom + 96, gap: 10 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4, marginBottom: 2 }}>
-          <Text accessibilityRole="header" maxFontSizeMultiplier={1.6} style={[text.largeTitle, { flex: 1, color: pal.ink }]}>
-            Notifications
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close"
-            hitSlop={4}
-            onPress={close}
-            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? pal.fill2 : pal.white, borderWidth: 1, borderColor: pal.hair })}
-          >
-            <SymbolView name="xmark" size={15} weight="bold" tintColor={pal.ink} fallback={<Text style={{ fontFamily: fonts.uiBold, fontSize: 16, color: pal.ink }}>✕</Text>} />
-          </Pressable>
-        </View>
-
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 24, paddingHorizontal: 20, paddingBottom: 8 }}>
+        <Text accessibilityRole="header" maxFontSizeMultiplier={1.6} style={[text.largeTitle, { flex: 1, color: pal.ink }]}>
+          Notifications
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          hitSlop={4}
+          onPress={close}
+          style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? pal.fill2 : pal.white, borderWidth: 1, borderColor: pal.hair })}
+        >
+          <SymbolView name="xmark" size={15} weight="bold" tintColor={pal.ink} fallback={<Text style={{ fontFamily: fonts.uiBold, fontSize: 16, color: pal.ink }}>✕</Text>} />
+        </Pressable>
+      </View>
+      {undo ? <UndoToast key={undo.key} label={undo.label} onUndo={restore} /> : null}
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingTop: 4, paddingHorizontal: 16, paddingBottom: insets.bottom + 32, gap: 10 }}>
         {items.length > 0 ? (
           <Animated.View layout={layout} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 4, marginBottom: 4 }}>
             <Text maxFontSizeMultiplier={1.8} style={[text.caption, { flex: 1, color: pal.ink2 }]}>
@@ -105,8 +105,6 @@ export default function Notifications() {
 
         {items.length === 0 ? <CaughtUp /> : null}
       </ScrollView>
-
-      {undo ? <UndoToast key={undo.key} label={undo.label} bottom={insets.bottom + 16} onUndo={restore} /> : null}
     </View>
   );
 }

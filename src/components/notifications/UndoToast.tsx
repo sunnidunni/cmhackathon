@@ -1,20 +1,18 @@
 import { Pressable, Text } from "react-native";
-import Animated, { FadeInDown, FadeOutDown, useReducedMotion } from "react-native-reanimated";
+import Animated, { FadeInUp, FadeOutUp, useReducedMotion } from "react-native-reanimated";
 import { fonts, text, usePalette } from "@/design/psst";
 
-export function UndoToast({ label, bottom, onUndo }: { label: string; bottom: number; onUndo: () => void }) {
+export function UndoToast({ label, onUndo }: { label: string; onUndo: () => void }) {
   const pal = usePalette();
   const reduce = useReducedMotion();
   return (
     <Animated.View
-      entering={reduce ? undefined : FadeInDown.duration(220)}
-      exiting={reduce ? undefined : FadeOutDown.duration(180)}
+      entering={reduce ? undefined : FadeInUp.duration(220)}
+      exiting={reduce ? undefined : FadeOutUp.duration(180)}
       accessibilityLiveRegion="polite"
       style={{
-        position: "absolute",
-        left: 16,
-        right: 16,
-        bottom,
+        marginHorizontal: 16,
+        marginBottom: 8,
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
