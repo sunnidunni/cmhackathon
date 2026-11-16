@@ -64,7 +64,7 @@ export default function Bring() {
           </View>
           <View style={{ borderTopWidth: 1, borderBottomWidth: 1, borderColor: p.hair, paddingVertical: 14 }}>
             <Text style={[text.caption, { color: p.ink2 }]}>
-              Psst will read new screenshots when you open it. You can turn this off in Settings.
+              Shots will read new screenshots when you open it. You can turn this off in Settings.
             </Text>
           </View>
         </View>

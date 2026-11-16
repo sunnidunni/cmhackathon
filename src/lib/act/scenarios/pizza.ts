@@ -27,7 +27,7 @@ export const scenario: ActScenario = {
   ],
   confirm: {
     title: "Place this order?",
-    lines: ["Ready: pizza for tonight. Nothing is ordered yet.", "Psst never orders on its own. It happens only when you tap."],
+    lines: ["Ready: pizza for tonight. Nothing is ordered yet.", "Shots never orders on its own. It happens only when you tap."],
     price: "$41.75",
     button: "Place order · $41.75",
   },

@@ -21,7 +21,7 @@ export const scenario: ActScenario = {
   ],
   confirm: {
     title: "Send this claim to Northwind?",
-    lines: ["Any payment comes from the airline, not from Psst."],
+    lines: ["Any payment comes from the airline, not from Shots."],
     button: "Send claim",
   },
   done: "Demo: nothing was sent.",

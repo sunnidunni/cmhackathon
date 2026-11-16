@@ -50,5 +50,5 @@ export function TodayCard({
   );
 }
 
-export const justInCaption = (category: string) => `Psst filed this in ${roomName(category)}`;
+export const justInCaption = (category: string) => `Shots filed this in ${roomName(category)}`;
 export { colors };

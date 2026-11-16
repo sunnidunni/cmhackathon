@@ -85,7 +85,7 @@ export function doneLine(scenario: ActScenario, step: ActStep | undefined, fixtu
   return scenario.doneFixture ?? (step ? stepDone(step) : scenario.done);
 }
 
-export const realLine = (step: ActStep) => (step.kind === "calendar" ? "Psst can't add this to your calendar yet." : "Psst can't send this yet.");
+export const realLine = (step: ActStep) => (step.kind === "calendar" ? "Shots can't add this to your calendar yet." : "Shots can't send this yet.");
 
 export function demoLine(step: ActStep, tense: "will" | "was") {
   const what = step.kind === "order" ? "ordered or charged" : step.kind === "calendar" ? "added to your calendar" : "sent";

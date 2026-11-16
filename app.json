@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Psst",
+    "name": "Shots",
     "slug": "cmhackathon",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -65,7 +65,7 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "Psst adds an event to your calendar only after you confirm it."
+          "calendarPermission": "Shots adds an event to your calendar only after you confirm it."
         }
       ],
       [

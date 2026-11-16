@@ -108,7 +108,7 @@ export default function BringIn() {
       <SafeAreaView style={[styles.screen, { backgroundColor: p.paper }]}>
         <View style={styles.center}>
           <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>No screenshots to read yet.</Text>
-          <Text style={[text.body, { color: p.ink2 }]}>Take a screenshot and Psst reads it.</Text>
+          <Text style={[text.body, { color: p.ink2 }]}>Take a screenshot and Shots reads it.</Text>
         </View>
         <View style={styles.footer}>
           <PsstButton kind="filled" label="Continue" onPress={() => router.replace("/today")} />

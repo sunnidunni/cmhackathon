@@ -167,9 +167,9 @@ export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { 
               ? "Nothing is bought until you confirm on the next screen."
               : "Nothing is added until you confirm on the next screen."
           : message
-            ? "You can change the words. Psst can't send this yet."
+            ? "You can change the words. Shots can't send this yet."
             : step.kind === "calendar"
-              ? "Psst can't add this to your calendar yet."
+              ? "Shots can't add this to your calendar yet."
               : "Nothing is bought until you confirm on the next screen."}
       </Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label={label} disabled={message && edit.body.trim().length === 0} onPress={onNext} />

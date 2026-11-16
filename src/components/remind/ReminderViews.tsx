@@ -69,7 +69,7 @@ export function Preview({ label, body, time }: { label: string; body: string; ti
         <Decor><KeeperFace id="murmur" size={36} /></Decor>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={[text.caption, { color: p.ink, fontWeight: "700" }]}>Psst</Text>
+            <Text style={[text.caption, { color: p.ink, fontWeight: "700" }]}>Shots</Text>
             <Text style={[text.caption, { color: p.ink2 }]}>{time}</Text>
           </View>
           <Text style={[text.body, { color: p.ink }]}>{body}</Text>

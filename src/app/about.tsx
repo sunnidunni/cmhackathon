@@ -32,7 +32,7 @@ export default function About() {
       >
         <View style={{ alignItems: "center", gap: 4, paddingTop: 8 }}>
           <Text maxFontSizeMultiplier={1.4} accessibilityRole="header" style={{ fontFamily: fonts.display, fontSize: 56, lineHeight: 62, letterSpacing: -1.4, color: pal.ink }}>
-            Psst
+            shots.
           </Text>
           <Text maxFontSizeMultiplier={2} style={[text.lead, { color: pal.ink2, textAlign: "center" }]}>
             Your screenshots, kept by four small friends.

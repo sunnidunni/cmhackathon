@@ -88,12 +88,12 @@ export function realEffectEnd(step: ActStep | undefined, result: EffectResult | 
   if (!step || !result || result === "fallback") return null;
   if (step.kind === "calendar") return { title: "Added to your calendar.", body: "Your calendar saved it." };
   const app = step.kind === "email-draft" ? "Mail" : "Messages";
-  return { title: "Opened in " + app + ".", body: result === "done" ? app + " says it was sent." : "Psst can't see whether you sent it." };
+  return { title: "Opened in " + app + ".", body: result === "done" ? app + " says it was sent." : "Shots can't see whether you sent it." };
 }
 
 export function confirmNote(step: ActStep): string | null {
   if (step.kind === "draft-message") return "Messages opens with this ready. Nothing is sent until you press Send.";
   if (step.kind === "email-draft") return "Mail opens with this ready. Nothing is sent until you press Send.";
-  if (step.kind === "calendar") return "Psst asks for calendar access, then adds this event.";
+  if (step.kind === "calendar") return "Shots asks for calendar access, then adds this event.";
   return null;
 }

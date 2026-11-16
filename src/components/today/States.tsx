@@ -28,7 +28,7 @@ export function ReadingView({ pending }: { pending: number }) {
       <View style={{ gap: 8 }}>
         <ScreenTitle>{`Reading ${pending} new ${pending === 1 ? "screenshot" : "screenshots"}.`}</ScreenTitle>
         <Text style={[text.body, { color: p.ink2 }]}>
-          Usually a few seconds. Psst reads new screenshots when you open it. Screenshots are sent to our server and an AI model to be read. You can turn this off in Settings.
+          Usually a few seconds. Shots reads new screenshots when you open it. Screenshots are sent to our server and an AI model to be read. You can turn this off in Settings.
         </Text>
       </View>
       <View style={{ backgroundColor: p.fill, borderRadius: 16, padding: 16, flexDirection: "row", gap: 16, minHeight: 150 }}>
@@ -82,7 +82,7 @@ export function EmptyView() {
         No screenshots to keep yet.
       </Text>
       <Text style={[text.lead, { color: p.ink2, textAlign: "center" }]}>
-        Take a screenshot of anything you want to remember: a flyer, a receipt, a plan in a chat. Open Psst to read it and file it into a room.
+        Take a screenshot of anything you want to remember: a flyer, a receipt, a plan in a chat. Open Shots to read it and file it into a room.
       </Text>
     </View>
   );

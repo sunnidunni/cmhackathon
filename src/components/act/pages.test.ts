@@ -75,7 +75,7 @@ describe("act pages", () => {
     expect(doneLine(real, lastAction(real.steps), isFixtureAct(real, true))).toBe("Nothing was sent.");
     expect(realEnd(lastAction(real.steps))).toEqual({ title: "Nothing was sent.", body: "Sending isn't connected in this version." });
     expect(realEnd({ kind: "calendar", title: "t", when: "w" }).title).toBe("Nothing was added.");
-    expect(realLine({ kind: "draft-message", to: "Sam", via: "Messages", body: "x" })).toBe("Psst can't send this yet.");
+    expect(realLine({ kind: "draft-message", to: "Sam", via: "Messages", body: "x" })).toBe("Shots can't send this yet.");
   });
   it("bill confirm has no demo-address line, and its fixture end says the email was sent", () => {
     expect(act("bill-willow-grid").confirm.lines.join(" ")).not.toMatch(/demo/i);

@@ -67,7 +67,7 @@ export default function Upgrade() {
               <Text style={type.display}>Bring in everything</Text>
               <Doodle kind="underline" width={170} color={colors.sun} />
               <Text style={[type.body, { marginTop: spacing.sm }]}>
-                Free reads the newest 50 screenshots. Pay once and Psst reads your whole library.
+                Free reads the newest 50 screenshots. Pay once and Shots reads your whole library.
               </Text>
             </View>
             <SketchFrame fill={colors.white} radius={radii.lg} seed="upgrade-card" style={{ alignSelf: "stretch", padding: spacing.lg, gap: spacing.md }}>

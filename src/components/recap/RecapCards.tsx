@@ -131,7 +131,7 @@ export function ClosingCard() {
 
 export function recapSummary(): string {
   const rooms = RECAP_WEEK.rooms.map((r) => `${ROOM_LABEL[r.keeper]} ${r.count}`).join(", ");
-  return `My week with Psst (${RECAP_WEEK.range}): ${RECAP_TOTAL} screenshots filed. ${rooms}. Keeper of the week: ${KEEPERS[KEEPER_OF_WEEK].name}.`;
+  return `My week with Shots (${RECAP_WEEK.range}): ${RECAP_TOTAL} screenshots filed. ${rooms}. Keeper of the week: ${KEEPERS[KEEPER_OF_WEEK].name}.`;
 }
 
 const styles = StyleSheet.create({

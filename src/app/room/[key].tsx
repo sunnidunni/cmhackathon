@@ -16,10 +16,10 @@ import { runSync } from "@/lib/sync";
 const CATEGORIES: Category[] = ["deadlines", "chats", "money", "ideas", "unsorted"];
 
 const EMPTY: Record<RoomKey, { body: string; line: string }> = {
-  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Psst.", line: "No dates found yet. All 3 of my alarms are bored." },
-  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Psst.", line: "Nothing in Chats yet. I'll never quote one back." },
-  money: { body: "Receipts, bills, tickets and things to buy land here. New screenshots are read each time you open Psst.", line: "An empty pouch. Very tidy." },
-  ideas: { body: "Recipes, places, quotes and saved answers land here. New screenshots are read each time you open Psst.", line: "The jar is open. Take your time." },
+  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Shots.", line: "No dates found yet. All 3 of my alarms are bored." },
+  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Shots.", line: "Nothing in Chats yet. I'll never quote one back." },
+  money: { body: "Receipts, bills, tickets and things to buy land here. New screenshots are read each time you open Shots.", line: "An empty pouch. Very tidy." },
+  ideas: { body: "Recipes, places, quotes and saved answers land here. New screenshots are read each time you open Shots.", line: "The jar is open. Take your time." },
 };
 
 const body = { padding: 16, paddingTop: Platform.OS === "ios" ? 8 : 64, paddingBottom: 32, gap: 16, flexGrow: 1 } as const;

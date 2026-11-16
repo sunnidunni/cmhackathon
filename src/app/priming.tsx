@@ -42,8 +42,8 @@ export default function Priming() {
           <View style={{ alignSelf: "center" }}>
             <Keeper id="murmur" size={128} boop />
           </View>
-          <Headline>{"Psst can't see your screenshots yet."}</Headline>
-          <Lead>{"Nothing has been brought in. In iOS Settings → Psst → Photos, choose Selected Photos or Full Access, then come back."}</Lead>
+          <Headline>{"Shots can't see your screenshots yet."}</Headline>
+          <Lead>{"Nothing has been brought in. In iOS Settings → Shots → Photos, choose Selected Photos or Full Access, then come back."}</Lead>
           <KeeperLine id="murmur">{"Fine by me. I'll wait by the door."}</KeeperLine>
         </View>
       </Page>

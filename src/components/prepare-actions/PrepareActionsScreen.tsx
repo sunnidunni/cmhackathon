@@ -64,7 +64,7 @@ export function PrepareActionsScreen() {
     >
       <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
         <Text accessibilityRole="header" maxFontSizeMultiplier={1.67} style={[text.headline, { flex: 1, color: pal.ink }]}>
-          Let Psst prepare actions
+          Let Shots prepare actions
         </Text>
         <CloseButton />
       </View>
@@ -75,7 +75,7 @@ export function PrepareActionsScreen() {
           <View style={{ flex: 1, gap: 4 }}>
             <KeeperLine id="penny">{master ? line : "Resting. Nothing gets prepared."}</KeeperLine>
             <Text style={[text.body, { color: pal.ink }]}>
-              Psst can prepare a draft for you to review. It never sends anything on its own.
+              Shots can prepare a draft for you to review. It never sends anything on its own.
             </Text>
           </View>
         </View>

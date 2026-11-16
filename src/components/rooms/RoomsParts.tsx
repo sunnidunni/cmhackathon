@@ -85,7 +85,7 @@ export function LimitedAccessCard({ onPress }: { onPress: () => void }) {
     <SoftCard style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
       <KeeperFace id="murmur" size={40} />
       <View style={{ flex: 1, gap: 4 }}>
-        <Text style={[text.bodyBold, { color: p.ink }]}>Psst reads only the ones you picked. Your rooms work with those.</Text>
+        <Text style={[text.bodyBold, { color: p.ink }]}>Shots reads only the ones you picked. Your rooms work with those.</Text>
         <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, justifyContent: "center" }}>
           <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Pick more screenshots</Text>
         </Pressable>

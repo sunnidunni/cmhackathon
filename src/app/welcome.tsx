@@ -33,7 +33,7 @@ export default function Welcome() {
         }
       >
         <View style={{ flexGrow: 1, gap: 20, paddingTop: 8 }}>
-          <Headline>Psst pulls the date, price or place out of a screenshot.</Headline>
+          <Headline>Shots pulls the date, price or place out of a screenshot.</Headline>
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
             <ShotSticker uri={DEMO_FLYER.image} title={DEMO_FLYER.title} size={132} tilt />
             <View style={{ flex: 1, gap: 8 }}>
@@ -63,7 +63,7 @@ export default function Welcome() {
         <KeeperRow size={76} />
         <View style={{ gap: 12 }}>
           <Headline large>Psst. You saved these for a reason.</Headline>
-          <Lead>Psst reads your screenshots, files them into four rooms, and brings back the few that matter today.</Lead>
+          <Lead>Shots reads your screenshots, files them into four rooms, and brings back the few that matter today.</Lead>
         </View>
       </View>
     </Page>
