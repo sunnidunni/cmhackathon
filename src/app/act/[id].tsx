@@ -26,6 +26,11 @@ export default function Act() {
   const [index, setIndex] = useState(0);
   const [edits, setEdits] = useState<Record<number, Edit>>({});
   const [ordering, setOrdering] = useState(false);
+  const [orderingFor, setOrderingFor] = useState(id);
+  if (orderingFor !== id) {
+    setOrderingFor(id);
+    setOrdering(false);
+  }
   const page = pages[index];
 
   useEffect(() => {
