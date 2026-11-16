@@ -21,8 +21,8 @@ vi.mock("expo-mail-composer", () => mail);
 vi.mock("expo-linking", () => linking);
 vi.mock("expo-calendar", () => calendar);
 
-const text: ActStep = { kind: "draft-message", to: "Mom", via: "iMessage", body: "Yes, I can order pizza for tonight." };
-const email: ActStep = { kind: "email-draft", to: "Willow Grid Energy billing", subject: "Question about my bill", body: "Hi." };
+const text: Extract<ActStep, { kind: "draft-message" }> = { kind: "draft-message", to: "Mom", via: "Messages", body: "Yes, I can order pizza for tonight." };
+const email: Extract<ActStep, { kind: "email-draft" }> = { kind: "email-draft", to: "Willow Grid Energy billing", subject: "Question about my bill", body: "Hi." };
 const event: ActStep = { kind: "calendar", title: "Juniper Vale at Northline Hall", when: "Nov 22, 8:00 PM (doors)", where: "Northline Hall", leaveBy: "7:15 PM" };
 
 beforeEach(() => {
@@ -60,7 +60,7 @@ describe("text", () => {
   test("passes a phone number through as the recipient", async () => {
     sms.sendSMSAsync.mockResolvedValue({ result: "sent" });
     await runEffect({ ...text, to: "+1 415 555 0100" });
-    expect(sms.sendSMSAsync).toHaveBeenCalledWith(["+1 415 555 0100"], text.kind === "draft-message" ? text.body : "");
+    expect(sms.sendSMSAsync).toHaveBeenCalledWith(["+1 415 555 0100"], text.body);
   });
   test("cancelled, unknown, unavailable and thrown all fall back", async () => {
     sms.sendSMSAsync.mockResolvedValue({ result: "cancelled" });
