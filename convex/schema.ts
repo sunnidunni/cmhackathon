@@ -118,6 +118,27 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_keyHash", ["keyHash"]),
 
+  albums: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    description: v.string(),
+    createdAt: v.number(),
+    sortStatus: v.union(v.literal("sorting"), v.literal("done"), v.literal("failed")),
+    sortRun: v.number(),
+  }).index("by_user_createdAt", ["userId", "createdAt"]),
+
+  // One row per screenshot in an album. removed: true is a tombstone for a manual removal, so auto-sort never re-adds it.
+  albumShots: defineTable({
+    userId: v.id("users"),
+    albumId: v.id("albums"),
+    screenshotId: v.id("screenshots"),
+    source: v.union(v.literal("auto"), v.literal("manual")),
+    removed: v.boolean(),
+    addedAt: v.number(),
+  })
+    .index("by_album_screenshot", ["albumId", "screenshotId"])
+    .index("by_screenshot", ["screenshotId"]),
+
   questions: defineTable({
     userId: v.id("users"),
     question: v.string(),

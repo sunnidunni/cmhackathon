@@ -7,6 +7,7 @@ import { category } from "./schema";
 import { requireUserId } from "./lib/auth";
 import { reminderFor } from "./lib/cards";
 import { isUrgent, pickLineKey } from "./lib/extraction";
+import { deleteAlbumsFor, forgetShot } from "./albums";
 
 async function mine(ctx: MutationCtx, id: Id<"screenshots">) {
   const userId = await requireUserId(ctx);
@@ -86,6 +87,7 @@ async function deleteRow(ctx: MutationCtx, row: Doc<"screenshots">) {
     if (r.scheduledId) await ctx.scheduler.cancel(r.scheduledId).catch(() => undefined);
     await ctx.db.delete(r._id);
   }
+  await forgetShot(ctx, row._id);
   await ctx.storage.delete(row.storageId).catch(() => undefined);
   await ctx.db.delete(row._id);
 }
@@ -118,6 +120,7 @@ export const removeAll = mutation({
       await ctx.db.delete(q._id);
     for (const todo of await ctx.db.query("todos").withIndex("by_user_createdAt", (x) => x.eq("userId", userId)).collect())
       await ctx.db.delete(todo._id);
+    await deleteAlbumsFor(ctx, userId);
     for (const p of await ctx.db.query("dailyPicks").withIndex("by_user_day", (x) => x.eq("userId", userId)).collect())
       await ctx.db.delete(p._id);
     await ctx.scheduler.runAfter(0, internal.memory.forget, { userId });

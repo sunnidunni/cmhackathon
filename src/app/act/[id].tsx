@@ -1,38 +1,63 @@
 import * as Haptics from "expo-haptics";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from "@/components/act/FlowViews";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ConfirmPage, DonePage, EditPage, MovePage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
-import { buildPages } from "@/components/act/pages";
+import { PizzaOrderFlow } from "@/components/act/PizzaOrderFlow";
+import { buildPages, isFixtureAct, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
+import { play as playSfx } from "@/lib/sfx";
+import { effectLabel, realEffectEnd, runEffect, type EffectResult } from "@/lib/act/effects";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
+import { PIZZA_ORDER } from "@/lib/act/scenarios/pizzaOrder";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
+import { getDetectedAct } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
 
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
+const finish = () => router.dismissTo("/today");
 
 export default function Act() {
   const p = usePalette();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const scenario = (FIXTURES ? DEMO_ACTS : []).find((a) => a.id === id);
+  const found = (FIXTURES ? DEMO_ACTS.find((a) => a.id === id) : undefined) ?? getDetectedAct(id);
+  const scenario = useMemo(() => (found?.flowKeeper ? { ...found, keeper: found.flowKeeper } : found), [found]);
   const { undone } = useActState();
   const pages = useMemo(() => buildPages(scenario?.steps ?? []), [scenario]);
   const [index, setIndex] = useState(0);
   const [edits, setEdits] = useState<Record<number, Edit>>({});
+  const [results, setResults] = useState<Record<number, EffectResult>>({});
+  const [openLabels, setOpenLabels] = useState<Record<number, string | null>>({});
+  const [ordering, setOrdering] = useState(false);
+  const [orderingFor, setOrderingFor] = useState(id);
+  if (orderingFor !== id) {
+    setOrderingFor(id);
+    setOrdering(false);
+  }
   const page = pages[index];
+  const fixture = scenario ? isFixtureAct(scenario, FIXTURES) : false;
+  const confirmStep = scenario && page?.kind === "confirm" ? scenario.steps[page.step] : undefined;
+  const confirmIndex = page?.kind === "confirm" ? page.step : -1;
+
+  useEffect(() => {
+    if (fixture || !confirmStep) return;
+    let live = true;
+    effectLabel(confirmStep).then((label) => live && setOpenLabels((all) => ({ ...all, [confirmIndex]: label })));
+    return () => {
+      live = false;
+    };
+  }, [fixture, confirmStep, confirmIndex]);
 
   useEffect(() => {
     if (scenario && page?.kind === "done") completeAct(scenario.id);
   }, [scenario, page?.kind]);
 
-  const sheet = <Stack.Screen options={{ presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.95], sheetCornerRadius: 24, contentStyle: { backgroundColor: p.paper } }} />;
-
   if (!scenario)
     return (
       <>
-        {sheet}
         <View style={{ flex: 1, padding: 24, gap: 16, justifyContent: "center" }}>
           <Text style={[text.headlineCard, { color: p.ink }]}>This one is gone.</Text>
           <Text style={[text.body, { color: p.ink2 }]}>It is no longer on Today.</Text>
@@ -53,14 +78,20 @@ export default function Act() {
   };
 
   const body = () => {
-    if (page.kind === "done") return <DonePage scenario={scenario} onClose={close} />;
+    if (ordering) return <PizzaOrderFlow scenario={scenario} sent={editFor(0).body} onPlaced={() => completeAct(scenario.id)} onClose={close} />;
+    if (page.kind === "done") {
+      const lastIndex = scenario.steps.findLastIndex((s) => !isReminderStep(s));
+      const end = fixture ? null : realEffectEnd(scenario.steps[lastIndex], results[lastIndex]);
+      return <DonePage scenario={scenario} fixture={fixture} end={end} onClose={finish} />;
+    }
     const step = scenario.steps[page.step];
-    if (page.kind === "move" && step.kind === "move-reminder")
+    if (page.kind === "move" && isReminderStep(step))
       return (
         <MovePage
           scenario={scenario}
           step={step}
           moved={!undone.has(scenario.id)}
+          nextLabel={nextLabel(scenario.steps[page.step + 1])}
           onToggle={() => {
             feedback("light");
             setReminderMoved(scenario.id, undone.has(scenario.id));
@@ -69,41 +100,50 @@ export default function Act() {
         />
       );
     if (page.kind === "edit")
-      return <EditPage scenario={scenario} step={step} edit={editFor(page.step)} onChange={(e) => setEdits((all) => ({ ...all, [page.step]: e }))} onNext={() => go(index + 1)} />;
-    if (page.kind === "confirm")
+      return <EditPage scenario={scenario} step={step} edit={editFor(page.step)} fixture={fixture} onChange={(e) => setEdits((all) => ({ ...all, [page.step]: e }))} onNext={() => go(index + 1)} />;
+    if (page.kind === "confirm") {
+      const before = scenario.steps[page.step - 1];
+      const reply = step.kind === "order" && before?.kind === "draft-message" && before.reply ? { to: before.to, text: before.reply } : undefined;
       return (
         <ConfirmPage
           scenario={scenario}
           step={step}
           final={page.final}
           edit={editFor(page.step)}
-          onEdit={() => go(index - 1)}
-          onConfirm={() => {
-            feedback("success");
+          fixture={fixture}
+          reply={reply}
+          onEdit={step.kind === "order" ? undefined : () => go(index - 1)}
+          openLabel={openLabels[page.step] ?? null}
+          onConfirm={async () => {
+            const live = fixture || openLabels[page.step];
+            feedback("light");
+            playSfx("confirm");
+            const result: EffectResult = live ? await runEffect(step, editFor(page.step)) : "fallback";
+            setResults((all) => ({ ...all, [page.step]: result }));
+            if (result === "done" || result === "opened") playSfx("sent");
+            feedback(fixture || result === "done" ? "success" : "light");
+            // Scripted reply/order/tracker only for the demo fixture; real acts keep the plain order confirm and never claim an order.
+            if (fixture && scenario.id === PIZZA_ORDER.scenarioId && step.kind === "draft-message") return setOrdering(true);
             go(index + 1);
           }}
         />
       );
-    if (page.kind === "reply" && step.kind === "draft-message") {
-      const next = scenario.steps[page.step + 1];
-      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} nextLabel={next?.kind === "order" ? "Set up the order" : "Next"} onNext={() => go(index + 1)} />;
     }
     return null;
   };
 
   return (
     <>
-      {sheet}
       <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: p.paper }}>
-        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, gap: 16 }}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, gap: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <KeeperFace id={scenario.keeper} size={32} />
-              <Text style={[text.caption, { color: p.ink2 }]}>{page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
+              <Text style={[text.caption, { color: p.ink2 }]}>{ordering ? "Pizza for tonight" : fixture ? "" : page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
             </View>
             {page.kind !== "done" ? <PsstButton kind="text" label="Close" onPress={close} /> : null}
           </View>
-          <Fade key={index}>{body()}</Fade>
+          <Fade key={ordering ? "order" : index}>{body()}</Fade>
         </ScrollView>
       </SafeAreaView>
     </>

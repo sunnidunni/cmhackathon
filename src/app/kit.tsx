@@ -67,7 +67,7 @@ export default function KitSheet() {
       <PsstButton kind="text" label="Skip ahead" onPress={() => {}} />
       <PsstButton kind="filled" label="Disabled" disabled />
       <SoftCard>
-        <Text style={{ ...text.body, color: pal.ink }}>Psst sees the 12 you picked. That works.</Text>
+        <Text style={{ ...text.body, color: pal.ink }}>Shots sees the 12 you picked. That works.</Text>
       </SoftCard>
       <View style={{ gap: 8 }}>
         <Skeleton w="100%" h={16} />
