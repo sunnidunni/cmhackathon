@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
-import { confirmFor, demoLine, reminderCopy, type ReminderStep } from "./pages";
+import { FIXTURES } from "@/lib/fixtures";
+import { confirmFor, demoLine, doneLine, lastAction, reminderCopy, stepDone, type ReminderStep } from "./pages";
 import { Fade, TypingDots } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
@@ -94,7 +95,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
           <Text style={[text.body, { color: p.ink }]}>{step.eta}</Text>
         </Row>
         <Row label="Pay with">
-          <Text style={[text.body, { color: p.ink }]}>Demo card</Text>
+          <Text style={[text.body, { color: p.ink }]}>{FIXTURES ? "Card on file" : "Demo card"}</Text>
         </Row>
       </SoftCard>
     );
@@ -182,7 +183,7 @@ export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: 
       {c.lines.map((l) => (
         <Text key={l} style={[text.body, { color: p.ink2 }]}>{l}</Text>
       ))}
-      <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{demoLine(step, "will")}</Text>
+      {FIXTURES ? null : <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{demoLine(step, "will")}</Text>}
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}
@@ -208,7 +209,7 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
   }, []);
   return (
     <View style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{demoLine(step, "was")}</Text>
+      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{FIXTURES ? stepDone(step) : demoLine(step, "was")}</Text>
       <View style={{ gap: 8 }}>
         <Bubble mine keeper={scenario.keeper}>
           <Text style={[text.lead, { color: p.kl }]}>{edit.body}</Text>
@@ -218,7 +219,7 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
             {shown ? <Text accessibilityLiveRegion="polite" style={[text.lead, { color: p.ink }]}>{step.reply}</Text> : <TypingDots />}
           </Bubble>
         </Fade>
-        {shown ? <Text style={[text.caption, { color: p.ink2 }]}>{`Demo: pretend ${step.to} answered.`}</Text> : null}
+        {shown ? <Text style={[text.caption, { color: p.ink2 }]}>{FIXTURES ? `${step.to.split(" (")[0]} answered.` : `Demo: pretend ${step.to} answered.`}</Text> : null}
       </View>
       {shown ? <PsstButton kind="filled" keeper={scenario.keeper} label={nextLabel} onPress={onNext} /> : null}
     </View>
@@ -227,11 +228,18 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
 
 export function DonePage({ scenario, onClose }: { scenario: ActScenario; onClose: () => void }) {
   const p = usePalette();
+  const line = doneLine(scenario, lastAction(scenario.steps), FIXTURES);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
       <Keeper id={scenario.keeper} size={120} mood="react" />
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>That was the demo.</Text>
-      <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{scenario.done}</Text>
+      {FIXTURES ? (
+        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
+      ) : (
+        <>
+          <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>That was the demo.</Text>
+          <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{line}</Text>
+        </>
+      )}
       <PsstButton kind="filled" keeper={scenario.keeper} label="Done" onPress={onClose} />
     </View>
   );
