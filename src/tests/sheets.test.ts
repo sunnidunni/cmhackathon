@@ -8,7 +8,7 @@ const src = (p: string) => readFileSync(resolve(__dirname, "../app", p), "utf8")
 // navigation.setOptions(options) in an effect keyed on that object, the navigator re-renders the screen, and the
 // loop ends in "Maximum update depth exceeded". Sheet routes declare stable options in the root layout instead.
 describe("formSheet routes", () => {
-  const sheets = ["remind/[id].tsx", "act/[id].tsx", "settings.tsx"];
+  const sheets = ["remind/[id].tsx", "act/[id].tsx", "act/flight-status.tsx", "settings.tsx"];
   it.each(sheets)("%s sets no inline Stack.Screen options", (file) => {
     expect(src(file)).not.toMatch(/<Stack\.Screen/);
   });
