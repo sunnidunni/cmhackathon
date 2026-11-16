@@ -4,14 +4,14 @@
     "slug": "cmhackathon",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/psst-icon-default.png",
+    "icon": "./assets/images/psst-icon-v2-default.png",
     "scheme": "cmhackathon",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": {
-        "light": "./assets/images/psst-icon-default.png",
-        "dark": "./assets/images/psst-icon-dark.png",
-        "tinted": "./assets/images/psst-icon-tinted.png"
+        "light": "./assets/images/psst-icon-v2-default.png",
+        "dark": "./assets/images/psst-icon-v2-dark.png",
+        "tinted": "./assets/images/psst-icon-v2-tinted.png"
       },
       "bundleIdentifier": "com.sunnidunni.cmhackathon.rooms",
       "supportsTablet": false
@@ -26,7 +26,7 @@
     },
     "web": {
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/psst-favicon-v2.png"
     },
     "plugins": [
       "expo-router",
