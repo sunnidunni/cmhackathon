@@ -1,12 +1,15 @@
 import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
+import { SymbolView } from "expo-symbols";
+import { Pressable, Text } from "react-native";
+import Svg, { Path } from "react-native-svg";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useConvexAuth } from "convex/react";
 import { useEffect, useMemo, type ComponentProps } from "react";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
 import { LoadingView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
-import { usePalette, usePsstFonts } from "@/design/psst";
+import { fonts, usePalette, usePsstFonts } from "@/design/psst";
 import { convex } from "@/lib/convex";
 import { AppLifecycle } from "@/lib/lifecycle";
 import { setOffline, useOffline } from "@/lib/offline";
@@ -40,8 +43,48 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
 
 type SheetOptions = NonNullable<ComponentProps<typeof Stack.Screen>["options"]>;
 
-// The glass back chevron is the native stack header's own back button, left over a transparent bar.
-const backHeader: SheetOptions = { headerShown: true, headerTransparent: true, title: "", headerBackButtonDisplayMode: "minimal", headerShadowVisible: false };
+function BackButton() {
+  const pal = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Back"
+      hitSlop={8}
+      onPress={() => router.back()}
+      style={({ pressed }) => ({
+        minHeight: 44,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingLeft: 10,
+        paddingRight: 14,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: pal.hair,
+        backgroundColor: pressed ? pal.paper : pal.white,
+        opacity: pressed ? 0.85 : 1,
+      })}
+    >
+      <SymbolView
+        name="chevron.left"
+        size={17}
+        weight="semibold"
+        tintColor={pal.ink}
+        fallback={
+          <Svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke={pal.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M15 5l-7 7 7 7" />
+          </Svg>
+        }
+      />
+      <Text maxFontSizeMultiplier={1.6} style={{ fontFamily: fonts.uiBold, fontSize: 16, lineHeight: 20, color: pal.ink }}>
+        Back
+      </Text>
+    </Pressable>
+  );
+}
+
+// A solid "Back" pill in the native stack header, over a transparent bar; the header keeps it inside the safe area.
+const backHeader: SheetOptions = { headerShown: true, headerTransparent: true, title: "", headerShadowVisible: false, headerLeft: () => <BackButton /> };
 
 export default function RootLayout() {
   useStickerFonts();

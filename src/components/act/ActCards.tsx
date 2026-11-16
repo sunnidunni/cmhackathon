@@ -40,21 +40,31 @@ function ActRow({ scenario }: { scenario: ActScenario }) {
   );
 }
 
+function useActLists() {
+  const { dismissed, completed, undone } = useActState();
+  const detected = useDetectedActs();
+  const acts = (FIXTURES ? DEMO_ACTS : detected).filter((x) => x.steps.length > 0);
+  const [first, ...rest] = acts.filter((x) => !dismissed.has(x.id) && !completed.has(x.id));
+  const moved = acts.flatMap((x) => {
+    const step = x.steps.find(isReminderStep);
+    return step && x !== first && !rest.includes(x) && !undone.has(x.id) ? [{ id: x.id, step, keeper: x.keeper }] : [];
+  });
+  return { first, rest, moved, undone };
+}
+
+export function useHasActs() {
+  const { first, moved } = useActLists();
+  return !!first || moved.length > 0;
+}
+
 export function ActCards() {
   const p = usePalette();
-  const { dismissed, completed, undone } = useActState();
+  const { first, rest, moved } = useActLists();
   useEffect(() => {
     if (!FIXTURES) return;
     const sub = AppState.addEventListener("change", (st) => st === "active" && resetActs());
     return () => sub.remove();
   }, []);
-  const detected = useDetectedActs();
-  const acts = (FIXTURES ? DEMO_ACTS : detected).filter((a) => a.steps.length > 0);
-  const [first, ...rest] = acts.filter((a) => !dismissed.has(a.id) && !completed.has(a.id));
-  const moved = acts.flatMap((a) => {
-    const step = a.steps.find(isReminderStep);
-    return step && a !== first && !rest.includes(a) && !undone.has(a.id) ? [{ id: a.id, step, keeper: a.keeper }] : [];
-  });
   if (!first && moved.length === 0) return null;
   return (
     <View style={{ gap: 16 }}>

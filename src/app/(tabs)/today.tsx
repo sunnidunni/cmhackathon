@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { ActCards } from "@/components/act/ActCards";
+import { ActCards, useHasActs } from "@/components/act/ActCards";
 import { ReminderRows, RememberCard } from "@/components/today/Extras";
 import { FocusCard, Headline } from "@/components/today/FocusCard";
 import { HandfulRows } from "@/components/today/HandfulRows";
@@ -88,7 +88,9 @@ export default function Today() {
   const tz = new Date().getTimezoneOffset();
   const offline = useOffline();
   const live = useSafeQuery(api.today.get, { tzOffsetMinutes: tz }, undefined);
-  const demo = (FIXTURES && preview) || offline ? previewToday(preview ?? "td-2", tz) : null;
+  const emptyAccount = FIXTURES && !!live && live.reading.total === 0 && live.justIn.length + live.missed.length + live.handful.length === 0 && !live.thin;
+  const prefill = FIXTURES && live === undefined;
+  const demo = (FIXTURES && preview) || offline || emptyAccount || prefill ? previewToday(preview ?? "td-2", tz) : null;
   const today = demo ? demo.data : live;
   const [clock, setClock] = useState(() => Date.now());
   useEffect(() => {
@@ -104,6 +106,9 @@ export default function Today() {
   const [failed, setFailed] = useState(false);
   const windUp = useWindUp(runSync, () => setFailed(true));
   const [removed, setRemoved] = useState(false);
+  const hasActs = useHasActs();
+  const todos = useSafeQuery(api.todos.list, {}, undefined);
+  const hasCards = hasActs || (todos?.length ?? 0) > 0;
   const [focusMemory, saveFocus] = useFocusMemory();
   const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory ?? null);
   const filedItem = useFiledToast(demo || !today ? null : buildItems(today, fixtureLine));
@@ -183,14 +188,14 @@ export default function Today() {
         <View style={{ gap: 16 }}>
           <Header />
           {windUp.banner}
-          {offline ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
+          {offline && !FIXTURES ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
               <ReadingView pending={screen.pending} />
             </Pressable>
           ) : null}
-          {screen.kind === "empty" ? <EmptyView /> : null}
+          {screen.kind === "empty" && !hasCards ? <EmptyView /> : null}
           {screen.kind === "focus" ? (
             <Rise key={screen.focus.id}>
               <View style={{ gap: 8, marginBottom: 16 }}>

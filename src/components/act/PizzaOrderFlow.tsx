@@ -134,6 +134,7 @@ export function PizzaOrderFlow({ scenario, sent, onPlaced, onClose }: { scenario
     const t = setTimeout(() => {
       setStage((s) => s + 1);
       tap("light");
+      playSfx("pop");
     }, O.stageMs);
     return () => clearTimeout(t);
   }, [phase, stage]);

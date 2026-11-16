@@ -8,7 +8,7 @@ export function Headline({ item, now, tz }: { item: Item; now: number; tz: numbe
   const big = useBigText();
   const h = headline(item, now, tz);
   return (
-    <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+    <Text accessibilityRole="header" style={{ fontFamily: fonts.uiBold, fontSize: 20, lineHeight: 27, color: p.ink }}>
       {h.name}
       {big ? " " : "  "}
       {big ? null : (
@@ -69,7 +69,14 @@ export function FocusCard({
         </View>
       </Wash>
       <PsstButton kind="filled" keeper={item.keeper} label={a.primary} onPress={onPrimary} />
-      <PsstButton kind="text" label={a.secondary} onPress={onSecondary} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={a.secondary}
+        onPress={onSecondary}
+        style={({ pressed }) => ({ minHeight: 50, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, backgroundColor: pressed ? p.fill2 : p.fill })}
+      >
+        <Text maxFontSizeMultiplier={2.6} style={[text.bodyBold, { color: p.ink }]}>{a.secondary}</Text>
+      </Pressable>
       <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{a.note}</Text>
     </View>
   );

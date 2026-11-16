@@ -231,13 +231,23 @@ export default function Settings() {
           <ActionRow first title="Delete everything" tone="danger" onPress={confirmDelete} />
         </Group>
 
+        <View style={{ gap: 8 }}>
+          <SectionLabel>More</SectionLabel>
+          <Group>
+            <ActionRow first title="About Psst" onPress={() => router.push("/about")} />
+            <ActionRow title="Activity" onPress={() => router.push("/activity")} />
+            <ActionRow title="Let Psst prepare actions" onPress={() => router.push("/settings/actions")} />
+            <ActionRow title="Your week with Psst" onPress={() => router.push("/recap")} />
+          </Group>
+        </View>
+
         {DEV_TOOLS ? (
           <View style={{ gap: 8 }}>
             <SectionLabel>Developer</SectionLabel>
             <Group>
               <SwitchRow first title="Read all photos" value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
               <ActionRow title="Reset demos" onPress={resetActs} />
-              <ActionRow title="Replay onboarding" detail="Plays the walkthrough on demo data. Nothing of yours is changed." onPress={() => router.push("/welcome?replay=1")} />
+              <ActionRow title="Replay onboarding" detail="Plays the walkthrough with sample screenshots. Nothing of yours is changed." onPress={() => router.push("/welcome?replay=1")} />
               <ActionRow title="Keepers" onPress={() => router.push("/keepers")} />
             </Group>
             <Text style={[text.caption, { color: pal.ink2, fontFamily: fonts.ui }]} testID="diagnostics">

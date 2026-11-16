@@ -35,7 +35,7 @@ export default function Welcome() {
         <View style={{ flexGrow: 1, gap: 20, paddingTop: 8 }}>
           <Headline>Psst pulls the date, price or place out of a screenshot.</Headline>
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-            <ShotSticker uri={null} title={DEMO_FLYER.title} size={132} tilt />
+            <ShotSticker uri={DEMO_FLYER.image} title={DEMO_FLYER.title} size={132} tilt />
             <View style={{ flex: 1, gap: 8 }}>
               {WHAT_WHEN_WHERE.map(([label, value]) => (
                 <View key={label} style={{ backgroundColor: p.fill, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>

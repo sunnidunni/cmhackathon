@@ -11,7 +11,7 @@ import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
 import { FIXTURE_SUGGESTIONS, fixtureAnswer } from "@/components/ask/fixtureAsk";
-import { fixtureAnswerFits, shownQuestion, withFocus } from "@/components/ask/focus";
+import { fixtureAnswerFits, isSamBookQuestion, shownQuestion, withFocus } from "@/components/ask/focus";
 import { SuggestionChips } from "@/components/ask/SuggestionChips";
 import { visibleChips } from "@/components/ask/suggestions";
 import { useFocusMemory } from "@/components/today/focusMemory";
@@ -76,8 +76,14 @@ export default function Ask() {
       setPending({ question: q, sent, status: "done", sentAt, result: { ...nextAnswer.result, questionId: "demo" }, demo: true, shots: nextAnswer.shots, about });
       return;
     }
-    if (FIXTURES && !about && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
-      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
+    const sam = FIXTURES && !about && isSamBookQuestion(q) ? fixtureAnswer(q) : null;
+    if (sam) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...sam.result, questionId: "demo" }, demo: true, shots: sam.shots });
+      return;
+    }
+    const instant = FIXTURES && !about ? fixtureFor(q) : null;
+    if (instant) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...instant.result, questionId: "demo" }, demo: true, shots: instant.shots });
       return;
     }
     if (isOffline()) {
@@ -111,6 +117,8 @@ export default function Ask() {
     exchanges.some((ex) => ex._id === pending.result?.questionId || (ex.question === pending.sent && ex.createdAt >= pending.sentAt - 5000));
   const shownPending = synced ? null : pending;
   const empty = history !== undefined && exchanges.length === 0 && !shownPending;
+  const chips = visibleChips(FIXTURE_SUGGESTIONS, [...exchanges.map((ex) => shownQuestion(ex.question)), ...asked], input, pending?.status === "looking");
+  const lastFound = (shownPending?.result ?? exchanges[exchanges.length - 1])?.found === true;
   const lastId = shownPending?.result ? undefined : exchanges[exchanges.length - 1]?._id;
 
   return (
@@ -142,9 +150,7 @@ export default function Ask() {
             </View>
           ) : null}
         </ScrollView>
-        {!empty && FIXTURES ? (
-          <SuggestionChips items={visibleChips(FIXTURE_SUGGESTIONS, [...exchanges.map((ex) => shownQuestion(ex.question)), ...asked], input, pending?.status === "looking")} onPick={send} />
-        ) : null}
+        {!empty && FIXTURES && !lastFound ? <SuggestionChips items={chips} onPick={send} /> : null}
         <View style={{ paddingBottom: keyboardUp ? 0 : Math.max(insets.bottom, 83) - 8 }}>
           <Composer value={input} onChange={setInput} onSend={() => send(input)} busy={pending?.status === "looking"} />
         </View>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONFETTI_COUNT, confettiFor, confettiPieces } from "./confetti";
+import { CONFETTI_COUNT, confettiFor, confettiPieces } from "./confettiPattern";
 
 describe("confettiFor", () => {
   it("gives Tock, Murmur and Mote their own shapes", () => {

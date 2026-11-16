@@ -1,7 +1,7 @@
 // Scripted: every status update below is fixture data on a timer; the real integration would poll a flight-status API (e.g. FlightAware AeroAPI) for the flight read off the screenshot.
 import type { ActScenario } from "../types";
 import { scenario as delay } from "./delay";
-import { FLIGHT_DELAY_IMAGE } from "./images";
+import { FLIGHT_LATE_IMAGE } from "./images";
 
 export const EU261_CLAIM_ACT_ID = "flight-eu261";
 
@@ -28,7 +28,7 @@ export const UPDATE_EVERY_MS = 2600;
 export const scenario: ActScenario = {
   id: "flight-status",
   keeper: "tock",
-  source: { image: FLIGHT_DELAY_IMAGE, title: "Boarding pass", at: "9:02 AM" },
+  source: { image: FLIGHT_LATE_IMAGE, title: "Boarding pass", at: "9:02 AM" },
   noticed: `${FLIGHT.number} to San Francisco is running late.`,
   why: `Your boarding pass says ${FLIGHT.from.city} to ${FLIGHT.to.city}, leaving ${FLIGHT.scheduled}, gate 14.`,
   ready: "Tock is watching the live status for you.",
