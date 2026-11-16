@@ -1,9 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
-import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
+import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
 import { confirmNote } from "@/lib/act/effects";
-import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, stepDone, type ReminderStep } from "./pages";
-import { Fade, TypingDots } from "./Motion";
+import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
 
@@ -14,16 +13,6 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View style={{ gap: 2 }}>
       <Text style={[text.caption, { color: p.ink2 }]}>{label}</Text>
-      {children}
-    </View>
-  );
-}
-
-function Bubble({ mine, children, keeper }: { mine?: boolean; children: ReactNode; keeper: ActScenario["keeper"] }) {
-  const p = usePalette();
-  const c = useKeeperColors(keeper);
-  return (
-    <View style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "88%", backgroundColor: mine ? c.main : p.fill2, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 }}>
       {children}
     </View>
   );
@@ -181,12 +170,18 @@ export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { 
   );
 }
 
-export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; openLabel: string | null; onConfirm: () => void; onEdit: () => void }) {
+export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, reply, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; openLabel: string | null; reply?: { to: string; text: string }; onConfirm: () => void; onEdit?: () => void }) {
   const p = usePalette();
   const [tapped, setTapped] = useState(false);
   const c = confirmFor(scenario, step, final);
   return (
     <View style={{ gap: 16 }}>
+      {reply ? (
+        <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink }]}>
+          {fixture ? `${reply.to.split(" (")[0]} answered. ` : `Demo: pretend ${reply.to} answered. `}
+          <Text style={text.body}>{reply.text}</Text>
+        </Text>
+      ) : null}
       <WhyRow scenario={scenario} />
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{c.title}</Text>
       <Receipt step={step} edit={edit} fixture={fixture} />
@@ -205,33 +200,7 @@ export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, o
           onConfirm();
         }}
       />
-      <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} />
-    </View>
-  );
-}
-
-export function ReplyPage({ scenario, step, edit, fixture, nextLabel, onNext }: { scenario: ActScenario; step: Extract<ActStep, { kind: "draft-message" }>; edit: Edit; fixture: boolean; nextLabel: string; onNext: () => void }) {
-  const p = usePalette();
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setShown(true), 1200);
-    return () => clearTimeout(t);
-  }, []);
-  return (
-    <View style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{fixture ? stepDone(step) : realEnd(step).title}</Text>
-      <View style={{ gap: 8 }}>
-        <Bubble mine keeper={scenario.keeper}>
-          <Text style={[text.lead, { color: p.kl }]}>{edit.body}</Text>
-        </Bubble>
-        <Fade key={shown ? "reply" : "typing"}>
-          <Bubble keeper={scenario.keeper}>
-            {shown ? <Text accessibilityLiveRegion="polite" style={[text.lead, { color: p.ink }]}>{step.reply}</Text> : <TypingDots />}
-          </Bubble>
-        </Fade>
-        {shown ? <Text style={[text.caption, { color: p.ink2 }]}>{fixture ? `${step.to.split(" (")[0]} answered.` : `Demo: pretend ${step.to} answered.`}</Text> : null}
-      </View>
-      {shown ? <PsstButton kind="filled" keeper={scenario.keeper} label={nextLabel} onPress={onNext} /> : null}
+      {onEdit ? <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} /> : null}
     </View>
   );
 }
