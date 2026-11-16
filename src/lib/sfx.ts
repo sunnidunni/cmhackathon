@@ -77,8 +77,8 @@ export function preloadSfx() {
 
 export function play(name: SfxName) {
   try {
-    if (!(sounds ?? SOUNDS_DEFAULT)) return;
     preloadSfx();
+    if (sounds !== true) return;
     const now = Date.now();
     if (!allowSound(lastAt, now)) return;
     const player = players?.[name];
