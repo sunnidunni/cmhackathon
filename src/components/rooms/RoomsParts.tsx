@@ -30,8 +30,8 @@ export function RoomCard({ room, count, chip, onPress }: { room: RoomKey; count:
           <Text style={[text.caption, { color: quiet ? p.ink2 : deep, marginTop: 2 }]}>{countText}</Text>
         )}
         {chip ? (
-          <View style={{ alignSelf: "flex-start", marginTop: 8, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: p.paper }}>
-            <Text style={[text.caption, { color: deep }]}>{chip}</Text>
+          <View style={{ alignSelf: "flex-start", marginTop: 8, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: p.paper, zIndex: 1 }}>
+            <Text numberOfLines={1} style={[text.caption, { color: deep }]}>{chip}</Text>
           </View>
         ) : null}
         <View style={{ position: "absolute", right: 8, bottom: 8 }}>
