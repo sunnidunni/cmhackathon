@@ -9,6 +9,7 @@ import { fonts, text, usePalette } from "@/design/psst";
 import { convex } from "@/lib/convex";
 import { useConnectionError } from "@/lib/connection-error";
 import { FIXTURES } from "@/lib/fixtures";
+import { setNotesPrefs, useNotesPrefs } from "@/lib/notes-prefs";
 import { useLibraryDiagnostics, useReadAllPhotos } from "@/lib/photos";
 import { buildLine, connectionLine, planLine, progressLine } from "./status";
 
@@ -35,6 +36,7 @@ export function DevPanel({ onClose, openRoute }: { onClose: () => void; openRout
   useEffect(() => convex.subscribeToConnectionState((s) => setSocket(s.isWebSocketConnected)), []);
   const [readAll, setReadAll] = useReadAllPhotos();
   const diag = useLibraryDiagnostics(true);
+  const notes = useNotesPrefs();
   const go = openRoute ?? ((path) => router.push(path));
   const rule = { borderTopWidth: 1, borderTopColor: pal.hair } as const;
 
@@ -102,6 +104,29 @@ export function DevPanel({ onClose, openRoute }: { onClose: () => void; openRout
               ? `Diagnostics failed: ${diag}`
               : `Smart albums: ${diag.smartAlbums.join(", ") || "none"}\nScreenshots album: ${diag.screenshotsAlbumCount ?? "missing"} · screenshot subtype: ${diag.screenshotSubtypeCount} · all images: ${diag.allImagesCount}`}
         </Text>
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <SectionLabel>Notes</SectionLabel>
+        <Group>
+          <SwitchRow
+            first
+            title="Notes tab"
+            detail="Adds a Notes tab with a note for each read screenshot."
+            value={notes.tab}
+            onValueChange={(on) => void setNotesPrefs({ tab: on })}
+            testID="notes-tab-switch"
+          />
+          {notes.tab ? (
+            <SwitchRow
+              title="Group notes by date"
+              detail={notes.byDate ? "Today, yesterday, this week, then by month." : "Off. Notes are grouped by room."}
+              value={notes.byDate}
+              onValueChange={(on) => void setNotesPrefs({ byDate: on })}
+              testID="notes-by-date-switch"
+            />
+          ) : null}
+        </Group>
       </View>
 
       <View style={{ gap: 8 }}>
