@@ -5,10 +5,12 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmPage, DonePage, EditPage, MovePage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
+import { PizzaOrderFlow } from "@/components/act/PizzaOrderFlow";
 import { buildPages, isFixtureAct, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
 import { effectLabel, realEffectEnd, runEffect, type EffectResult } from "@/lib/act/effects";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
+import { PIZZA_ORDER } from "@/lib/act/scenarios/pizzaOrder";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
 import { getDetectedAct } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
@@ -27,6 +29,12 @@ export default function Act() {
   const [edits, setEdits] = useState<Record<number, Edit>>({});
   const [results, setResults] = useState<Record<number, EffectResult>>({});
   const [openLabels, setOpenLabels] = useState<Record<number, string | null>>({});
+  const [ordering, setOrdering] = useState(false);
+  const [orderingFor, setOrderingFor] = useState(id);
+  if (orderingFor !== id) {
+    setOrderingFor(id);
+    setOrdering(false);
+  }
   const page = pages[index];
   const fixture = scenario ? isFixtureAct(scenario, FIXTURES) : false;
   const confirmStep = scenario && page?.kind === "confirm" ? scenario.steps[page.step] : undefined;
@@ -68,6 +76,7 @@ export default function Act() {
   };
 
   const body = () => {
+    if (ordering) return <PizzaOrderFlow scenario={scenario} sent={editFor(0).body} onPlaced={() => completeAct(scenario.id)} onClose={close} />;
     if (page.kind === "done") {
       const lastIndex = scenario.steps.findLastIndex((s) => !isReminderStep(s));
       const end = fixture ? null : realEffectEnd(scenario.steps[lastIndex], results[lastIndex]);
@@ -108,6 +117,8 @@ export default function Act() {
             const result: EffectResult = live ? await runEffect(step, editFor(page.step)) : "fallback";
             setResults((all) => ({ ...all, [page.step]: result }));
             feedback(fixture || result === "done" ? "success" : "light");
+            // Scripted reply/order/tracker only for the demo fixture; real acts keep the plain order confirm and never claim an order.
+            if (fixture && scenario.id === PIZZA_ORDER.scenarioId && step.kind === "draft-message") return setOrdering(true);
             go(index + 1);
           }}
         />
@@ -123,11 +134,11 @@ export default function Act() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <KeeperFace id={scenario.keeper} size={32} />
-              <Text style={[text.caption, { color: p.ink2 }]}>{fixture ? "" : page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
+              <Text style={[text.caption, { color: p.ink2 }]}>{ordering ? "Pizza for tonight" : fixture ? "" : page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
             </View>
             {page.kind !== "done" ? <PsstButton kind="text" label="Close" onPress={close} /> : null}
           </View>
-          <Fade key={index}>{body()}</Fade>
+          <Fade key={ordering ? "order" : index}>{body()}</Fade>
         </ScrollView>
       </SafeAreaView>
     </>
