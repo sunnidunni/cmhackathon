@@ -6,9 +6,11 @@ import {
   internalQuery,
   mutation,
 } from "./_generated/server";
-import { EXTRACTION_SCHEMA, buildPrompt, parseExtraction } from "./lib/extraction";
+import { EXTRACTION_SCHEMA, albumKey, buildPrompt, parseExtraction } from "./lib/extraction";
+import type { AlbumBrief } from "./lib/albumModel";
 import { requireUserId } from "./lib/auth";
 import { insertTodos } from "./todos";
+import { sortIntoAlbums } from "./albums";
 
 export const MAX_PARALLEL = 10;
 export const MAX_ATTEMPTS = 3;
@@ -63,7 +65,15 @@ export const getForExtract = internalQuery({
   handler: async (ctx, { screenshotId }) => {
     const row = await ctx.db.get(screenshotId);
     if (row === null || row.status !== "processing") return null;
-    return { userId: row.userId, url: await ctx.storage.getUrl(row.storageId) };
+    const albums = await ctx.db
+      .query("albums")
+      .withIndex("by_user_createdAt", (q) => q.eq("userId", row.userId))
+      .collect();
+    return {
+      userId: row.userId,
+      url: await ctx.storage.getUrl(row.storageId),
+      albums: albums.map((a) => ({ _id: a._id, run: a.sortRun, name: a.name, description: a.description })),
+    };
   },
 });
 
@@ -83,14 +93,16 @@ export const complete = internalMutation({
     ),
     reason: v.string(),
     todos: v.optional(v.array(v.string())),
+    albums: v.optional(v.object({ seen: v.array(v.object({ albumId: v.id("albums"), run: v.number() })), matched: v.array(v.id("albums")) })),
     dates: v.array(v.object({ when: v.string(), what: v.string(), confident: v.boolean() })),
     importance: v.number(),
     reactionKey: v.string(),
   },
-  handler: async (ctx, { screenshotId, todos, ...result }) => {
+  handler: async (ctx, { screenshotId, todos, albums, ...result }) => {
     const row = await ctx.db.get(screenshotId);
     if (row === null || row.status !== "processing") return false;
     if (row.todosExtracted !== true) await insertTodos(ctx, row.userId, screenshotId, todos ?? []);
+    await sortIntoAlbums(ctx, row.userId, screenshotId, albums ?? { seen: [], matched: [] });
     await ctx.db.patch(screenshotId, {
       ...result,
       todosExtracted: true,
@@ -170,7 +182,7 @@ export const retryAllFailed = mutation({
   },
 });
 
-async function callVision(imageUrl: string) {
+async function callVision(imageUrl: string, albums: AlbumBrief[]) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
   const res = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -184,7 +196,7 @@ async function callVision(imageUrl: string) {
         {
           role: "user",
           content: [
-            { type: "input_text", text: buildPrompt(today) },
+            { type: "input_text", text: buildPrompt(today, albums) },
             { type: "input_image", image_url: imageUrl, detail: "auto" },
           ],
         },
@@ -212,8 +224,20 @@ export const run = internalAction({
       const target = await ctx.runQuery(internal.extract.getForExtract, { screenshotId });
       if (target === null) return;
       if (target.url === null) throw new Error("Image missing from storage");
-      const result = parseExtraction(await callVision(target.url), screenshotId);
-      const saved = await ctx.runMutation(internal.extract.complete, { screenshotId, ...result });
+      const { albums, ...result } = parseExtraction(
+        await callVision(target.url, target.albums),
+        screenshotId,
+        Date.now(),
+        target.albums.map((_, i) => albumKey(i)),
+      );
+      const saved = await ctx.runMutation(internal.extract.complete, {
+        screenshotId,
+        ...result,
+        albums: {
+          seen: target.albums.map((a) => ({ albumId: a._id, run: a.run })),
+          matched: target.albums.filter((_, i) => albums.includes(albumKey(i))).map((a) => a._id),
+        },
+      });
       if (saved) {
         await ctx.runAction(internal.memory.store, {
           screenshotId,

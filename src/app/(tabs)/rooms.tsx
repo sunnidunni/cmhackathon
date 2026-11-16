@@ -14,6 +14,7 @@ import { previewToday } from "@/components/today/preview";
 import { usePhotoAccess } from "@/lib/photos";
 import { runSync } from "@/lib/sync";
 import { useSafeQuery } from "@/lib/useSafeQuery";
+import { AlbumsSection } from "@/components/albums/AlbumsSection";
 
 export default function Rooms() {
   const p = usePalette();
@@ -61,6 +62,7 @@ export default function Rooms() {
         ) : null}
         <RecentlyFiled items={recentlyFiled(filed)} now={now} tz={tz} onOpen={(item) => router.push(`/shot/${item.id}`)} />
         {total !== null && total > 0 ? <AllRow count={total} onPress={() => router.push("/room/all")} /> : null}
+        {real !== null ? <AlbumsSection libraryEmpty={real === 0} /> : null}
         {empty ? (
           <View style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>
             <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>

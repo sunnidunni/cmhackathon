@@ -17,6 +17,7 @@ import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
 import { UndoToast } from "@/components/rooms/UndoToast";
 import { MoveSheet } from "@/components/rooms/MoveSheet";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
+import { AlbumPickSheet } from "@/components/albums/AlbumPickSheet";
 
 const UNDO_MS = 5000;
 
@@ -58,6 +59,8 @@ export default function Detail() {
   const reminders = useReminders();
   const [moveOpen, setMoveOpen] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
+  const [albumsOpen, setAlbumsOpen] = useState(false);
+  const albums = useSafeQuery(api.albums.forShot, isDemo ? "skip" : { screenshotId: shotId }, undefined);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const phaseRef = useRef<Phase>("idle");
@@ -195,6 +198,14 @@ export default function Detail() {
                 action="Move"
                 onAction={() => setMoveOpen(true)}
               />
+              {!isDemo && albums ? (
+                <Row
+                  label="Albums"
+                  value={albums.filter((a) => a.inAlbum).map((a) => a.name).join(", ") || "Not in an album"}
+                  action={albums.some((a) => a.inAlbum) ? "Change" : "Add"}
+                  onAction={() => setAlbumsOpen(true)}
+                />
+              ) : null}
             </View>
             {shot.userMoved ? <Text style={[text.caption, { color: p.ink2 }]}>You moved it, so it stays where you put it.</Text> : null}
 
@@ -283,6 +294,7 @@ export default function Detail() {
           move({ id: shotId, category: room }).catch(() => setError("That didn't save. Try again in a moment."));
         }}
       />
+      {!isDemo ? <AlbumPickSheet visible={albumsOpen} screenshotId={shotId} onClose={() => setAlbumsOpen(false)} /> : null}
       {reminders.sheet}
       {shot.imageUrl ? <ZoomViewer uri={shot.imageUrl} visible={zoomOpen} onClose={() => setZoomOpen(false)} /> : null}
     </View>
