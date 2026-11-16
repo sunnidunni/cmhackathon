@@ -99,7 +99,7 @@ function SingleRoom({ category }: { category: Category }) {
         </Text>
         {rows ? <KeeperLine id={keeper}>{roomLine(category, rows)}</KeeperLine> : <Skeleton w={160} h={14} />}
       </View>
-      <Keeper id={keeper} size={88} />
+      <Keeper id={keeper} size={88} boop />
     </RoomWash>
   );
 
@@ -127,7 +127,7 @@ function SingleRoom({ category }: { category: Category }) {
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
         {isEmpty && isRoom ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 8 }}>
-            <Keeper id={keeper} size={128} />
+            <Keeper id={keeper} size={128} boop />
             <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
               Nothing in {ROOM_LABEL[category]} yet.
             </Text>

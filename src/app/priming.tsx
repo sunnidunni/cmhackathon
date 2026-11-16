@@ -40,7 +40,7 @@ export default function Priming() {
       >
         <View style={{ flexGrow: 1, justifyContent: "center", gap: 14 }}>
           <View style={{ alignSelf: "center" }}>
-            <Keeper id="murmur" size={128} />
+            <Keeper id="murmur" size={128} boop />
           </View>
           <Headline>{"Psst can't see your screenshots yet."}</Headline>
           <Lead>{"Nothing has been brought in. In iOS Settings → Psst → Photos, choose Selected Photos or Full Access, then come back."}</Lead>

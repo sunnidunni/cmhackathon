@@ -49,7 +49,7 @@ export default function KeepersCard() {
               const n = countOf(id);
               return (
                 <View key={id} style={styles.cell} accessible accessibilityLabel={`${KEEPERS[id].name}, ${n === null ? "counting" : screenshotsIn(n)}`}>
-                  <Keeper id={id} size={92} />
+                  <Keeper id={id} size={92} boop />
                   <Text style={[text.bodyBold, { color: p.ink, marginTop: 8 }]}>{KEEPERS[id].name}</Text>
                   {n === null ? <Skeleton w={72} h={10} style={{ marginTop: 6 }} /> : <Text style={[text.caption, { color: p.ink2 }]}>{screenshotsIn(n)}</Text>}
                 </View>
