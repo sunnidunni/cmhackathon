@@ -63,7 +63,8 @@ export function useWindUp(check: () => Promise<SyncResult>, onError?: () => void
       if (r.uploaded > 0) setDone(`${r.uploaded} new ${r.uploaded === 1 ? "screenshot. Filing it" : "screenshots. Filing them"} now.`);
       else if (r.failed === 0) setDone("No new screenshots.");
     } catch {
-      onError?.();
+      if (onError) onError();
+      else setDone("Couldn't check for new screenshots.");
     }
     setRefreshing(false);
   }, [check, onError]);

@@ -85,7 +85,8 @@ export function runSync(): Promise<SyncResult> {
       let result = await syncOnce();
       while (again) {
         again = false;
-        result = await syncOnce();
+        const next = await syncOnce();
+        result = { uploaded: result.uploaded + next.uploaded, failed: result.failed + next.failed, skipped: next.skipped };
       }
       setState({ status: "idle", last: result });
       return result;
