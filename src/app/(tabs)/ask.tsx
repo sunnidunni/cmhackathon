@@ -1,4 +1,4 @@
-import { useAction } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import * as Haptics from "expo-haptics";
 import type { FunctionReturnType } from "convex/server";
 import { useEffect, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult,
 import { fixtureNextAnswer } from "@/components/ask/askNext";
 import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
-import { EmptyAsk } from "@/components/ask/EmptyAsk";
+import { DEMO_STARTERS, EmptyAsk } from "@/components/ask/EmptyAsk";
 import { FIXTURE_SUGGESTIONS, fixtureAnswer } from "@/components/ask/fixtureAsk";
 import { fixtureAnswerFits, isSamBookQuestion, shownQuestion, withFocus } from "@/components/ask/focus";
 import { SuggestionChips } from "@/components/ask/SuggestionChips";
@@ -34,6 +34,8 @@ export default function Ask() {
   const { screen } = buildScreen(focusMemory === undefined ? undefined : today, new Set(), undefined, focusMemory ?? null);
   const focusTitle = screen.kind === "focus" ? screen.focus.title : null;
   const askAction = useAction(api.ask.ask);
+  const own = useQuery(api.ask.suggestions, FIXTURES ? "skip" : {});
+  const starters = FIXTURES ? DEMO_STARTERS : (own ?? []).map((s) => s.question);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
   const [asked, setAsked] = useState<string[]>([]);
@@ -54,11 +56,12 @@ export default function Ask() {
   // Sample-data answers (fixtures on, no real answer): the flyer for pottery or a bare "that", else the chip's own screenshot.
   // A follow-up about one screenshot only takes that screenshot's own sample answer, never another one's.
   const fixtureFor = (q: string, about?: About) => {
+    if (!FIXTURES) return null;
     if (about) {
       const answer = fixtureNextAnswer(q, about.shotId);
       return answer ? { result: { ...demoResult, answer }, shots: demoShots } : null;
     }
-    return !FIXTURES ? null : fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES) ? { result: demoResult, shots: demoShots } : fixtureAnswer(q);
+    return fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES) ? { result: demoResult, shots: demoShots } : fixtureAnswer(q);
   };
 
   // `about` is set for an Ask next chip: the question is about that answer's screenshot, not Today's focus.
@@ -134,7 +137,7 @@ export default function Ask() {
           onContentSizeChange={() => !empty && scroll.current?.scrollToEnd({ animated: true })}
           keyboardShouldPersistTaps="handled"
         >
-          {empty ? <EmptyAsk count={rooms?.count} onPick={send} showSuggestions={input.length === 0} /> : null}
+          {empty ? <EmptyAsk count={rooms?.count} starters={starters} onPick={send} showSuggestions={input.length === 0} /> : null}
           {exchanges.map((ex) => (
             <View key={ex._id} style={{ gap: 14 }}>
               <QuestionBubble question={shownQuestion(ex.question)} />

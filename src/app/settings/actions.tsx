@@ -1,5 +1,9 @@
 import { PrepareActionsScreen } from "@/components/prepare-actions/PrepareActionsScreen";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { FIXTURES } from "@/lib/fixtures";
 
-export default function PrepareActions() {
+function PrepareActions() {
   return <PrepareActionsScreen />;
 }
+
+export default onlyWhen(FIXTURES, PrepareActions);

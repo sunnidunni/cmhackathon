@@ -20,6 +20,8 @@ import {
   tiltFor,
   type,
 } from "@/design";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { DEV_BUILD } from "@/lib/dev-flags";
 
 const LINES: Record<RoomKey, string> = {
   deadlines: "Rent's due Friday. Want a nudge Thursday?",
@@ -77,7 +79,7 @@ function MissedRow({ room, index }: { room: RoomKey; index: number }) {
   );
 }
 
-export default function DesignGallery() {
+function DesignGallery() {
   const insets = useSafeAreaInsets();
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.paper }} contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + spacing.xxxl }}>
@@ -218,3 +220,5 @@ export default function DesignGallery() {
     </ScrollView>
   );
 }
+
+export default onlyWhen(DEV_BUILD, DesignGallery);

@@ -1,11 +1,12 @@
-import { useMutation } from "convex/react";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
-import { api } from "../../convex/_generated/api";
 import { ActionRow, Footer, Group, SectionLabel, SwitchRow } from "@/components/settings/rows";
 import { fonts, KEEPER_IDS, KEEPERS, KeeperFace, SoftCard, text, usePalette } from "@/design/psst";
 import { resetActs } from "@/lib/act/store";
+import { useDeleteEverything } from "@/lib/delete-everything";
+import { DEV_BUILD } from "@/lib/dev-flags";
+import { FIXTURES } from "@/lib/fixtures";
 import { useAutoRead } from "@/lib/auto-read";
 import { useSounds } from "@/lib/sfx";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
@@ -58,7 +59,7 @@ export default function Settings() {
   const pal = usePalette();
   const { access, openLimitedPicker, openSettings } = usePhotoAccess();
   const { status, syncNow } = useSync();
-  const removeAll = useMutation(api.shots.removeAll);
+  const deleteEverything = useDeleteEverything();
   const { enabled: autoRead, setEnabled: setAutoRead } = useAutoRead();
   const { enabled: sounds, setEnabled: setSounds } = useSounds();
   const [notify, setNotify] = useState(false);
@@ -102,9 +103,9 @@ export default function Settings() {
         {
           text: "Delete everything",
           style: "destructive",
-          onPress: () => {
-            void setAutoReadSaved(false);
-            void removeAll({});
+          onPress: async () => {
+            if (await deleteEverything()) return;
+            Alert.alert("Couldn't delete", "Nothing was deleted. Check your connection and try again.");
           },
         },
       ],
@@ -236,9 +237,13 @@ export default function Settings() {
           <Group>
             <ActionRow first title="About Shots" onPress={() => router.push("/about")} />
             <ActionRow title="What happens to your screenshots" onPress={() => router.push("/privacy")} />
-            <ActionRow title="Activity" onPress={() => router.push("/activity")} />
-            <ActionRow title="Let Shots prepare actions" onPress={() => router.push("/settings/actions")} />
-            <ActionRow title="Your week with Shots" onPress={() => router.push("/recap")} />
+            {FIXTURES ? (
+              <>
+                <ActionRow title="Activity" onPress={() => router.push("/activity")} />
+                <ActionRow title="Let Shots prepare actions" onPress={() => router.push("/settings/actions")} />
+                <ActionRow title="Your week with Shots" onPress={() => router.push("/recap")} />
+              </>
+            ) : null}
           </Group>
         </View>
 
@@ -261,9 +266,11 @@ export default function Settings() {
           </View>
         ) : null}
 
-        <Group>
-          <ActionRow first title="Developer" onPress={() => router.push("/dev")} />
-        </Group>
+        {DEV_BUILD ? (
+          <Group>
+            <ActionRow first title="Developer" onPress={() => router.push("/dev")} />
+          </Group>
+        ) : null}
       </ScrollView>
     </>
   );

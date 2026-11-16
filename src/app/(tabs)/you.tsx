@@ -1,6 +1,6 @@
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, useColorScheme, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
@@ -21,17 +21,18 @@ export default function You() {
   const todos = useQuery(api.todos.list, {});
   const today = useQuery(api.today.get, { tzOffsetMinutes: tz });
 
+  const [now] = useState(() => Date.now());
   const insights = useMemo(() => {
     if (!all) return [];
     return computeInsights({
       items: all.items.map((i) => ({ _id: i._id, takenAt: i.takenAt, category: i.category, title: i.title })),
-      now: Date.now(),
+      now,
       tzOffsetMinutes: tz,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       openTodos: todos ? todos.filter((t) => !t.done).length : 0,
       reminders: today ? today.reminders.length : 0,
     });
-  }, [all, todos, today, tz]);
+  }, [all, todos, today, tz, now]);
 
   const lead = you?.headline && isRoom(you.headline.lead) ? you.headline.lead : null;
   const colorOf = (room: string) => (isRoom(room) ? KEEPERS[keeperForRoom(room)].main : dark ? MUTED.mainDark : MUTED.main);

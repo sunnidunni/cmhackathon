@@ -5,10 +5,12 @@ import { FlightStatusView } from "@/components/act/FlightStatusView";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
 import { FLIGHT_UPDATES } from "@/lib/act/scenarios/flightStatus";
 import { DEV_TOOLS } from "@/lib/dev-flags";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { FIXTURES } from "@/lib/fixtures";
 
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
 
-export default function FlightStatus() {
+function FlightStatus() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { at } = useLocalSearchParams<{ at?: string }>();
@@ -27,3 +29,5 @@ export default function FlightStatus() {
     </SafeAreaView>
   );
 }
+
+export default onlyWhen(FIXTURES, FlightStatus);

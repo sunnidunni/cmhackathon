@@ -12,7 +12,7 @@ import {
 } from "expo-media-library";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { AppState, Linking } from "react-native";
-import { DEV_TOOLS, READ_ALL_PHOTOS_DEFAULT } from "./dev-flags";
+import { DEV_BUILD, DEV_TOOLS, READ_ALL_PHOTOS_DEFAULT } from "./dev-flags";
 
 export { DEV_TOOLS };
 
@@ -66,12 +66,14 @@ export function usePhotoAccess() {
 }
 
 // Dev switch: read every photo instead of only the Screenshots album (simulators have no screenshots).
-let readAllPhotos = READ_ALL_PHOTOS_DEFAULT;
+// It stays off outside developer builds, whatever asks: the photo permission prompt promises "only your Screenshots album".
+let readAllPhotos = DEV_BUILD && READ_ALL_PHOTOS_DEFAULT;
 const readAllListeners = new Set<() => void>();
 export function getReadAllPhotos() {
   return readAllPhotos;
 }
 export function setReadAllPhotos(value: boolean) {
+  if (!DEV_BUILD) return;
   readAllPhotos = value;
   readAllListeners.forEach((l) => l());
 }

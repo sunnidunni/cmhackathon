@@ -1,11 +1,12 @@
 import { Component, type ReactNode } from "react";
 import { MessageView } from "@/components/state-views";
-import { isOffline, setOffline } from "@/lib/offline";
+import { isOffline, SAMPLE_DATA_WHEN_OFFLINE, setOffline } from "@/lib/offline";
 
 type State = { failed: boolean; stuck: boolean };
 
-// A failed Convex query throws while rendering. Catch it, go offline, and render again so the screens use fixtures.
-// If the screen still throws once offline, show a plain message instead of looping.
+// A failed Convex query throws while rendering.
+// Demo builds catch it, go offline, and render again so the screens use sample data.
+// Every other build shows a plain message with a retry, and so does a demo build that still throws once offline.
 export class OfflineBoundary extends Component<{ children: ReactNode }, State> {
   state: State = { failed: false, stuck: false };
 
@@ -14,7 +15,7 @@ export class OfflineBoundary extends Component<{ children: ReactNode }, State> {
   }
 
   componentDidCatch(error: Error) {
-    if (isOffline()) return this.setState({ stuck: true });
+    if (!SAMPLE_DATA_WHEN_OFFLINE || isOffline()) return this.setState({ stuck: true });
     setOffline(error.message);
     this.setState({ failed: false });
   }

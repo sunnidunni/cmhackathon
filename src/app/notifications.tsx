@@ -10,12 +10,14 @@ import { NOTIFICATIONS, type PsstNotification } from "@/components/notifications
 import { NotificationRow } from "@/components/notifications/NotificationRow";
 import { UndoToast } from "@/components/notifications/UndoToast";
 import { fonts, text, usePalette } from "@/design/psst";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { FIXTURES } from "@/lib/fixtures";
 
 const UNDO_MS = 4000;
 
 type Undo = { key: number; label: string; previous: PsstNotification[] };
 
-export default function Notifications() {
+function Notifications() {
   const pal = usePalette();
   const insets = useSafeAreaInsets();
   const reduce = useReducedMotion();
@@ -96,3 +98,5 @@ export default function Notifications() {
     </View>
   );
 }
+
+export default onlyWhen(FIXTURES, Notifications);
