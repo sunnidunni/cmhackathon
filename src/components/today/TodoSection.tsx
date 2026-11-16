@@ -40,7 +40,7 @@ function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
           <Text numberOfLines={2} style={[text.bodyBold, { color: row.done ? p.ink2 : p.ink }, row.done && { textDecorationLine: "line-through" }]}>
             {row.text}
           </Text>
-          {row.due && !row.done ? <Text style={[text.caption, { color: deep }]}>{row.due}</Text> : null}
+          {row.due && !row.done ? <Text style={[text.caption, { color: row.late ? p.ink2 : deep }]}>{row.due}</Text> : null}
         </View>
       </Pressable>
     </View>
@@ -48,7 +48,7 @@ function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
 }
 
 // demo is dev-only preview data; it replaces the live queries.
-export function TodoSection({ demo }: { demo?: { todos: TodoItem[]; shots: [string, ShotInfo][] } | null }) {
+export function TodoSection({ day, shown, demo }: { day: string | undefined; shown: string[]; demo?: { todos: TodoItem[]; shots: [string, ShotInfo][] } | null }) {
   const p = usePalette();
   const live = useQuery(api.todos.list, demo ? "skip" : {});
   const library = useQuery(api.rooms.all, demo ? "skip" : {});
@@ -58,8 +58,8 @@ export function TodoSection({ demo }: { demo?: { todos: TodoItem[]; shots: [stri
   const todos = demo?.todos ?? live;
   const shots = useMemo(() => new Map<string, ShotInfo>(demo ? demo.shots : (library?.items ?? []).map((i) => [i._id, { category: i.category, date: i.date }])), [demo, library]);
   if (!todos || todos.length === 0) return null;
-  const rows = buildTodoRows(todos, shots);
-  const shown = visibleTodos(rows.open, rows.done, expanded);
+  const rows = buildTodoRows(todos, shots, day, new Set(shown));
+  const visible = visibleTodos(rows.open, rows.done, expanded);
 
   const check = async (row: TodoRow) => {
     setFailed(false);
@@ -70,11 +70,11 @@ export function TodoSection({ demo }: { demo?: { todos: TodoItem[]; shots: [stri
   return (
     <View>
       <Text style={[text.caption, { color: p.ink2, marginBottom: 8 }]}>To do</Text>
-      {[...shown.open, ...shown.done].map((row) => (
+      {[...visible.open, ...visible.done].map((row) => (
         <Row key={row.id} row={row} onToggle={() => check(row)} />
       ))}
       <View style={{ borderTopWidth: 1, borderTopColor: p.hair }} />
-      {shown.hidden > 0 ? <PsstButton kind="text" label={showAllLabel(rows.open.length, rows.done.length)} onPress={() => setExpanded(true)} /> : null}
+      {visible.hidden > 0 ? <PsstButton kind="text" label={showAllLabel(rows.open.length, rows.done.length)} onPress={() => setExpanded(true)} /> : null}
       {failed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
     </View>
   );

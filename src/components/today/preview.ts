@@ -86,7 +86,7 @@ export function previewTodos(kind: string): { todos: TodoItem[]; shots: [string,
       ["demo-15", { category: "money", date: "2026-11-21" }],
       ["demo-08", { category: "chats", date: null }],
       ["demo-01", { category: "deadlines", date: "2026-11-22T10:00" }],
-      ["demo-18", { category: "ideas", date: null }],
+      ["demo-18", { category: "ideas", date: "2026-11-12" }],
     ],
   };
 }
