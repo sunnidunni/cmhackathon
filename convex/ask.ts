@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { action, query } from "./_generated/server";
+import { action, internalAction, query, type ActionCtx } from "./_generated/server";
 import { askLibrary, toSources, type Source } from "./askData";
 import { requireUserId } from "./lib/auth";
 import { askModel } from "./lib/llm";
@@ -16,67 +16,70 @@ const SYSTEM = `You answer questions about the user's own screenshots. Use only 
 const line = (b: { id: string; title: string; summary: string; text: string; dates: string[] }) =>
   `[id ${b.id}] ${b.title}. ${b.summary}${b.dates.length ? ` Dates: ${b.dates.join("; ")}.` : ""}${b.text ? ` Text: ${b.text}` : ""}`;
 
+type AskResult = { questionId: Id<"questions">; answer: string; found: boolean; sources: Source[] };
+
+export async function answerQuestion(ctx: ActionCtx, userId: Id<"users">, q: string): Promise<AskResult> {
+
+  let hits: MemoryHit[] = [];
+  try {
+    hits = await searchMemory(userId, q);
+  } catch (e) {
+    console.error("Supermemory search failed", e instanceof Error ? e.message : String(e));
+  }
+  const data = await ctx.runQuery(internal.askData.context, { userId });
+
+  const sections = [
+    `Most recent screenshots, newest first:\n${data.recent.map(line).join("\n") || "(none)"}`,
+  ];
+  if (hits.length > 0) {
+    sections.push(`Memory search results:\n${hits.map((h) => (h.screenshotId ? `[id ${h.screenshotId}] ` : "") + h.text).join("\n")}`);
+  } else {
+    sections.push(`All the user's screenshots:\n${data.library.map(line).join("\n") || "(none)"}`);
+  }
+  const reply = await askModel(SYSTEM, `${sections.join("\n\n")}\n\nQuestion: ${q}`);
+
+  const hitIds = hits.flatMap((h) => (h.screenshotId ? [h.screenshotId] : []));
+  const recentIds = data.recent.map((b) => b.id);
+  let sources: Source[];
+  let answer = reply.answer.trim();
+  const found = reply.found && answer !== "";
+  if (found) {
+    sources = await ctx.runQuery(internal.askData.sources, { userId, ids: reply.sourceIds });
+  } else {
+    answer = NOT_FOUND_ANSWER;
+    sources = (
+      await ctx.runQuery(internal.askData.sources, { userId, ids: [...hitIds, ...recentIds] })
+    ).slice(0, 3);
+  }
+
+  const questionId = await ctx.runMutation(internal.askData.save, {
+    userId,
+    question: q,
+    answer,
+    found,
+    sourceScreenshotIds: sources.map((s) => s.screenshotId),
+  });
+
+  const turn = (role: "user" | "assistant", content: string) =>
+    addMemory(userId, {
+      id: `chat_${questionId}_${role}`,
+      content: `${role === "user" ? "User asked" : "Assistant answered"}: ${content}`,
+      metadata: { kind: "chat", role, questionId },
+    });
+  const added = await Promise.allSettled([turn("user", q), turn("assistant", answer)]);
+  for (const r of added)
+    if (r.status === "rejected") console.error("Supermemory add failed", String(r.reason));
+
+  return { questionId, answer, found, sources };
+}
+
 export const ask = action({
   args: { question: v.string() },
-  handler: async (
-    ctx,
-    { question },
-  ): Promise<{ questionId: Id<"questions">; answer: string; found: boolean; sources: Source[] }> => {
+  handler: async (ctx, { question }): Promise<AskResult> => {
     const userId = await requireUserId(ctx);
     const q = question.trim();
     if (q === "") throw new Error("Ask a question first");
-
-    let hits: MemoryHit[] = [];
-    try {
-      hits = await searchMemory(userId, q);
-    } catch (e) {
-      console.error("Supermemory search failed", e instanceof Error ? e.message : String(e));
-    }
-    const data = await ctx.runQuery(internal.askData.context, { userId });
-
-    const sections = [
-      `Most recent screenshots, newest first:\n${data.recent.map(line).join("\n") || "(none)"}`,
-    ];
-    if (hits.length > 0) {
-      sections.push(`Memory search results:\n${hits.map((h) => (h.screenshotId ? `[id ${h.screenshotId}] ` : "") + h.text).join("\n")}`);
-    } else {
-      sections.push(`All the user's screenshots:\n${data.library.map(line).join("\n") || "(none)"}`);
-    }
-    const reply = await askModel(SYSTEM, `${sections.join("\n\n")}\n\nQuestion: ${q}`);
-
-    const hitIds = hits.flatMap((h) => (h.screenshotId ? [h.screenshotId] : []));
-    const recentIds = data.recent.map((b) => b.id);
-    let sources: Source[];
-    let answer = reply.answer.trim();
-    const found = reply.found && answer !== "";
-    if (found) {
-      sources = await ctx.runQuery(internal.askData.sources, { userId, ids: reply.sourceIds });
-    } else {
-      answer = NOT_FOUND_ANSWER;
-      sources = (
-        await ctx.runQuery(internal.askData.sources, { userId, ids: [...hitIds, ...recentIds] })
-      ).slice(0, 3);
-    }
-
-    const questionId = await ctx.runMutation(internal.askData.save, {
-      userId,
-      question: q,
-      answer,
-      found,
-      sourceScreenshotIds: sources.map((s) => s.screenshotId),
-    });
-
-    const turn = (role: "user" | "assistant", content: string) =>
-      addMemory(userId, {
-        id: `chat_${questionId}_${role}`,
-        content: `${role === "user" ? "User asked" : "Assistant answered"}: ${content}`,
-        metadata: { kind: "chat", role, questionId },
-      });
-    const added = await Promise.allSettled([turn("user", q), turn("assistant", answer)]);
-    for (const r of added)
-      if (r.status === "rejected") console.error("Supermemory add failed", String(r.reason));
-
-    return { questionId, answer, found, sources };
+    return answerQuestion(ctx, userId, q);
   },
 });
 
@@ -91,6 +94,11 @@ export const suggestions = query({
       .take(300);
     return suggestionsFrom(askLibrary(rows).map((r) => ({ ...r, id: r._id })));
   },
+});
+
+export const askAs = internalAction({
+  args: { userId: v.id("users"), question: v.string() },
+  handler: async (ctx, { userId, question }): Promise<AskResult> => answerQuestion(ctx, userId, question),
 });
 
 export const history = query({

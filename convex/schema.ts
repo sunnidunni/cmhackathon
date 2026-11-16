@@ -111,6 +111,12 @@ export default defineSchema({
     thin: v.boolean(),
   }).index("by_user_day", ["userId", "day"]),
 
+  siriKeys: defineTable({
+    keyHash: v.string(),
+    userId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_keyHash", ["keyHash"]),
+
   questions: defineTable({
     userId: v.id("users"),
     question: v.string(),
