@@ -14,7 +14,7 @@ export function KeeperLineup() {
     <View style={{ gap: 14 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
         {KEEPER_IDS.map((id) => (
-          <View key={id} style={{ alignItems: "center", flex: 1 }} accessible accessibilityRole="button" accessibilityLabel={`${KEEPERS[id].name}. Tap to hear a line.`}>
+          <View key={id} style={{ alignItems: "center", flex: 1 }}>
             <Keeper
               name={id}
               size={78}
