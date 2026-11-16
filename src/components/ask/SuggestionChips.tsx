@@ -6,7 +6,7 @@ export function SuggestionChips({ items, onPick }: { items: Suggestion[]; onPick
   const p = usePalette();
   if (items.length === 0) return null;
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
+    <ScrollView style={{ flexGrow: 0, flexShrink: 0 }} horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 8 }}>
       {items.map((c, i) => (
         <Pressable
           key={c.question}

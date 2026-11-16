@@ -33,6 +33,7 @@ export default function Ask() {
   const askAction = useAction(api.ask.ask);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
+  const [asked, setAsked] = useState<string[]>([]);
   const [slowFor, setSlowFor] = useState<number | null>(null);
   const [keyboardUp, setKeyboardUp] = useState(false);
   const insets = useSafeAreaInsets();
@@ -54,6 +55,7 @@ export default function Ask() {
     const q = question.trim();
     if (!q || pending?.status === "looking") return;
     setInput("");
+    setAsked((a) => [...a, q]);
     const sentAt = Date.now();
     const sent = withFocus(q, focusTitle);
     setPending({ question: q, sent, status: "looking", sentAt });
@@ -122,7 +124,7 @@ export default function Ask() {
           ) : null}
         </ScrollView>
         {!empty && FIXTURES ? (
-          <SuggestionChips items={visibleChips(FIXTURE_SUGGESTIONS, [...exchanges.map((ex) => shownQuestion(ex.question)), ...(pending ? [pending.question] : [])], input, pending?.status === "looking")} onPick={send} />
+          <SuggestionChips items={visibleChips(FIXTURE_SUGGESTIONS, [...exchanges.map((ex) => shownQuestion(ex.question)), ...asked], input, pending?.status === "looking")} onPick={send} />
         ) : null}
         <View style={{ paddingBottom: keyboardUp ? 0 : Math.max(insets.bottom, 83) - 8 }}>
           <Composer value={input} onChange={setInput} onSend={() => send(input)} busy={pending?.status === "looking"} />
