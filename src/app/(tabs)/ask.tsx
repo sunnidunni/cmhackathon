@@ -22,7 +22,8 @@ import { isOffline } from "@/lib/offline";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 
 type Exchange = FunctionReturnType<typeof api.ask.history>[number];
-type Pending = { question: string; sent: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean; shots?: Shots };
+type About = Parameters<OnAsk>[1];
+type Pending = { question: string; sent: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean; shots?: Shots; about?: About };
 
 export default function Ask() {
   const p = usePalette();
@@ -51,10 +52,17 @@ export default function Ask() {
   }, []);
 
   // Sample-data answers (fixtures on, no real answer): the flyer for pottery or a bare "that", else the chip's own screenshot.
-  const fixtureFor = (q: string) => (!FIXTURES ? null : fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES) ? { result: demoResult, shots: demoShots } : fixtureAnswer(q));
+  // A follow-up about one screenshot only takes that screenshot's own sample answer, never another one's.
+  const fixtureFor = (q: string, about?: About) => {
+    if (about) {
+      const answer = fixtureNextAnswer(q, about.shotId);
+      return answer ? { result: { ...demoResult, answer }, shots: demoShots } : null;
+    }
+    return !FIXTURES ? null : fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES) ? { result: demoResult, shots: demoShots } : fixtureAnswer(q);
+  };
 
   // `about` is set for an Ask next chip: the question is about that answer's screenshot, not Today's focus.
-  async function send(question: string, about?: Parameters<OnAsk>[1]) {
+  async function send(question: string, about?: About) {
     const q = question.trim();
     if (!q || pending?.status === "looking") return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
@@ -62,37 +70,35 @@ export default function Ask() {
     setAsked((a) => [...a, q]);
     const sentAt = Date.now();
     const sent = about ? `${q} (about: ${about.title})` : withFocus(q, focusTitle);
-    setPending({ question: q, sent, status: "looking", sentAt });
-    const nextAnswer = about && (FIXTURES || isOffline()) ? fixtureNextAnswer(q, about.shotId) : null;
+    setPending({ question: q, sent, status: "looking", sentAt, about });
+    const nextAnswer = about && (FIXTURES || isOffline()) ? fixtureFor(q, about) : null;
     if (nextAnswer) {
-      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, answer: nextAnswer, questionId: "demo" }, demo: true, shots: demoShots });
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...nextAnswer.result, questionId: "demo" }, demo: true, shots: nextAnswer.shots, about });
       return;
     }
-    if (FIXTURES && (!about || about.shotId === DEMO_FLYER.id) && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
+    if (FIXTURES && !about && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
       setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
       return;
     }
     if (isOffline()) {
-      const fixture = fixtureFor(q);
+      const fixture = fixtureFor(q, about);
       const result = fixture ? { ...fixture.result, questionId: "demo" } : { answer: "I can't reach your screenshots right now.", found: false, sources: [], questionId: "offline" };
-      setPending({ question: q, sent, status: "done", sentAt, result, demo: fixture !== null, shots: fixture?.shots });
+      setPending({ question: q, sent, status: "done", sentAt, result, demo: fixture !== null, shots: fixture?.shots, about });
       return;
     }
     setTimeout(() => setSlowFor(sentAt), 400);
     try {
       const result = await askAction({ question: sent });
-      const fixture = !result.found || result.sources.length === 0 ? fixtureFor(q) : null;
+      const fixture = !result.found || result.sources.length === 0 ? fixtureFor(q, about) : null;
       if (fixture) {
-        setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots });
+        setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots, about });
         return;
       }
-      setPending({ question: q, sent, status: "done", sentAt, result });
+      setPending({ question: q, sent, status: "done", sentAt, result, about });
     } catch {
-      if (FIXTURES) {
-        const fixture = fixtureFor(q) ?? { result: demoResult, shots: demoShots };
-        setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots });
-      }
-      else setPending({ question: q, sent, status: "failed", sentAt });
+      const fixture = FIXTURES ? (fixtureFor(q, about) ?? (about ? null : { result: demoResult, shots: demoShots })) : null;
+      if (fixture) setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots, about });
+      else setPending({ question: q, sent, status: "failed", sentAt, about });
     }
   }
 
@@ -131,7 +137,7 @@ export default function Ask() {
             <View style={{ gap: 14 }}>
               <QuestionBubble question={shownPending.question} />
               {shownPending.status === "looking" && slowFor === shownPending.sentAt ? <LookingBlock count={rooms?.count} /> : null}
-              {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question)} /> : null}
+              {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question, shownPending.about)} /> : null}
               {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} onAsk={send} /> : null}
             </View>
           ) : null}
