@@ -25,6 +25,21 @@
       "env": {
         "EXPO_PUBLIC_CONVEX_URL": "https://frugal-grasshopper-744.convex.cloud"
       }
+    },
+    "production": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_CONVEX_URL": "https://frugal-grasshopper-744.convex.cloud"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {}
     }
   }
 }
