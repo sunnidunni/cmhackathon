@@ -102,19 +102,31 @@ export function Banner({ kind, title, body }: { kind: "off" | "error"; title: st
 export function Priming({ preview, onAllow, onSkip }: { preview: { body: string; time: string }; onAllow: () => void; onSkip: () => void }) {
   const p = usePalette();
   const big = useBigText();
+  const sheet = { backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24 } as const;
+  const content = (
+    <>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <Decor><Keeper id="tock" size={big ? 48 : 72} /></Decor>
+        <Text maxFontSizeMultiplier={1.84} style={[text.headlineCard, { color: p.ink, flex: 1 }]}>Tock can tap you on the shoulder.</Text>
+      </View>
+      <Preview label="What you'll get" body={preview.body} time={preview.time} />
+      <Text style={[text.caption, { color: p.ink2 }]}>{"We'll remind you once per item. You can snooze or turn reminders off."}</Text>
+      <PsstButton kind="filled" keeper="tock" label="Turn on notifications" onPress={onAllow} />
+      <PsstButton kind="text" label="Not now, show it in Today" onPress={onSkip} />
+      <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Your reminder is saved either way.</Text>
+    </>
+  );
   return (
     <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0, justifyContent: "flex-end", backgroundColor: p.scrim }}>
-      <ScrollView accessibilityViewIsModal style={{ flexGrow: 0, maxHeight: "92%", backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24 }} contentContainerStyle={{ padding: 16, paddingBottom: 42, gap: 14 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Decor><Keeper id="tock" size={big ? 48 : 72} /></Decor>
-          <Text maxFontSizeMultiplier={1.84} style={[text.headlineCard, { color: p.ink, flex: 1 }]}>Tock can tap you on the shoulder.</Text>
+      {big ? (
+        <ScrollView accessibilityViewIsModal style={[sheet, { flexGrow: 0, maxHeight: "92%" }]} contentContainerStyle={{ padding: 16, paddingBottom: 42, gap: 14 }}>
+          {content}
+        </ScrollView>
+      ) : (
+        <View accessibilityViewIsModal style={[sheet, { padding: 16, paddingBottom: 42, gap: 14 }]}>
+          {content}
         </View>
-        <Preview label="What you'll get" body={preview.body} time={preview.time} />
-        <Text style={[text.caption, { color: p.ink2 }]}>{"We'll remind you once per item. You can snooze or turn reminders off."}</Text>
-        <PsstButton kind="filled" keeper="tock" label="Turn on notifications" onPress={onAllow} />
-        <PsstButton kind="text" label="Not now, show it in Today" onPress={onSkip} />
-        <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Your reminder is saved either way.</Text>
-      </ScrollView>
+      )}
     </View>
   );
 }
