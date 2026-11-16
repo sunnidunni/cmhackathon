@@ -7,13 +7,13 @@ export default function TabsLayout() {
     <NativeTabs tintColor={pal.ink} minimizeBehavior="onScrollDown" backgroundColor={pal.paper} shadowColor={pal.hair} labelStyle={{ fontFamily: fonts.uiBold }}>
       <NativeTabs.Trigger name="today">
         <NativeTabs.Trigger.Icon sf={{ default: "sun.max", selected: "sun.max.fill" }} />
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="rooms">
         <NativeTabs.Trigger.Icon sf={{ default: "square.grid.2x2", selected: "square.grid.2x2.fill" }} />
         <NativeTabs.Trigger.Label>Rooms</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="you">
+      <NativeTabs.Trigger name="you" hidden>
         <NativeTabs.Trigger.Icon sf={{ default: "person.crop.circle", selected: "person.crop.circle.fill" }} />
         <NativeTabs.Trigger.Label>You</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
