@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
@@ -6,6 +7,10 @@ import { useWindUp } from "@/components/tabs/WindUp";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { AllRow, LimitedAccessCard, RoomCard, ROOM_KEYS, UnsortedRow } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
+import { chipLabel, recentlyFiled, roomChips, type FiledItem } from "@/components/rooms/filed";
+import { RecentlyFiled } from "@/components/rooms/RecentlyFiled";
+import type { Category } from "@/components/rooms/format";
+import { previewToday } from "@/components/today/preview";
 import { usePhotoAccess } from "@/lib/photos";
 import { runSync } from "@/lib/sync";
 import { useSafeQuery } from "@/lib/useSafeQuery";
@@ -14,6 +19,9 @@ export default function Rooms() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const list = useSafeQuery(api.rooms.list, {}, []);
+  const tz = new Date().getTimezoneOffset();
+  const all = useSafeQuery(api.rooms.all, {}, undefined);
+  const today = useSafeQuery(api.today.get, { tzOffsetMinutes: tz }, undefined);
   const { access, openLimitedPicker } = usePhotoAccess();
   const windUp = useWindUp(runSync);
 
@@ -25,6 +33,12 @@ export default function Rooms() {
   const unsorted = demo ? { count: demoUnsorted.length, newest: demoUnsorted[0] ?? null } : list?.find((r) => r.category === "unsorted");
   const total = demo ? DEMO_ROWS.length : real;
   const empty = total === 0;
+  const [now] = useState(() => Date.now());
+  const filed: FiledItem[] = demo
+    ? DEMO_ROWS.map((r) => ({ id: r.id, title: r.title, category: r.category, takenAt: r.takenAt, imageUrl: r.imageUrl }))
+    : (all?.items ?? []).map((r) => ({ id: r._id, title: r.title, category: r.category as Category, takenAt: r.takenAt, imageUrl: r.imageUrl }));
+  const handful = ((demo ? previewToday("td-2", tz).data?.handful : today?.handful) ?? []).map((c) => (c.category ?? "unsorted") as Category);
+  const chips = roomChips(filed, handful, now, tz);
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
@@ -38,13 +52,14 @@ export default function Rooms() {
         {[ROOM_KEYS.slice(0, 2), ROOM_KEYS.slice(2)].map((pair) => (
           <View key={pair[0]} style={{ flexDirection: "row", gap: 12 }}>
             {pair.map((room) => (
-              <RoomCard key={room} room={room} count={countOf(room)} onPress={() => router.push(`/room/${room}`)} />
+              <RoomCard key={room} room={room} count={countOf(room)} chip={chips[room] ? chipLabel(chips[room]) : undefined} onPress={() => router.push(`/room/${room}`)} />
             ))}
           </View>
         ))}
         {unsorted && unsorted.count > 0 ? (
           <UnsortedRow count={unsorted.count} newest={unsorted.newest} onPress={() => router.push("/room/unsorted")} />
         ) : null}
+        <RecentlyFiled items={recentlyFiled(filed)} now={now} tz={tz} onOpen={(item) => router.push(`/shot/${item.id}`)} />
         {total !== null && total > 0 ? <AllRow count={total} onPress={() => router.push("/room/all")} /> : null}
         {empty ? (
           <View style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>

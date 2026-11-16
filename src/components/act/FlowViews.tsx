@@ -91,7 +91,7 @@ export function Receipt({ step, edit, fixture }: { step: ActStep; edit: Edit; fi
           <Text style={[text.body, { color: p.ink }]}>{step.eta}</Text>
         </Row>
         <Row label="Pay with">
-          <Text style={[text.body, { color: p.ink }]}>{fixture ? "Card on file" : "Demo card"}</Text>
+          <Text style={[text.body, { color: p.ink }]}>Card on file</Text>
         </Row>
       </SoftCard>
     );
@@ -185,7 +185,7 @@ export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, r
     <View style={{ gap: 16 }}>
       {reply ? (
         <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink }]}>
-          {fixture ? `${reply.to.split(" (")[0]} answered. ` : `Demo: pretend ${reply.to} answered. `}
+          {`${reply.to.split(" (")[0]} answered. `}
           <Text style={text.body}>{reply.text}</Text>
         </Text>
       ) : null}
@@ -225,7 +225,7 @@ function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]>
   useEffect(() => {
     if (shown !== total) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-    playSfx("celebrate");
+    playSfx("sent");
   }, [shown, total]);
   return (
     <View style={{ alignSelf: "stretch", gap: 8 }}>
@@ -236,7 +236,7 @@ function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]>
             <Fade key={row.label}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
                 <Text style={[i === total - 1 ? text.bodyBold : text.body, { color: p.ink, flex: 1 }]}>{row.label}</Text>
-                <Text style={[text.body, { color: p.ink2 }]}>{row.when}</Text>
+                <Text style={[text.body, { color: p.ink2, flexShrink: 0 }]}>{row.when}</Text>
               </View>
             </Fade>
           ) : (

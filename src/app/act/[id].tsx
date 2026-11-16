@@ -116,6 +116,7 @@ export default function Act() {
           openLabel={openLabels[page.step] ?? null}
           onConfirm={async () => {
             const live = fixture || openLabels[page.step];
+            feedback("light");
             playSfx("confirm");
             const result: EffectResult = live ? await runEffect(step, editFor(page.step)) : "fallback";
             setResults((all) => ({ ...all, [page.step]: result }));
