@@ -29,6 +29,7 @@ import type * as lib_time from "../lib/time.js";
 import type * as lib_titles from "../lib/titles.js";
 import type * as lib_whop_signature from "../lib/whop_signature.js";
 import type * as memory from "../memory.js";
+import type * as notes from "../notes.js";
 import type * as plan from "../plan.js";
 import type * as reminders from "../reminders.js";
 import type * as rooms from "../rooms.js";
@@ -71,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   "lib/titles": typeof lib_titles;
   "lib/whop_signature": typeof lib_whop_signature;
   memory: typeof memory;
+  notes: typeof notes;
   plan: typeof plan;
   reminders: typeof reminders;
   rooms: typeof rooms;

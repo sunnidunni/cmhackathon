@@ -11,14 +11,12 @@ const SKIP_ROOMS = new Set(["ideas", "unsorted"]);
 export const batch = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const ready = await ctx.db
+    const todo = await ctx.db
       .query("screenshots")
-      .withIndex("by_status", (q) => q.eq("status", "ready"))
-      .collect();
-    const todo = ready.filter((r) => r.todosExtracted !== true);
+      .withIndex("by_status_todosExtracted", (q) => q.eq("status", "ready").eq("todosExtracted", undefined))
+      .take(BATCH);
     return {
-      remaining: todo.length,
-      rows: todo.slice(0, BATCH).map((r) => ({
+      rows: todo.map((r) => ({
         id: r._id,
         skip: SKIP_ROOMS.has(r.category ?? "unsorted") || !(r.text ?? r.summary),
         title: r.title ?? "",
@@ -45,7 +43,7 @@ export const apply = internalMutation({
 export const run = internalAction({
   args: {},
   handler: async (ctx) => {
-    const { rows, remaining } = await ctx.runQuery(internal.todosBackfill.batch, {});
+    const { rows } = await ctx.runQuery(internal.todosBackfill.batch, {});
     if (rows.length === 0) return;
     let progressed = 0;
     for (let i = 0; i < rows.length; i += CHUNK) {
@@ -61,6 +59,6 @@ export const run = internalAction({
         }),
       );
     }
-    if (remaining > rows.length && progressed > 0) await ctx.scheduler.runAfter(0, internal.todosBackfill.run, {});
+    if (rows.length === BATCH && progressed > 0) await ctx.scheduler.runAfter(0, internal.todosBackfill.run, {});
   },
 });
