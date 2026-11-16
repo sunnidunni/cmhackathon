@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -94,13 +94,11 @@ export default function Detail() {
     [markDone, isDemo, shotId],
   );
 
-  const header = <Stack.Screen options={{ headerShown: true, headerTransparent: true, title: "", headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }} />;
   const top = Platform.OS === "ios" ? 8 : 64;
 
   if (shot === undefined)
     return (
       <View style={{ flex: 1, backgroundColor: p.paper }}>
-        {header}
         <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingTop: top, gap: 16 }}>
           <Skeleton w="100%" h={260} style={{ borderRadius: 16 }} />
           <Skeleton w={120} h={14} />
@@ -113,7 +111,6 @@ export default function Detail() {
   if (shot === null)
     return (
       <View style={{ flex: 1, backgroundColor: p.paper }}>
-        {header}
         <View style={{ flex: 1, padding: 16, justifyContent: "center", gap: 12 }}>
           <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{"I can't find that screenshot."}</Text>
           <Text style={[text.lead, { color: p.ink2 }]}>It may have been deleted.</Text>
@@ -154,7 +151,6 @@ export default function Detail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      {header}
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingTop: top, paddingBottom: 24, gap: 12 }}>
         <RoomWash keeper={keeper} muted={finished || !isRoom} style={{ paddingVertical: 20, alignItems: "center" }}>
           <Pressable
