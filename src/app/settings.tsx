@@ -231,6 +231,16 @@ export default function Settings() {
           <ActionRow first title="Delete everything" tone="danger" onPress={confirmDelete} />
         </Group>
 
+        <View style={{ gap: 8 }}>
+          <SectionLabel>More</SectionLabel>
+          <Group>
+            <ActionRow first title="About Psst" onPress={() => router.push("/about")} />
+            <ActionRow title="Activity" onPress={() => router.push("/activity")} />
+            <ActionRow title="Let Psst prepare actions" onPress={() => router.push("/settings/actions")} />
+            <ActionRow title="Your week with Psst" onPress={() => router.push("/recap")} />
+          </Group>
+        </View>
+
         {DEV_TOOLS ? (
           <View style={{ gap: 8 }}>
             <SectionLabel>Developer</SectionLabel>
