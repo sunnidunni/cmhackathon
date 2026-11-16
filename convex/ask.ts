@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { action, query } from "./_generated/server";
-import { toSources, type Source } from "./askData";
+import { askLibrary, toSources, type Source } from "./askData";
 import { requireUserId } from "./lib/auth";
 import { askModel } from "./lib/llm";
 import { suggestionsFrom } from "./lib/suggestions";
@@ -88,8 +88,8 @@ export const suggestions = query({
       .query("screenshots")
       .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
       .order("desc")
-      .take(200);
-    return suggestionsFrom(rows.map((r) => ({ ...r, id: r._id })));
+      .take(300);
+    return suggestionsFrom(askLibrary(rows).map((r) => ({ ...r, id: r._id })));
   },
 });
 
