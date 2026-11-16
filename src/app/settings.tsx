@@ -7,6 +7,7 @@ import { ActionRow, Footer, Group, SectionLabel, SwitchRow } from "@/components/
 import { fonts, KEEPER_IDS, KEEPERS, KeeperFace, SoftCard, text, usePalette } from "@/design/psst";
 import { resetActs } from "@/lib/act/store";
 import { useAutoRead } from "@/lib/auto-read";
+import { useSounds } from "@/lib/sfx";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
 import { DEV_TOOLS, useLibraryDiagnostics, usePhotoAccess, useReadAllPhotos } from "@/lib/photos";
 import { useSync } from "@/lib/sync";
@@ -59,6 +60,7 @@ export default function Settings() {
   const { status, syncNow } = useSync();
   const removeAll = useMutation(api.shots.removeAll);
   const { enabled: autoRead, setEnabled: setAutoRead } = useAutoRead();
+  const { enabled: sounds, setEnabled: setSounds } = useSounds();
   const [notify, setNotify] = useState(false);
   const [checked, setChecked] = useState<string | null>(null);
   const [readAll, setReadAll] = useReadAllPhotos();
@@ -161,6 +163,20 @@ export default function Settings() {
             />
           </Group>
           <Footer>{"We'll remind you once per item. You can snooze or turn reminders off."}</Footer>
+        </View>
+
+        <View style={{ gap: 8 }}>
+          <SectionLabel>Sounds</SectionLabel>
+          <Group>
+            <SwitchRow
+              first
+              title="Sounds"
+              detail={sounds ? "On. Small sounds for keepers and confirmations. Your silent switch still mutes them." : "Off. Psst stays quiet."}
+              value={sounds}
+              onValueChange={(on) => void setSounds(on)}
+              testID="sounds-switch"
+            />
+          </Group>
         </View>
 
         <View style={{ gap: 8 }}>

@@ -2,6 +2,7 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useState, type ReactNode } from "react";
 import { AccessibilityInfo, Text, View } from "react-native";
 import { PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
+import { play as playSfx } from "@/lib/sfx";
 import { arrivalTime, PIZZA_ORDER as O } from "@/lib/act/scenarios/pizzaOrder";
 import type { ActScenario } from "@/lib/act/types";
 import { Fade, TypingDots } from "./Motion";
@@ -139,6 +140,7 @@ export function PizzaOrderFlow({ scenario, sent, onPlaced, onClose }: { scenario
 
   const place = () => {
     tap("success");
+    playSfx("sent");
     setEta(arrivalTime(new Date(), O.etaMinutes));
     setPhase("placed");
     onPlaced();

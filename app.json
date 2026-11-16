@@ -67,6 +67,14 @@
         {
           "calendarPermission": "Psst adds an event to your calendar only after you confirm it."
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
+        }
       ]
     ],
     "experiments": {
