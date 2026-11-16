@@ -9,6 +9,7 @@ import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
 import { shownQuestion, withFocus } from "@/components/ask/focus";
+import { useFocusMemory } from "@/components/today/focusMemory";
 import { buildScreen } from "@/components/today/model";
 import { text, usePalette } from "@/design/psst";
 import { FIXTURES } from "@/lib/fixtures";
@@ -21,7 +22,8 @@ export default function Ask() {
   const history = useQuery(api.ask.history);
   const rooms = useQuery(api.rooms.all);
   const today = useQuery(api.today.get, { tzOffsetMinutes: new Date().getTimezoneOffset() });
-  const { screen } = buildScreen(today, new Set());
+  const [focusMemory] = useFocusMemory();
+  const { screen } = buildScreen(focusMemory === undefined ? undefined : today, new Set(), undefined, focusMemory ?? null);
   const focusTitle = screen.kind === "focus" ? screen.focus.title : null;
   const askAction = useAction(api.ask.ask);
   const [input, setInput] = useState("");
