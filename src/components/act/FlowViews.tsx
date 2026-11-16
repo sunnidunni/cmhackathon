@@ -1,7 +1,10 @@
-import { useState, type ReactNode } from "react";
+import * as Haptics from "expo-haptics";
+import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
 import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
+import { Fade } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
 
@@ -204,6 +207,40 @@ export function ConfirmPage({ scenario, step, final, edit, fixture, reply, onCon
   );
 }
 
+function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]> }) {
+  const p = usePalette();
+  const reduce = useReducedMotion();
+  const total = timeline.rows.length;
+  const [shown, setShown] = useState(reduce ? total : 0);
+  useEffect(() => {
+    if (shown >= total) return;
+    const t = setTimeout(() => setShown((n) => n + 1), shown === 0 ? 400 : 900);
+    return () => clearTimeout(t);
+  }, [shown, total]);
+  useEffect(() => {
+    if (shown === total) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+  }, [shown, total]);
+  return (
+    <View style={{ alignSelf: "stretch", gap: 8 }}>
+      <Text style={[text.caption, { color: p.ink2 }]}>{timeline.caption}</Text>
+      <SoftCard style={{ gap: 12 }}>
+        {timeline.rows.map((row, i) =>
+          i < shown ? (
+            <Fade key={row.label}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+                <Text style={[i === total - 1 ? text.bodyBold : text.body, { color: p.ink, flex: 1 }]}>{row.label}</Text>
+                <Text style={[text.body, { color: p.ink2 }]}>{row.when}</Text>
+              </View>
+            </Fade>
+          ) : (
+            <View key={row.label} style={{ height: 24 }} />
+          ),
+        )}
+      </SoftCard>
+    </View>
+  );
+}
+
 export function DonePage({ scenario, fixture, onClose }: { scenario: ActScenario; fixture: boolean; onClose: () => void }) {
   const p = usePalette();
   const last = lastAction(scenario.steps);
@@ -211,7 +248,7 @@ export function DonePage({ scenario, fixture, onClose }: { scenario: ActScenario
   const end = realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
-      <Keeper id={scenario.keeper} size={120} mood="react" />
+      <Keeper id={scenario.keeper} size={fixture && scenario.timeline ? 88 : 120} mood="react" />
       {fixture ? (
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
       ) : (
@@ -220,6 +257,7 @@ export function DonePage({ scenario, fixture, onClose }: { scenario: ActScenario
           <Text accessibilityLiveRegion="polite" style={[text.body, { color: p.ink2, textAlign: "center" }]}>{end.body}</Text>
         </>
       )}
+      {fixture && scenario.timeline ? <Timeline timeline={scenario.timeline} /> : null}
       <PsstButton kind="filled" keeper={scenario.keeper} label="Done" onPress={onClose} />
     </View>
   );

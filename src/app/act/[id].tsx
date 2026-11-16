@@ -18,7 +18,8 @@ export default function Act() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const scenario = (FIXTURES ? DEMO_ACTS.find((a) => a.id === id) : undefined) ?? getDetectedAct(id);
+  const found = (FIXTURES ? DEMO_ACTS.find((a) => a.id === id) : undefined) ?? getDetectedAct(id);
+  const scenario = useMemo(() => (found?.flowKeeper ? { ...found, keeper: found.flowKeeper } : found), [found]);
   const { undone } = useActState();
   const pages = useMemo(() => buildPages(scenario?.steps ?? []), [scenario]);
   const [index, setIndex] = useState(0);

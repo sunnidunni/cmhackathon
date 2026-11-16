@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ActScenario, ActStep } from "../../lib/act/types";
 import { buildPages, confirmFor, doneLine, isFixtureAct, itemsSum, lastAction, nextLabel, realEnd, realLine, reminderCopy, totalCents, demoLine } from "./pages";
 
-vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2, BILL_IMAGE: 3, CONCERT_IMAGE: 4 }));
+vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2, FLIGHT_LATE_IMAGE: 5, BILL_IMAGE: 3, CONCERT_IMAGE: 4 }));
 
 let DEMO_ACTS: ActScenario[] = [];
 const act = (id: string) => DEMO_ACTS.find((a) => a.id === id)!;
@@ -16,10 +16,13 @@ describe("act pages", () => {
     expect(buildPages(act("mom-pizza").steps).map((p) => p.kind)).toEqual(["edit", "confirm", "confirm", "done"]);
     expect(buildPages(act("mom-pizza").steps)[2]).toMatchObject({ kind: "confirm", step: 1, final: true });
   });
-  it("delay moves the reminder, then drafts and confirms the text", () => {
-    const pages = buildPages(act("flight-delay").steps);
-    expect(pages.map((p) => p.kind)).toEqual(["move", "edit", "confirm", "done"]);
-    expect(pages[2]).toMatchObject({ kind: "confirm", final: true });
+  it("flight claim: Tock's card, Penny's flow, one email confirm, then the timeline", () => {
+    const claim = act("flight-eu261");
+    expect([claim.keeper, claim.flowKeeper]).toEqual(["tock", "penny"]);
+    expect(buildPages(claim.steps).map((p) => p.kind)).toEqual(["edit", "confirm", "done"]);
+    expect(claim.cta).toBe("Review claim");
+    expect(claim.timeline?.rows.map((r) => r.label)).toEqual(["Claim sent", "Airline replied", "Approved", "Paid €600 (about $700)"]);
+    expect(claim.timeline?.rows.every((r) => /^Day \d+$/.test(r.when))).toBe(true);
   });
   it("uses the scenario confirm for the last send and a derived one before it", () => {
     const pizza = act("mom-pizza");
@@ -56,19 +59,18 @@ describe("act pages", () => {
   });
   it("done copy: product voice on fixtures, honest on real and detected acts", () => {
     const pizza = act("mom-pizza");
-    const delay = act("flight-delay");
+    const delay = act("flight-eu261");
     expect(doneLine(pizza, lastAction(pizza.steps), true)).toBe("Order placed · $41.75");
-    expect(doneLine(delay, lastAction(delay.steps), true)).toBe("Sent to Sam.");
+    expect(doneLine(delay, lastAction(delay.steps), true)).toBe("Claim sent to the airline.");
     expect(doneLine(pizza, lastAction(pizza.steps), false)).toBe("Demo: nothing was ordered or charged.");
-    expect(doneLine({ ...delay, doneFixture: "Claim sent to the airline." }, lastAction(delay.steps), true)).toBe("Claim sent to the airline.");
-    expect(doneLine({ ...delay, doneFixture: "Claim sent to the airline." }, lastAction(delay.steps), false)).toBe("Demo: nothing was sent.");
+    expect(doneLine(delay, lastAction(delay.steps), false)).toBe("Demo: nothing was sent.");
     expect(doneLine(act("bill-willow-grid"), lastAction(act("bill-willow-grid").steps), true)).toBe("Email sent to Willow Grid.");
     expect(doneLine(act("concert-calendar"), undefined, true)).toBeTruthy();
   });
   it("fixtures are gated per scenario: a detected act stays honest even with fixtures on", () => {
-    const real: ActScenario = { ...act("flight-delay"), id: "real:delay:26-flight-delay", done: "Nothing was sent." };
-    expect(isFixtureAct(act("flight-delay"), true)).toBe(true);
-    expect(isFixtureAct(act("flight-delay"), false)).toBe(false);
+    const real: ActScenario = { ...act("flight-eu261"), id: "real:delay:26-flight-delay", done: "Nothing was sent." };
+    expect(isFixtureAct(act("flight-eu261"), true)).toBe(true);
+    expect(isFixtureAct(act("flight-eu261"), false)).toBe(false);
     expect(isFixtureAct(real, true)).toBe(false);
     expect(doneLine(real, lastAction(real.steps), isFixtureAct(real, true))).toBe("Nothing was sent.");
     expect(realEnd(lastAction(real.steps))).toEqual({ title: "Nothing was sent.", body: "Sending isn't connected in this version." });
