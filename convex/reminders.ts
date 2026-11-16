@@ -75,6 +75,11 @@ export const cancel = mutation({
   },
 });
 
+async function sendToLine(ctx: MutationCtx, userId: Id<"users">, reminderId: Id<"reminders">) {
+  if (!process.env.LINE_USER_ID || process.env.LINE_USER_ID !== userId) return;
+  await ctx.scheduler.runAfter(0, internal.line.sendReminder, { reminderId });
+}
+
 // Called by the scheduler at dueAt, independent of notification permission on the phone.
 export const fire = internalMutation({
   args: { reminderId: v.id("reminders") },
@@ -82,6 +87,7 @@ export const fire = internalMutation({
     const r = await ctx.db.get(reminderId);
     if (r === null || r.status !== "scheduled") return;
     await ctx.db.patch(reminderId, { status: "sent", sentAt: Date.now(), scheduledId: undefined });
+    await sendToLine(ctx, r.userId, reminderId);
   },
 });
 
@@ -105,6 +111,7 @@ export const fireNow = mutation({
       active?._id ??
       (await ctx.db.insert("reminders", { userId, screenshotId, whenKey: when ?? undefined, ...fields }));
     if (active) await ctx.db.patch(active._id, fields);
+    await sendToLine(ctx, userId, reminderId);
     return { reminderId, text: message };
   },
 });
