@@ -15,7 +15,8 @@ import { HandfulRows } from "@/components/today/HandfulRows";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
-import { previewToday } from "@/components/today/preview";
+import { TodoSection } from "@/components/today/TodoSection";
+import { previewToday, previewTodos } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
 import { DoneView, EmptyView, FailedLine, LoadingView, ReadingView } from "@/components/today/States";
 import { sameMemory, withSkipped } from "@/components/today/focus";
@@ -209,6 +210,7 @@ export default function Today() {
           {resurfaced ? (
             <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
           ) : null}
+          <TodoSection day={today?.day} shown={rendered.map((i) => i.id)} demo={FIXTURES && preview ? previewTodos(preview) : null} />
           {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Psst. Your original screenshot stays in Photos.</Text> : null}
           {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
           {today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
