@@ -1,10 +1,9 @@
 import { useQuery } from "convex/react";
 import * as Notifications from "expo-notifications";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { usePalette } from "@/design/psst";
 import { fixtureShot } from "@/components/remind/fixture";
 import { isConvexId } from "@/components/remind/ids";
 import { defaultReminder, demoNow } from "@/components/remind/plan";
@@ -17,7 +16,6 @@ const tz = () => new Date().getTimezoneOffset();
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
 
 export default function Remind() {
-  const p = usePalette();
   const { id } = useLocalSearchParams<{ id: string }>();
   const shotId = id as Id<"screenshots">;
   const real = isConvexId(id);
@@ -68,7 +66,6 @@ export default function Remind() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.95], sheetCornerRadius: 24, contentStyle: { backgroundColor: p.paper } }} />
       <RemindBody
         shot={shot}
         now={now}
