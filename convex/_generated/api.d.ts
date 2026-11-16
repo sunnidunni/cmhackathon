@@ -33,6 +33,7 @@ import type * as reminders from "../reminders.js";
 import type * as rooms from "../rooms.js";
 import type * as screenshots from "../screenshots.js";
 import type * as shots from "../shots.js";
+import type * as siri from "../siri.js";
 import type * as sync from "../sync.js";
 import type * as today from "../today.js";
 import type * as todos from "../todos.js";
@@ -73,6 +74,7 @@ declare const fullApi: ApiFromModules<{
   rooms: typeof rooms;
   screenshots: typeof screenshots;
   shots: typeof shots;
+  siri: typeof siri;
   sync: typeof sync;
   today: typeof today;
   todos: typeof todos;
