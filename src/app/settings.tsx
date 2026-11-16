@@ -235,6 +235,7 @@ export default function Settings() {
           <SectionLabel>More</SectionLabel>
           <Group>
             <ActionRow first title="About Psst" onPress={() => router.push("/about")} />
+            <ActionRow title="What happens to your screenshots" onPress={() => router.push("/privacy")} />
             <ActionRow title="Activity" onPress={() => router.push("/activity")} />
             <ActionRow title="Let Psst prepare actions" onPress={() => router.push("/settings/actions")} />
             <ActionRow title="Your week with Psst" onPress={() => router.push("/recap")} />
