@@ -10,6 +10,7 @@ import { usePalette, usePsstFonts } from "@/design/psst";
 import { convex } from "@/lib/convex";
 import { AppLifecycle } from "@/lib/lifecycle";
 import { setOffline, useOffline } from "@/lib/offline";
+import { preloadSfx } from "@/lib/sfx";
 import { secureStorage } from "@/lib/secure-storage";
 
 const SIGN_IN_TIMEOUT_MS = 4000;
@@ -45,6 +46,9 @@ const backHeader: SheetOptions = { headerShown: true, headerTransparent: true, t
 export default function RootLayout() {
   useStickerFonts();
   usePsstFonts();
+  useEffect(() => {
+    preloadSfx();
+  }, []);
   const pal = usePalette();
   const sheet = useMemo<SheetOptions>(
     () => ({ presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.95], sheetCornerRadius: 24, contentStyle: { backgroundColor: pal.paper } }),

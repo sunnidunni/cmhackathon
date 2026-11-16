@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { play as playSfx, sfxForReaction } from "../../lib/sfx";
 import { blink as blinkT, duration, easing, spring } from "../motion";
 import { Art, usePrefix } from "./Art";
 import { KEEPER_ART, type BodyPose, type FaceState, type KeeperName } from "./keeperArt";
@@ -81,6 +82,7 @@ export const Keeper = forwardRef<KeeperHandle, Props>(function Keeper({ name, st
   const blinking = useBlink(name, !reduce && !asleep);
   const [smiling, setSmiling] = useState(false);
   const lineIndex = useRef(0);
+  const pending = useRef(new Set<ReturnType<typeof setTimeout>>());
 
   const y = useSharedValue(0);
   const rot = useSharedValue(0);
@@ -131,15 +133,25 @@ export const Keeper = forwardRef<KeeperHandle, Props>(function Keeper({ name, st
   const play = useCallback(
     (r: KeeperReaction) => {
       const wait = reserveReaction(reduce ? duration.reaction : REACTION_MS[r]);
-      setTimeout(() => {
+      const t = setTimeout(() => {
+        pending.current.delete(t);
+        playSfx(sfxForReaction(name, r));
         animate(r);
         if (r === "reveal") smileFor(duration.reaction, reduce ? 0 : M.reveal.smileAt);
         else if (r !== "filed" || reduce) smileFor(duration.reaction);
       }, wait);
+      pending.current.add(t);
     },
-    [animate, reduce, smileFor],
+    [animate, name, reduce, smileFor],
   );
   useImperativeHandle(ref, () => ({ play }), [play]);
+  useEffect(() => {
+    const queued = pending.current;
+    return () => {
+      queued.forEach(clearTimeout);
+      queued.clear();
+    };
+  }, []);
 
   useEffect(() => {
     if (reaction && reactionKey !== undefined) play(reaction);

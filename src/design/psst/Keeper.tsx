@@ -2,6 +2,7 @@ import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
 import { Keeper as KeeperV2, KeeperAvatar, type KeeperHandle, type KeeperReaction } from "../keepers-v2";
+import { play as playSfx, sfxForReaction } from "../../lib/sfx";
 import { duration, easing } from "../motion";
 import type { KeeperId } from "./tokens";
 
@@ -55,6 +56,7 @@ export function KeeperFace({ id, size, mood = "rest", muted = false, reaction, r
   useEffect(() => {
     if (!reaction || reactionKey === undefined || muted) return;
     const hop = (h: number) => withSequence(withTiming(-h, { duration: 110, easing: easing.out }), withTiming(0, { duration: 140, easing: easing.in }));
+    if (reaction === "celebrate") playSfx(sfxForReaction(id, reaction));
     if (!reduce) y.set(reaction === "celebrate" ? withSequence(hop(size * 0.2), hop(size * 0.12)) : hop(size * 0.2));
     const on = setTimeout(() => setSmiling(true), 0);
     const off = setTimeout(() => setSmiling(false), duration.reaction);
@@ -62,7 +64,7 @@ export function KeeperFace({ id, size, mood = "rest", muted = false, reaction, r
       clearTimeout(on);
       clearTimeout(off);
     };
-  }, [reaction, reactionKey, muted, reduce, size, y]);
+  }, [id, reaction, reactionKey, muted, reduce, size, y]);
 
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
   return (
