@@ -8,11 +8,11 @@ import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult 
 import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
-import { shownQuestion, withFocus } from "@/components/ask/focus";
+import { fixtureAnswerFits, shownQuestion, withFocus } from "@/components/ask/focus";
 import { useFocusMemory } from "@/components/today/focusMemory";
 import { buildScreen } from "@/components/today/model";
 import { text, usePalette } from "@/design/psst";
-import { FIXTURES } from "@/lib/fixtures";
+import { DEMO_FLYER, FIXTURES } from "@/lib/fixtures";
 import { isOffline } from "@/lib/offline";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 
@@ -52,7 +52,7 @@ export default function Ask() {
     const sent = withFocus(q, focusTitle);
     setPending({ question: q, sent, status: "looking", sentAt });
     if (isOffline()) {
-      const pottery = /pottery/i.test(q);
+      const pottery = fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES);
       const result = pottery ? { ...demoResult, questionId: "demo" } : { answer: "I can't reach your screenshots right now.", found: false, sources: [], questionId: "offline" };
       setPending({ question: q, sent, status: "done", sentAt, result, demo: pottery });
       return;
@@ -60,6 +60,10 @@ export default function Ask() {
     setTimeout(() => setSlowFor(sentAt), 400);
     try {
       const result = await askAction({ question: sent });
+      if ((!result.found || result.sources.length === 0) && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES)) {
+        setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true });
+        return;
+      }
       setPending({ question: q, sent, status: "done", sentAt, result });
     } catch {
       if (FIXTURES) setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true });
@@ -67,9 +71,11 @@ export default function Ask() {
     }
   }
 
-  const exchanges: Exchange[] = history ?? [];
+  const isPendingRow = (ex: Exchange) => pending !== null && ex.question === pending.sent && ex.createdAt >= pending.sentAt - 5000;
+  const exchanges: Exchange[] = (history ?? []).filter((ex) => !(pending?.demo && isPendingRow(ex)));
   const synced =
     pending !== null &&
+    !pending.demo &&
     pending.status !== "failed" &&
     exchanges.some((ex) => ex._id === pending.result?.questionId || (ex.question === pending.sent && ex.createdAt >= pending.sentAt - 5000));
   const shownPending = synced ? null : pending;

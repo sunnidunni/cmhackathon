@@ -23,11 +23,13 @@ type KeeperProps = Reactive & {
   label?: string;
   /** Tap to boop: the v2 tap reaction, plus one selection haptic at most every 3 s. Use on keepers 72pt or larger that sit outside another button. */
   boop?: boolean;
+  /** The sleeping pose: three slow breaths, then still. */
+  sleeping?: boolean;
 };
 
 const BOOP_HAPTIC_GAP_MS = 3000;
 
-export function Keeper({ id, size, mood = "rest", muted = false, boop = false, reaction, reactionKey }: KeeperProps) {
+export function Keeper({ id, size, mood = "rest", muted = false, boop = false, sleeping = false, reaction, reactionKey }: KeeperProps) {
   // "react" plays the tap reaction once each time the mood flips to react.
   const ref = useRef<KeeperHandle>(null);
   useEffect(() => {
@@ -40,7 +42,7 @@ export function Keeper({ id, size, mood = "rest", muted = false, boop = false, r
     lastHaptic.current = now;
     Haptics.selectionAsync().catch(() => undefined);
   }, []);
-  return <KeeperV2 ref={ref} name={id} size={size} state={muted ? "muted" : "rest"} onLine={boop && !muted ? onBoop : undefined} reaction={reaction} reactionKey={reactionKey} />;
+  return <KeeperV2 ref={ref} name={id} size={size} state={muted ? "muted" : sleeping ? "sleeping" : "rest"} onLine={boop && !muted ? onBoop : undefined} reaction={reaction} reactionKey={reactionKey} />;
 }
 
 type KeeperFaceProps = Reactive & { id: KeeperId; size: number; mood?: KeeperMood; muted?: boolean; still?: boolean; label?: string };

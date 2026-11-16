@@ -168,7 +168,7 @@ export const Keeper = forwardRef<KeeperHandle, Props>(function Keeper({ name, st
       y.set(size * M.holding.lift);
       y.set(withTiming(0, { duration: M.holding.duration, easing: easing.out }));
     } else if (state === "sleeping") {
-      sy.set(withRepeat(withTiming(M.breathe.scaleY, { duration: M.breathe.half, easing: easing.inOut }), -1, true));
+      sy.set(withRepeat(withTiming(M.breathe.scaleY, { duration: M.breathe.half, easing: easing.inOut }), 6, true));
       return () => {
         sy.set(withTiming(1, { duration: duration.quick }));
       };
