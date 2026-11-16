@@ -107,6 +107,14 @@ describe("detect over the demo manifest", () => {
   });
 });
 
+describe("calendar year", () => {
+  test("names the year when the event is not in the current year, so the effect cannot guess", () => {
+    const row = manifest.find((r) => r.file.includes("dentist")) as Row;
+    const act = detect({ ...asShot(row), dates: [{ when: "2027-11-22T20:00:00", what: "Dental cleaning", confident: true }] }, NOW);
+    expect(act?.steps[0]).toMatchObject({ kind: "calendar", when: "Nov 22, 2027, 8:00 PM" });
+  });
+});
+
 describe("saved label", () => {
   test("says today with the time for a screenshot saved today", () => {
     const row = manifest.find((r) => r.file.includes("dentist")) as Row;

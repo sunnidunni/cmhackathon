@@ -7,6 +7,7 @@ import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from 
 import { Fade } from "@/components/act/Motion";
 import { buildPages, isFixtureAct, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
+import { effectLabel, realEffectEnd, runEffect, type EffectResult } from "@/lib/act/effects";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
 import { getDetectedAct } from "@/lib/act/useDetectedActs";
@@ -23,8 +24,21 @@ export default function Act() {
   const pages = useMemo(() => buildPages(scenario?.steps ?? []), [scenario]);
   const [index, setIndex] = useState(0);
   const [edits, setEdits] = useState<Record<number, Edit>>({});
+  const [results, setResults] = useState<Record<number, EffectResult>>({});
+  const [openLabels, setOpenLabels] = useState<Record<number, string | null>>({});
   const page = pages[index];
   const fixture = scenario ? isFixtureAct(scenario, FIXTURES) : false;
+  const confirmStep = scenario && page?.kind === "confirm" ? scenario.steps[page.step] : undefined;
+  const confirmIndex = page?.kind === "confirm" ? page.step : -1;
+
+  useEffect(() => {
+    if (fixture || !confirmStep) return;
+    let live = true;
+    effectLabel(confirmStep).then((label) => live && setOpenLabels((all) => ({ ...all, [confirmIndex]: label })));
+    return () => {
+      live = false;
+    };
+  }, [fixture, confirmStep, confirmIndex]);
 
   useEffect(() => {
     if (scenario && page?.kind === "done") completeAct(scenario.id);
@@ -53,7 +67,11 @@ export default function Act() {
   };
 
   const body = () => {
-    if (page.kind === "done") return <DonePage scenario={scenario} fixture={fixture} onClose={close} />;
+    if (page.kind === "done") {
+      const lastIndex = scenario.steps.findLastIndex((s) => !isReminderStep(s));
+      const end = fixture ? null : realEffectEnd(scenario.steps[lastIndex], results[lastIndex]);
+      return <DonePage scenario={scenario} fixture={fixture} end={end} onClose={close} />;
+    }
     const step = scenario.steps[page.step];
     if (page.kind === "move" && isReminderStep(step))
       return (
@@ -80,8 +98,12 @@ export default function Act() {
           edit={editFor(page.step)}
           fixture={fixture}
           onEdit={() => go(index - 1)}
-          onConfirm={() => {
-            feedback(fixture ? "success" : "light");
+          openLabel={openLabels[page.step] ?? null}
+          onConfirm={async () => {
+            const live = fixture || openLabels[page.step];
+            const result: EffectResult = live ? await runEffect(step, editFor(page.step)) : "fallback";
+            setResults((all) => ({ ...all, [page.step]: result }));
+            feedback(fixture || result === "done" ? "success" : "light");
             go(index + 1);
           }}
         />
