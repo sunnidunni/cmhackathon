@@ -1,25 +1,31 @@
-import { useMutation, useQuery } from "convex/react";
+import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
 import { SymbolView } from "expo-symbols";
-import { AccessibilityInfo, Alert, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { AccessibilityInfo, Alert, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { ActCards } from "@/components/act/ActCards";
+import { ActCards, useHasActs } from "@/components/act/ActCards";
 import { ReminderRows, RememberCard } from "@/components/today/Extras";
 import { FocusCard, Headline } from "@/components/today/FocusCard";
-import { Todos } from "@/components/tabs/Todos";
 import { HandfulRows } from "@/components/today/HandfulRows";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
-import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
-import { previewToday } from "@/components/today/preview";
+import { FiledToast, useFiledToast } from "@/components/today/FiledToast";
+import { actionsFor, buildItems, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
+import { TodoSection } from "@/components/today/TodoSection";
+import { previewToday, previewTodos } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
-import { DoneView, EmptyView, FailedCard, LoadingView, ReadingView } from "@/components/today/States";
+import { DoneView, EmptyView, FailedLine, LoadingView, ReadingView } from "@/components/today/States";
+import { sameMemory, withSkipped } from "@/components/today/focus";
+import { useFocusMemory } from "@/components/today/focusMemory";
+import { useWindUp } from "@/components/tabs/WindUp";
+import { useOffline } from "@/lib/offline";
 import { runSync } from "@/lib/sync";
+import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
 
 // Fixtures fill a keeper line only when the card has none and FIXTURES is on.
 const fixtureLine = FIXTURES
@@ -62,8 +68,8 @@ function Header() {
   );
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-      <Text accessibilityRole="header" style={[text.headline, { fontSize: 24, color: p.ink }]}>
-        Psst
+      <Text accessibilityRole="header" allowFontScaling={false} style={[text.headline, { fontSize: 24, color: p.ink }]}>
+        shots.
       </Text>
       {glass ? (
         <GlassView isInteractive style={{ width: 44, height: 44, borderRadius: 22 }}>
@@ -80,8 +86,11 @@ export default function Today() {
   const p = usePalette();
   const { preview } = useLocalSearchParams<{ preview?: string }>();
   const tz = new Date().getTimezoneOffset();
-  const live = useQuery(api.today.get, { tzOffsetMinutes: tz });
-  const demo = FIXTURES && preview ? previewToday(preview, tz) : null;
+  const offline = useOffline();
+  const live = useSafeQuery(api.today.get, { tzOffsetMinutes: tz }, undefined);
+  const emptyAccount = FIXTURES && !!live && live.reading.total === 0 && live.justIn.length + live.missed.length + live.handful.length === 0 && !live.thin;
+  const prefill = FIXTURES && live === undefined;
+  const demo = (FIXTURES && preview) || offline || emptyAccount || prefill ? previewToday(preview ?? "td-2", tz) : null;
   const today = demo ? demo.data : live;
   const [clock, setClock] = useState(() => Date.now());
   useEffect(() => {
@@ -89,24 +98,28 @@ export default function Today() {
     return () => clearInterval(timer);
   }, []);
   const now = demo ? demo.now : clock;
-  const done = useMutation(api.shots.done);
-  const keep = useMutation(api.shots.keep);
-  const remove = useMutation(api.shots.remove);
-  const retryAll = useMutation(api.extract.retryAllFailed);
+  const done = useSafeMutation(api.shots.done);
+  const keep = useSafeMutation(api.shots.keep);
+  const remove = useSafeMutation(api.shots.remove);
+  const retryAll = useSafeMutation(api.extract.retryAllFailed);
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   const [failed, setFailed] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const windUp = useWindUp(runSync, () => setFailed(true));
   const [removed, setRemoved] = useState(false);
-  const { screen } = buildScreen(today, skipped, fixtureLine);
+  const hasActs = useHasActs();
+  const todos = useSafeQuery(api.todos.list, {}, undefined);
+  const hasCards = hasActs || (todos?.length ?? 0) > 0;
+  const [focusMemory, saveFocus] = useFocusMemory();
+  const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory ?? null);
+  const filedItem = useFiledToast(demo || !today ? null : buildItems(today, fixtureLine));
+  useEffect(() => {
+    if (!demo && memory && !sameMemory(memory, focusMemory)) saveFocus(memory);
+  }, [demo, memory, focusMemory, saveFocus]);
   const rendered = screen.kind === "focus" ? [screen.focus, ...screen.rows] : screen.kind === "reading" || screen.kind === "done" ? screen.rows : [];
   const reminderRows = today ? extraReminders(today, rendered) : [];
   const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin", fixtureLine) : null;
 
-  const checkForNew = async () => {
-    setRefreshing(true);
-    await runSync().catch(() => setFailed(true));
-    setRefreshing(false);
-  };
+  const checkForNew = windUp.refresh;
 
   const run = async (work: () => Promise<unknown>) => {
     setFailed(false);
@@ -118,10 +131,14 @@ export default function Today() {
       setFailed(true);
     }
   };
-  const skip = (item: Item) => setSkipped((s) => new Set(s).add(item.id));
+  const skip = (item: Item) => {
+    setSkipped((s) => new Set(s).add(item.id));
+    if (!demo && today) saveFocus(withSkipped(focusMemory, today.day, item.id));
+  };
   const open = (item: Item) => router.push(`/shot/${item.id}`);
   const remind = (item: Item) => router.push(`/remind/${item.id}` as never);
   const act = (item: Item, kind: ReturnType<typeof actionsFor>["primaryKind"] | ReturnType<typeof actionsFor>["secondaryKind"]) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     if (kind === "remind") return remind(item);
     if (kind === "see") return open(item);
     if (kind === "skip") return skip(item);
@@ -144,7 +161,7 @@ export default function Today() {
   const menu = (item: Item) =>
     Alert.alert(item.title, undefined, [
       item.actions.primary === "remind" ? { text: "Remind me", onPress: () => remind(item) } : { text: "Not today", onPress: () => skip(item) },
-      { text: "Delete from Psst", style: "destructive" as const, onPress: () => confirmRemove(item, "Delete from Psst?") },
+      { text: "Delete from Shots", style: "destructive" as const, onPress: () => confirmRemove(item, "Delete from Shots?") },
       { text: "Cancel", style: "cancel" as const },
     ]);
 
@@ -166,19 +183,19 @@ export default function Today() {
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={checkForNew} />}
+        refreshControl={windUp.control}
         contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
         <View style={{ gap: 16 }}>
           <Header />
-          {today && today.reading.failed > 0 ? <FailedCard count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
-          <ActCards />
+          {windUp.banner}
+          {offline && !FIXTURES ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
               <ReadingView pending={screen.pending} />
             </Pressable>
           ) : null}
-          {screen.kind === "empty" ? <EmptyView /> : null}
+          {screen.kind === "empty" && !hasCards ? <EmptyView /> : null}
           {screen.kind === "focus" ? (
             <Rise key={screen.focus.id}>
               <View style={{ gap: 8, marginBottom: 16 }}>
@@ -198,16 +215,19 @@ export default function Today() {
           ) : null}
           {screen.kind === "done" ? <DoneView /> : null}
           <HandfulRows rows={rows} now={now} tz={tz} title={rowTitle} onOpen={open} onRemind={remind} onSkip={skip} onMenu={menu} />
-          <Todos />
+          <ActCards />
           <ReminderRows rows={reminderRows} now={now} tz={tz} onOpen={(id) => router.push(`/shot/${id}`)} />
           {resurfaced ? (
-            <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Psst?")} />
+            <RememberCard item={resurfaced} onOpen={() => open(resurfaced)} onKeep={() => act(resurfaced, "keep")} onDelete={() => confirmRemove(resurfaced, "Delete from Shots?")} />
           ) : null}
-          {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Psst. Your original screenshot stays in Photos.</Text> : null}
-          {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
+          <TodoSection day={today?.day} shown={rendered.map((i) => i.id)} demo={FIXTURES && preview ? previewTodos(preview) : null} />
+          {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Shots. Your original screenshot stays in Photos.</Text> : null}
+          {!FIXTURES && failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
+          {!FIXTURES && today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
         </View>
         {footer}
       </ScrollView>
+      <FiledToast item={filedItem} />
     </SafeAreaView>
   );
 }

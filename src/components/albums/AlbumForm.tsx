@@ -13,7 +13,7 @@ const errorText = (e: unknown) => {
   return known ? `${known[1]}.` : "That didn't save. Try again in a moment.";
 };
 
-// Make or edit an album: a name, and an optional line that tells Psst what belongs in it.
+// Make or edit an album: a name, and an optional line that tells Shots what belongs in it.
 export function AlbumForm({ visible, album, onClose, onSaved }: { visible: boolean; album?: AlbumDraft; onClose: () => void; onSaved?: (id: Id<"albums">) => void }) {
   const p = usePalette();
   const create = useMutation(api.albums.create);
@@ -67,7 +67,7 @@ export function AlbumForm({ visible, album, onClose, onSaved }: { visible: boole
             multiline
             style={[field, { minHeight: 72, textAlignVertical: "top" }]}
           />
-          <Text style={[text.caption, { color: p.ink2 }]}>Optional. Psst reads the name and this line, then sorts screenshots that fit into the album. Your rooms stay as they are.</Text>
+          <Text style={[text.caption, { color: p.ink2 }]}>Optional. Shots reads the name and this line, then sorts screenshots that fit into the album. Your rooms stay as they are.</Text>
         </View>
         {error ? <Text style={[text.caption, { color: p.danger }]}>{error}</Text> : null}
         <View style={{ flex: 1 }} />

@@ -1,4 +1,5 @@
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
@@ -13,7 +14,7 @@ const body = { padding: 16, paddingTop: Platform.OS === "ios" ? 8 : 64, paddingB
 export default function AlbumScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const p = usePalette();
-  const album = useQuery(api.albums.get, { albumId: id });
+  const album = useSafeQuery(api.albums.get, { albumId: id }, undefined);
   const remove = useMutation(api.albums.remove);
   const resort = useMutation(api.albums.resort);
   const [editOpen, setEditOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function AlbumScreen() {
           {album.sortStatus === "failed" ? (
             <SoftCard style={{ gap: 8 }}>
               <Text style={[text.bodyBold, { color: p.ink }]}>Sorting stopped before it finished.</Text>
-              <Text style={[text.body, { color: p.ink2 }]}>{"Psst couldn't reach the reader. The screenshots already here stay."}</Text>
+              <Text style={[text.body, { color: p.ink2 }]}>{"Shots couldn't reach the reader. The screenshots already here stay."}</Text>
               <PsstButton kind="outline" label="Try sorting again" onPress={() => resort({ albumId: album._id }).catch(() => setError("That didn't work. Try again in a moment."))} />
             </SoftCard>
           ) : null}

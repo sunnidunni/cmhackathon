@@ -1,5 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,7 +11,9 @@ import { KeeperFace, KeeperLine, PsstButton, ShotSticker, Skeleton, SoftCard, te
 import { RoomWash } from "@/components/rooms/RoomWash";
 import { useReminders } from "@/components/tabs/reminders";
 import { FIXTURES } from "@/lib/fixtures";
+import { shareScreenshot } from "@/lib/share";
 import { demoById, isDemoId, useDemoFallback, type DemoRow } from "@/components/rooms/demo";
+import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
 import { UndoToast } from "@/components/rooms/UndoToast";
 import { MoveSheet } from "@/components/rooms/MoveSheet";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
@@ -49,17 +50,17 @@ export default function Detail() {
   const demoOn = useDemoFallback();
   const demoRow = demoOn && isDemoId(id) ? demoById(id) : null;
   const isDemo = demoOn && isDemoId(id);
-  const realShot = useQuery(api.shots.detail, isDemo ? "skip" : { id: shotId });
+  const realShot = useSafeQuery(api.shots.detail, isDemo ? "skip" : { id: shotId }, null);
   const shot = isDemo ? (demoRow ? demoDetail(demoRow) : null) : realShot;
-  const markOpened = useMutation(api.shots.markOpened);
-  const markDone = useMutation(api.shots.done);
-  const move = useMutation(api.shots.move);
-  const retry = useMutation(api.extract.retry);
+  const markOpened = useSafeMutation(api.shots.markOpened);
+  const markDone = useSafeMutation(api.shots.done);
+  const move = useSafeMutation(api.shots.move);
+  const retry = useSafeMutation(api.extract.retry);
   const reminders = useReminders();
   const [moveOpen, setMoveOpen] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [albumsOpen, setAlbumsOpen] = useState(false);
-  const albums = useQuery(api.albums.forShot, isDemo ? "skip" : { screenshotId: shotId });
+  const albums = useSafeQuery(api.albums.forShot, isDemo ? "skip" : { screenshotId: shotId }, undefined);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const phaseRef = useRef<Phase>("idle");
@@ -97,13 +98,11 @@ export default function Detail() {
     [markDone, isDemo, shotId],
   );
 
-  const header = <Stack.Screen options={{ headerShown: true, headerTransparent: true, title: "", headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }} />;
   const top = Platform.OS === "ios" ? 8 : 64;
 
   if (shot === undefined)
     return (
       <View style={{ flex: 1, backgroundColor: p.paper }}>
-        {header}
         <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingTop: top, gap: 16 }}>
           <Skeleton w="100%" h={260} style={{ borderRadius: 16 }} />
           <Skeleton w={120} h={14} />
@@ -116,7 +115,6 @@ export default function Detail() {
   if (shot === null)
     return (
       <View style={{ flex: 1, backgroundColor: p.paper }}>
-        {header}
         <View style={{ flex: 1, padding: 16, justifyContent: "center", gap: 12 }}>
           <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{"I can't find that screenshot."}</Text>
           <Text style={[text.lead, { color: p.ink2 }]}>It may have been deleted.</Text>
@@ -157,7 +155,6 @@ export default function Detail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      {header}
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingTop: top, paddingBottom: 24, gap: 12 }}>
         <RoomWash keeper={keeper} muted={finished || !isRoom} style={{ paddingVertical: 20, alignItems: "center" }}>
           <Pressable
@@ -219,6 +216,16 @@ export default function Detail() {
               </View>
             </View>
 
+            {shot.title || shot.summary ? (
+              <PsstButton
+                kind="text"
+                label="Share this screenshot"
+                onPress={() => {
+                  setError(null);
+                  shareScreenshot({ uri: isDemo ? shot.imageUrl : null, title: shot.title, message: shot.summary }).catch(() => setError("That didn't work. Try again in a moment."));
+                }}
+              />
+            ) : null}
             {!finished ? <PsstButton kind="text" label="Mark as done" onPress={() => beginDone()} /> : null}
             {FIXTURES && withReminder && !isDemo ? (
               <PsstButton kind="text" label="Fire reminder now (dev)" onPress={() => reminders.fireNow(shotId).catch(() => setError("That didn't work. Try again in a moment."))} />
@@ -262,7 +269,8 @@ export default function Detail() {
                 label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Choose a reminder time"}
                 disabled={!primary}
                 onPress={() => {
-                  if (!primary || isDemo) return;
+                  if (!primary) return;
+                  if (isDemo) return router.push(`/remind/${id}` as never);
                   setError(null);
                   reminders.remind(shotId, primary.when, shot.title || undefined).catch(() => setError("That didn't save. Try again in a moment."));
                 }}

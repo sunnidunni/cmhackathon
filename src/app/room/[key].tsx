@@ -1,30 +1,26 @@
-import { useQuery } from "convex/react";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
 import { countLabel, dateLabel, roomHeadline, roomLine, type Category } from "@/components/rooms/format";
 import { Keeper, KeeperLine, keeperForRoom, PsstButton, Skeleton, text, usePalette, type KeeperId } from "@/design/psst";
 import type { RoomKey } from "@/design/theme";
+import { SleepyKeeper } from "@/components/keepers/SleepyKeeper";
 import { RoomWash } from "@/components/rooms/RoomWash";
 import { PhotoGrid, ShotGridSkeleton } from "@/components/rooms/PhotoGrid";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 import { runSync } from "@/lib/sync";
 
 const CATEGORIES: Category[] = ["deadlines", "chats", "money", "ideas", "unsorted"];
 
 const EMPTY: Record<RoomKey, { body: string; line: string }> = {
-  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Psst.", line: "No dates found yet. All 3 of my alarms are bored." },
-  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Psst.", line: "Nothing in Chats yet. I'll never quote one back." },
-  money: { body: "Receipts, bills, tickets and things to buy land here. New screenshots are read each time you open Psst.", line: "An empty pouch. Very tidy." },
-  ideas: { body: "Recipes, places, quotes and saved answers land here. New screenshots are read each time you open Psst.", line: "The jar is open. Take your time." },
+  deadlines: { body: "Anything with a date lands here: sign-ups, bookings, things due back. New screenshots are read each time you open Shots.", line: "No dates found yet. All 3 of my alarms are bored." },
+  chats: { body: "Screenshots of conversations land here: plans, codes, addresses. New screenshots are read each time you open Shots.", line: "Nothing in Chats yet. I'll never quote one back." },
+  money: { body: "Receipts, bills, tickets and things to buy land here. New screenshots are read each time you open Shots.", line: "An empty pouch. Very tidy." },
+  ideas: { body: "Recipes, places, quotes and saved answers land here. New screenshots are read each time you open Shots.", line: "The jar is open. Take your time." },
 };
-
-// The glass back chevron is the native stack header's own back button, left over a transparent bar.
-function HeaderOptions() {
-  return <Stack.Screen options={{ headerShown: true, headerTransparent: true, title: "", headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }} />;
-}
 
 const body = { padding: 16, paddingTop: Platform.OS === "ios" ? 8 : 64, paddingBottom: 32, gap: 16, flexGrow: 1 } as const;
 const open = (id: string) => router.push(`/shot/${id}`);
@@ -36,7 +32,7 @@ export default function RoomScreen() {
 
 function AllScreen() {
   const p = usePalette();
-  const realAll = useQuery(api.rooms.all, {});
+  const realAll = useSafeQuery(api.rooms.all, {}, { count: 0, items: [] });
   const demoOn = useDemoFallback();
   const all =
     realAll && realAll.count === 0 && demoOn
@@ -52,7 +48,6 @@ function AllScreen() {
   );
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      <HeaderOptions />
       {all && all.items.length > 0 ? (
         <PhotoGrid
           keeper="mote"
@@ -72,8 +67,8 @@ function AllScreen() {
 
 function SingleRoom({ category }: { category: Category }) {
   const p = usePalette();
-  const realData = useQuery(api.rooms.get, { category });
-  const list = useQuery(api.rooms.list, {});
+  const realData = useSafeQuery(api.rooms.get, { category }, { category, count: 0, newestLineKey: null, items: [] });
+  const list = useSafeQuery(api.rooms.list, {}, []);
   const libraryEmpty = list !== undefined && list.every((r) => r.count === 0);
   const demoOn = useDemoFallback();
   const demoItems = demoRoom(category);
@@ -99,14 +94,13 @@ function SingleRoom({ category }: { category: Category }) {
         </Text>
         {rows ? <KeeperLine id={keeper}>{roomLine(category, rows)}</KeeperLine> : <Skeleton w={160} h={14} />}
       </View>
-      <Keeper id={keeper} size={88} />
+      <Keeper id={keeper} size={88} boop />
     </RoomWash>
   );
 
   if (items !== null && items.length > 0)
     return (
       <View style={{ flex: 1, backgroundColor: p.paper }}>
-        <HeaderOptions />
         <PhotoGrid
           keeper={keeper}
           onOpen={open}
@@ -123,11 +117,10 @@ function SingleRoom({ category }: { category: Category }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      <HeaderOptions />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
         {isEmpty && isRoom ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 8 }}>
-            <Keeper id={keeper} size={128} />
+            <SleepyKeeper id={keeper} size={128} />
             <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
               Nothing in {ROOM_LABEL[category]} yet.
             </Text>

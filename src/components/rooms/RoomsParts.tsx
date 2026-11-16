@@ -8,7 +8,7 @@ export const ROOM_LABEL: Record<RoomKey, string> = { deadlines: "Deadlines", cha
 export const ROOM_KEYS: RoomKey[] = ["deadlines", "chats", "money", "ideas"];
 
 // One keeper room as a wash card. A null count means the query has not answered yet: a skeleton, never 0.
-export function RoomCard({ room, count, onPress }: { room: RoomKey; count: number | null; onPress: () => void }) {
+export function RoomCard({ room, count, chip, onPress }: { room: RoomKey; count: number | null; chip?: string; onPress: () => void }) {
   const p = usePalette();
   const id = keeperForRoom(room);
   const { deep } = useKeeperColors(id);
@@ -17,7 +17,7 @@ export function RoomCard({ room, count, onPress }: { room: RoomKey; count: numbe
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${ROOM_LABEL[room]}, ${KEEPERS[id].name}, ${countText ?? "loading"}`}
+      accessibilityLabel={`${ROOM_LABEL[room]}, ${KEEPERS[id].name}, ${countText ?? "loading"}${chip ? `, ${chip}` : ""}`}
       onPress={onPress}
       style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.85 : 1 })}
     >
@@ -29,6 +29,11 @@ export function RoomCard({ room, count, onPress }: { room: RoomKey; count: numbe
         ) : (
           <Text style={[text.caption, { color: quiet ? p.ink2 : deep, marginTop: 2 }]}>{countText}</Text>
         )}
+        {chip ? (
+          <View style={{ alignSelf: "flex-start", marginTop: 8, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: p.paper, zIndex: 1 }}>
+            <Text numberOfLines={1} style={[text.caption, { color: deep }]}>{chip}</Text>
+          </View>
+        ) : null}
         <View style={{ position: "absolute", right: 8, bottom: 8 }}>
           <Keeper id={id} size={84} muted={quiet} />
         </View>
@@ -80,7 +85,7 @@ export function LimitedAccessCard({ onPress }: { onPress: () => void }) {
     <SoftCard style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
       <KeeperFace id="murmur" size={40} />
       <View style={{ flex: 1, gap: 4 }}>
-        <Text style={[text.bodyBold, { color: p.ink }]}>Psst reads only the ones you picked. Your rooms work with those.</Text>
+        <Text style={[text.bodyBold, { color: p.ink }]}>Shots reads only the ones you picked. Your rooms work with those.</Text>
         <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, justifyContent: "center" }}>
           <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Pick more screenshots</Text>
         </Pressable>

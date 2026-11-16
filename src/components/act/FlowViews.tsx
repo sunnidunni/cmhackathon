@@ -1,8 +1,14 @@
+import * as Haptics from "expo-haptics";
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
-import { fonts, Keeper, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
-import { confirmFor, demoLine } from "./pages";
-import { Fade, TypingDots } from "./Motion";
+import { useReducedMotion } from "react-native-reanimated";
+import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
+import { confirmNote } from "@/lib/act/effects";
+import { Confetti } from "@/components/delight/Confetti";
+import { useBigText } from "@/lib/bigText";
+import { play as playSfx } from "@/lib/sfx";
+import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
+import { Fade } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
 
@@ -18,22 +24,13 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Bubble({ mine, children, keeper }: { mine?: boolean; children: ReactNode; keeper: ActScenario["keeper"] }) {
-  const p = usePalette();
-  const c = useKeeperColors(keeper);
-  return (
-    <View style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "88%", backgroundColor: mine ? c.main : p.fill2, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 }}>
-      {children}
-    </View>
-  );
-}
-
 export function WhyRow({ scenario }: { scenario: ActScenario }) {
   const p = usePalette();
+  const big = useBigText();
   return (
-    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+    <View style={{ flexDirection: big ? "column" : "row", gap: 12, alignItems: big ? "flex-start" : "center" }}>
       <SourceThumb source={scenario.source} size={44} />
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: big ? undefined : 1, gap: 2 }}>
         <Text style={[text.body, { color: p.ink }]}>{scenario.why}</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>{`From your screenshot${scenario.source.at ? `, ${scenario.source.at}` : ""}`}</Text>
       </View>
@@ -41,7 +38,7 @@ export function WhyRow({ scenario }: { scenario: ActScenario }) {
   );
 }
 
-export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; keeper: ActScenario["keeper"] }) {
+export function Receipt({ step, edit, fixture }: { step: ActStep; edit: Edit; fixture: boolean }) {
   const p = usePalette();
   if (step.kind === "draft-message")
     return (
@@ -94,7 +91,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
           <Text style={[text.body, { color: p.ink }]}>{step.eta}</Text>
         </Row>
         <Row label="Pay with">
-          <Text style={[text.body, { color: p.ink }]}>Demo card</Text>
+          <Text style={[text.body, { color: p.ink }]}>Card on file</Text>
         </Row>
       </SoftCard>
     );
@@ -120,22 +117,23 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
   return null;
 }
 
-export function MovePage({ scenario, step, moved, onToggle, onNext }: { scenario: ActScenario; step: Extract<ActStep, { kind: "move-reminder" }>; moved: boolean; onToggle: () => void; onNext: () => void }) {
+export function MovePage({ scenario, step, moved, nextLabel, onToggle, onNext }: { scenario: ActScenario; step: ReminderStep; moved: boolean; nextLabel: string; onToggle: () => void; onNext: () => void }) {
+  const copy = reminderCopy(step, KEEPERS[scenario.keeper].name);
   const p = usePalette();
   return (
     <View style={{ gap: 16 }}>
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
-        {moved ? `Tock moved your airport reminder from ${step.from} to ${step.to}.` : `Your airport reminder is back at ${step.from}.`}
+        {moved ? copy.done : copy.reverted}
       </Text>
       <WhyRow scenario={scenario} />
       <Text style={[text.body, { color: p.ink2 }]}>You can change it back any time.</Text>
-      <PsstButton kind="filled" keeper={scenario.keeper} label="Next: text to Sam" onPress={onNext} />
-      <PsstButton kind="text" label={moved ? `Undo · back to ${step.from}` : `Move it to ${step.to}`} onPress={onToggle} />
+      <PsstButton kind="filled" keeper={scenario.keeper} label={nextLabel} onPress={onNext} />
+      <PsstButton kind="text" label={moved ? copy.undo : copy.redo} onPress={onToggle} />
     </View>
   );
 }
 
-export function EditPage({ scenario, step, edit, onChange, onNext }: { scenario: ActScenario; step: ActStep; edit: Edit; onChange: (e: Edit) => void; onNext: () => void }) {
+export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { scenario: ActScenario; step: ActStep; edit: Edit; fixture: boolean; onChange: (e: Edit) => void; onNext: () => void }) {
   const p = usePalette();
   const field = { fontFamily: fonts.ui, fontSize: 16, lineHeight: 22, color: p.ink, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair2, borderRadius: 12, padding: 12 } as const;
   const message = step.kind === "draft-message" || step.kind === "email-draft";
@@ -159,33 +157,49 @@ export function EditPage({ scenario, step, edit, onChange, onNext }: { scenario:
           style={[field, { minHeight: 96, textAlignVertical: "top" }]}
         />
       ) : (
-        <Receipt step={step} edit={edit} keeper={scenario.keeper} />
+        <Receipt step={step} edit={edit} fixture={fixture} />
       )}
       <Text style={[text.body, { color: p.ink2 }]}>
-        {message ? "You can change the words. Nothing is sent until you confirm on the next screen." : "Nothing is bought until you confirm on the next screen."}
+        {fixture
+          ? message
+            ? "You can change the words. Nothing is sent until you confirm on the next screen."
+            : step.kind === "order"
+              ? "Nothing is bought until you confirm on the next screen."
+              : "Nothing is added until you confirm on the next screen."
+          : message
+            ? "You can change the words. Shots can't send this yet."
+            : step.kind === "calendar"
+              ? "Shots can't add this to your calendar yet."
+              : "Nothing is bought until you confirm on the next screen."}
       </Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label={label} disabled={message && edit.body.trim().length === 0} onPress={onNext} />
     </View>
   );
 }
 
-export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; onConfirm: () => void; onEdit: () => void }) {
+export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, reply, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; openLabel: string | null; reply?: { to: string; text: string }; onConfirm: () => void; onEdit?: () => void }) {
   const p = usePalette();
   const [tapped, setTapped] = useState(false);
   const c = confirmFor(scenario, step, final);
   return (
     <View style={{ gap: 16 }}>
+      {reply ? (
+        <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink }]}>
+          {`${reply.to.split(" (")[0]} answered. `}
+          <Text style={text.body}>{reply.text}</Text>
+        </Text>
+      ) : null}
       <WhyRow scenario={scenario} />
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{c.title}</Text>
-      <Receipt step={step} edit={edit} keeper={scenario.keeper} />
+      <Receipt step={step} edit={edit} fixture={fixture} />
       {c.lines.map((l) => (
         <Text key={l} style={[text.body, { color: p.ink2 }]}>{l}</Text>
       ))}
-      <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{demoLine(step, "will")}</Text>
+      {fixture ? null : <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{openLabel ? confirmNote(step) : realLine(step)}</Text>}
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}
-        label={c.button}
+        label={fixture ? c.button : (openLabel ?? "Got it")}
         disabled={tapped}
         onPress={() => {
           if (tapped) return;
@@ -193,44 +207,70 @@ export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: 
           onConfirm();
         }}
       />
-      <PsstButton kind="text" label="Edit" onPress={onEdit} />
+      {onEdit ? <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} /> : null}
     </View>
   );
 }
 
-export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenario: ActScenario; step: Extract<ActStep, { kind: "draft-message" }>; edit: Edit; nextLabel: string; onNext: () => void }) {
+function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]> }) {
   const p = usePalette();
-  const [shown, setShown] = useState(false);
+  const reduce = useReducedMotion();
+  const total = timeline.rows.length;
+  const [shown, setShown] = useState(reduce ? total : 0);
   useEffect(() => {
-    const t = setTimeout(() => setShown(true), 1200);
+    if (shown >= total) return;
+    const t = setTimeout(() => setShown((n) => n + 1), shown === 0 ? 400 : 900);
     return () => clearTimeout(t);
-  }, []);
+  }, [shown, total]);
+  useEffect(() => {
+    if (shown !== total) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    playSfx("sent");
+  }, [shown, total]);
   return (
-    <View style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{demoLine(step, "was")}</Text>
-      <View style={{ gap: 8 }}>
-        <Bubble mine keeper={scenario.keeper}>
-          <Text style={[text.lead, { color: p.kl }]}>{edit.body}</Text>
-        </Bubble>
-        <Fade key={shown ? "reply" : "typing"}>
-          <Bubble keeper={scenario.keeper}>
-            {shown ? <Text accessibilityLiveRegion="polite" style={[text.lead, { color: p.ink }]}>{step.reply}</Text> : <TypingDots />}
-          </Bubble>
-        </Fade>
-        {shown ? <Text style={[text.caption, { color: p.ink2 }]}>{`Demo: pretend ${step.to} answered.`}</Text> : null}
-      </View>
-      {shown ? <PsstButton kind="filled" keeper={scenario.keeper} label={nextLabel} onPress={onNext} /> : null}
+    <View style={{ alignSelf: "stretch", gap: 8 }}>
+      <Text style={[text.caption, { color: p.ink2 }]}>{timeline.caption}</Text>
+      <SoftCard style={{ gap: 12 }}>
+        {timeline.rows.map((row, i) =>
+          i < shown ? (
+            <Fade key={row.label}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+                <Text style={[i === total - 1 ? text.bodyBold : text.body, { color: p.ink, flex: 1 }]}>{row.label}</Text>
+                <Text style={[text.body, { color: p.ink2, flexShrink: 0 }]}>{row.when}</Text>
+              </View>
+            </Fade>
+          ) : (
+            <View key={row.label} style={{ height: 24 }} />
+          ),
+        )}
+      </SoftCard>
     </View>
   );
 }
 
-export function DonePage({ scenario, onClose }: { scenario: ActScenario; onClose: () => void }) {
+export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scenario: ActScenario; fixture: boolean; end: { title: string; body: string } | null; onClose: () => void }) {
   const p = usePalette();
+  const big = useBigText();
+  const last = lastAction(scenario.steps);
+  const line = doneLine(scenario, last, fixture);
+  const end = effectEnd ?? realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
-      <Keeper id={scenario.keeper} size={120} mood="react" />
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>That was the demo.</Text>
-      <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{scenario.done}</Text>
+      <View>
+        <Keeper id={scenario.keeper} size={big ? 72 : fixture && scenario.timeline ? 88 : 120} reaction="celebrate" reactionKey="done" />
+        <View pointerEvents="none" style={{ position: "absolute", left: "50%", top: "58%" }}>
+          <Confetti keeper={scenario.keeper} fireKey="done" />
+        </View>
+      </View>
+      {fixture ? (
+        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
+      ) : (
+        <>
+          <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{end.title}</Text>
+          <Text accessibilityLiveRegion="polite" style={[text.body, { color: p.ink2, textAlign: "center" }]}>{end.body}</Text>
+        </>
+      )}
+      {fixture && scenario.timeline ? <Timeline timeline={scenario.timeline} /> : null}
       <PsstButton kind="filled" keeper={scenario.keeper} label="Done" onPress={onClose} />
     </View>
   );

@@ -315,13 +315,13 @@
     ]
   },
   "system.partial": {
-    "text": "Psst can see only the screenshots you picked. That works.",
+    "text": "Shots can see only the screenshots you picked. That works.",
     "where": "Rooms, partial photo access card",
     "voice": "app",
     "placeholders": []
   },
   "system.denied": {
-    "text": "Psst can't see your screenshots yet.",
+    "text": "Shots can't see your screenshots yet.",
     "where": "Photo access denied, one button that asks again",
     "voice": "app",
     "placeholders": []
@@ -361,6 +361,64 @@
   "system.reminder.fired": {
     "text": "You were reminded today.",
     "where": "Today focus card, after a reminder fired",
+    "voice": "app",
+    "placeholders": []
+  },
+  "tock.filed": {
+    "text": "Filed. {title} closes {weekday}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "tock.filed.on": {
+    "text": "Filed. {title} is on {weekday}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "murmur.filed": {
+    "text": "Filed. {title} is on {weekday}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Murmur",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "penny.filed": {
+    "text": "Filed. {title} is due {date}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "title",
+      "date"
+    ]
+  },
+  "mote.filed": {
+    "text": "Filed. {title}, for a someday.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Mote",
+    "placeholders": [
+      "title"
+    ]
+  },
+  "system.filed.room": {
+    "text": "Filed in {room}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "app",
+    "placeholders": [
+      "room"
+    ]
+  },
+  "system.filed.unsorted": {
+    "text": "Shots couldn't place this one. You decide where it goes.",
+    "where": "Today toast when a new screenshot is filed",
     "voice": "app",
     "placeholders": []
   }

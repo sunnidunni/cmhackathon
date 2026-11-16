@@ -50,7 +50,7 @@ export function AlbumPickSheet({ visible, screenshotId, onClose }: { visible: bo
         </ScrollView>
         {albums && albums.length === 0 ? <Text style={[text.body, { color: p.ink2 }]}>No albums yet. Make one and this screenshot goes in it.</Text> : null}
         <Text style={[text.caption, { color: p.ink2, borderTopWidth: 1, borderColor: p.hair, paddingTop: 12 }]}>
-          {"Taking a screenshot out keeps it out. Psst won't sort it back in, and it stays in its room."}
+          {"Taking a screenshot out keeps it out. Shots won't sort it back in, and it stays in its room."}
         </Text>
         {error ? <Text style={[text.caption, { color: p.danger }]}>{error}</Text> : null}
         <View style={{ flex: 1 }} />

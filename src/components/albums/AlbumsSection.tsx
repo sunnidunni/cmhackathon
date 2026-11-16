@@ -1,4 +1,5 @@
 import { useQuery } from "convex/react";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -12,11 +13,11 @@ type Album = NonNullable<ReturnType<typeof useQuery<typeof api.albums.list>>>[nu
 export const albumStatus = (a: { sortStatus: string; count: number }) =>
   a.sortStatus === "sorting" ? "Sorting your screenshots" : a.sortStatus === "failed" ? "Sorting stopped. Open to try again." : a.count === 0 ? "Empty for now" : countLabel(a.count);
 
-// The person's own albums under the rooms. Psst fills them; a room is still where each screenshot lives.
+// The person's own albums under the rooms. Shots fills them; a room is still where each screenshot lives.
 // With no screenshots yet it stays out of the way, unless albums already exist and must stay reachable.
 export function AlbumsSection({ libraryEmpty }: { libraryEmpty: boolean }) {
   const p = usePalette();
-  const albums = useQuery(api.albums.list, {});
+  const albums = useSafeQuery(api.albums.list, {}, []);
   const [formOpen, setFormOpen] = useState(false);
   if (libraryEmpty && (albums === undefined || albums.length === 0)) return null;
 
@@ -37,7 +38,7 @@ export function AlbumsSection({ libraryEmpty }: { libraryEmpty: boolean }) {
         ))
       ) : albums.length === 0 ? (
         <Text style={[text.body, { color: p.ink2, marginBottom: 8 }]}>
-          Make an album for anything you keep screenshotting, like concert tickets or recipes to try. Psst sorts the ones that fit into it, and keeps doing it for new ones.
+          Make an album for anything you keep screenshotting, like concert tickets or recipes to try. Shots sorts the ones that fit into it, and keeps doing it for new ones.
         </Text>
       ) : (
         albums.map((a) => <AlbumRow key={a._id} album={a} />)
