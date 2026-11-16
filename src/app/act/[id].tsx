@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
-import { buildPages, isReminderStep, nextLabel } from "@/components/act/pages";
+import { buildPages, isFixtureAct, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
@@ -24,6 +24,7 @@ export default function Act() {
   const [index, setIndex] = useState(0);
   const [edits, setEdits] = useState<Record<number, Edit>>({});
   const page = pages[index];
+  const fixture = scenario ? isFixtureAct(scenario, FIXTURES) : false;
 
   useEffect(() => {
     if (scenario && page?.kind === "done") completeAct(scenario.id);
@@ -52,7 +53,7 @@ export default function Act() {
   };
 
   const body = () => {
-    if (page.kind === "done") return <DonePage scenario={scenario} onClose={close} />;
+    if (page.kind === "done") return <DonePage scenario={scenario} fixture={fixture} onClose={close} />;
     const step = scenario.steps[page.step];
     if (page.kind === "move" && isReminderStep(step))
       return (
@@ -69,7 +70,7 @@ export default function Act() {
         />
       );
     if (page.kind === "edit")
-      return <EditPage scenario={scenario} step={step} edit={editFor(page.step)} onChange={(e) => setEdits((all) => ({ ...all, [page.step]: e }))} onNext={() => go(index + 1)} />;
+      return <EditPage scenario={scenario} step={step} edit={editFor(page.step)} fixture={fixture} onChange={(e) => setEdits((all) => ({ ...all, [page.step]: e }))} onNext={() => go(index + 1)} />;
     if (page.kind === "confirm")
       return (
         <ConfirmPage
@@ -77,16 +78,17 @@ export default function Act() {
           step={step}
           final={page.final}
           edit={editFor(page.step)}
+          fixture={fixture}
           onEdit={() => go(index - 1)}
           onConfirm={() => {
-            feedback("success");
+            feedback(fixture ? "success" : "light");
             go(index + 1);
           }}
         />
       );
     if (page.kind === "reply" && step.kind === "draft-message") {
       const next = scenario.steps[page.step + 1];
-      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} nextLabel={next?.kind === "order" ? "Set up the order" : nextLabel(next)} onNext={() => go(index + 1)} />;
+      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} fixture={fixture} nextLabel={next?.kind === "order" ? "Set up the order" : nextLabel(next)} onNext={() => go(index + 1)} />;
     }
     return null;
   };
@@ -98,7 +100,7 @@ export default function Act() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <KeeperFace id={scenario.keeper} size={32} />
-              <Text style={[text.caption, { color: p.ink2 }]}>{FIXTURES ? "" : page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
+              <Text style={[text.caption, { color: p.ink2 }]}>{fixture ? "" : page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
             </View>
             {page.kind !== "done" ? <PsstButton kind="text" label="Close" onPress={close} /> : null}
           </View>
