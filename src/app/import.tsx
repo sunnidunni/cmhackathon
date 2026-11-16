@@ -19,9 +19,17 @@ const FIXTURE_COUNTS = { deadlines: DEMO_COUNTS.tock, money: DEMO_COUNTS.penny, 
 
 export default function BringIn() {
   const p = usePalette();
-  // Dev preview: /import?demo=<0..16> drives the reveal from fixtures, only when FIXTURES is on.
+  // Dev preview: /import?demo=<0..24> drives the reveal from fixtures, only when FIXTURES is on.
   const { demo } = useLocalSearchParams<{ demo?: string }>();
-  const demoRead = FIXTURES && demo !== undefined ? Math.min(DEMO_COUNTS.total, Math.max(0, Number(demo) || 0)) : null;
+  // /import?demo=play counts 0 to 24 on its own, about 0.7s per screenshot, for the onboarding replay.
+  const [played, setPlayed] = useState(0);
+  const playing = FIXTURES && demo === "play";
+  useEffect(() => {
+    if (!playing || played >= DEMO_COUNTS.total) return;
+    const timer = setTimeout(() => setPlayed((n) => n + 1), 700);
+    return () => clearTimeout(timer);
+  }, [playing, played]);
+  const demoRead = FIXTURES && demo !== undefined ? (playing ? played : Math.min(DEMO_COUNTS.total, Math.max(0, Number(demo) || 0))) : null;
   const liveProgress = useQuery(api.sync.progress, demoRead === null ? {} : "skip");
   const liveRooms = useQuery(api.rooms.list, demoRead === null ? {} : "skip");
   const progress = demoRead === null ? liveProgress : { total: DEMO_COUNTS.total, read: demoRead, failed: 0, pending: DEMO_COUNTS.total - demoRead, uploaded: DEMO_COUNTS.total };
@@ -144,11 +152,11 @@ export default function BringIn() {
             ? unsorted > 0
               ? unsorted === 1 ? "1 couldn't be read. It's in Unsorted, and you decide where it goes." : `${unsorted} couldn't be read. They're in Unsorted, and you decide where they go.`
               : "You can meet the keepers again in Rooms."
-            : "About a minute left. You can go to Today while they read. No notification is sent when it finishes."}
+            : "You can go to Today while they read. No notification is sent when it finishes."}
         </Text>
         <PsstButton kind="filled"
           label={done ? "See your keepers card" : "Skip to Today"}
-          onPress={() => router.replace(done ? "/keepers-card" : "/today")}
+          onPress={() => router.replace(done ? (demoRead === null ? "/keepers-card" : "/keepers-card?demo=1") : "/today")}
         />
       </View>
     </SafeAreaView>
