@@ -52,6 +52,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
     prev.current = at;
     const run = done ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning) : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     run.catch(() => undefined);
+    playSfx(done ? "boop" : "pop");
     AccessibilityInfo.announceForAccessibility(`${FLIGHT.number} now delayed ${u.delay}. Departs ${u.departs}, gate ${u.gate}.`);
   }, [at, done, u]);
 
