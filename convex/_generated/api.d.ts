@@ -8,11 +8,13 @@
  * @module
  */
 
+import type * as albums from "../albums.js";
 import type * as ask from "../ask.js";
 import type * as askData from "../askData.js";
 import type * as auth from "../auth.js";
 import type * as extract from "../extract.js";
 import type * as http from "../http.js";
+import type * as lib_albumModel from "../lib/albumModel.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_cards from "../lib/cards.js";
 import type * as lib_extraction from "../lib/extraction.js";
@@ -51,11 +53,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  albums: typeof albums;
   ask: typeof ask;
   askData: typeof askData;
   auth: typeof auth;
   extract: typeof extract;
   http: typeof http;
+  "lib/albumModel": typeof lib_albumModel;
   "lib/auth": typeof lib_auth;
   "lib/cards": typeof lib_cards;
   "lib/extraction": typeof lib_extraction;
