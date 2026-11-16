@@ -13,7 +13,8 @@ import { FocusCard, Headline } from "@/components/today/FocusCard";
 import { HandfulRows } from "@/components/today/HandfulRows";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
-import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
+import { FiledToast, useFiledToast } from "@/components/today/FiledToast";
+import { actionsFor, buildItems, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
 import { TodoSection } from "@/components/today/TodoSection";
 import { previewToday, previewTodos } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
@@ -103,6 +104,7 @@ export default function Today() {
   const [removed, setRemoved] = useState(false);
   const [focusMemory, saveFocus] = useFocusMemory();
   const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory ?? null);
+  const filedItem = useFiledToast(demo || !today ? null : buildItems(today, fixtureLine));
   useEffect(() => {
     if (!demo && memory && !sameMemory(memory, focusMemory)) saveFocus(memory);
   }, [demo, memory, focusMemory, saveFocus]);
@@ -220,6 +222,7 @@ export default function Today() {
         </View>
         {footer}
       </ScrollView>
+      <FiledToast item={filedItem} />
     </SafeAreaView>
   );
 }
