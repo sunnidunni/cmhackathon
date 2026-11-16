@@ -8,7 +8,8 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import type { FunctionReturnType } from "convex/server";
 import { isConvexId } from "@/components/remind/ids";
 import { defaultReminder, dueParts, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
-import { KEEPERS, KeeperFace, PsstButton, ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
+import { KEEPERS, KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
+import { MurmurThinking } from "./MurmurThinking";
 
 const Decor = ({ children }: { children: ReactNode }) => (
   <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -182,23 +183,12 @@ export function AnswerBlock({ result, latest, shots, demo = false }: { result: A
 
 export function LookingBlock({ count }: { count: number | undefined }) {
   const p = usePalette();
-  const bar = (w: `${number}%`, h = 14) => <Skeleton w={w} h={h} />;
   return (
     <View accessibilityState={{ busy: true }} accessibilityLabel="Looking through your screenshots" style={{ gap: 14 }}>
       <Text maxFontSizeMultiplier={2.95} style={[text.headline, { color: p.ink }]}>
         {count === undefined ? "Looking through your screenshots." : `Looking through your ${count} screenshot${count === 1 ? "" : "s"}.`}
       </Text>
-      <View style={{ gap: 10 }}>
-        {bar("92%")}
-        {bar("62%")}
-      </View>
-      <View style={{ flexDirection: "row", gap: 12, padding: 8, borderRadius: 16, borderWidth: 1, borderColor: p.hair }}>
-        <Skeleton w={44} h={66} />
-        <View style={{ flex: 1, gap: 10, justifyContent: "center" }}>
-          {bar("70%", 12)}
-          {bar("40%", 12)}
-        </View>
-      </View>
+      <MurmurThinking />
     </View>
   );
 }
