@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
+import { confirmNote } from "@/lib/act/effects";
 import { confirmFor, demoLine, reminderCopy, type ReminderStep } from "./pages";
 import { Fade, TypingDots } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
@@ -182,7 +183,7 @@ export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: 
       {c.lines.map((l) => (
         <Text key={l} style={[text.body, { color: p.ink2 }]}>{l}</Text>
       ))}
-      <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{demoLine(step, "will")}</Text>
+      <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{confirmNote(step) ?? demoLine(step, "will")}</Text>
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}

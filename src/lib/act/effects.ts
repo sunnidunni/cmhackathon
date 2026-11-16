@@ -11,13 +11,14 @@ const HOUR = 3600000;
 const onIOS = () => process.env.EXPO_OS === "ios";
 
 export function parseEventWhen(when: string, now: Date = new Date()): Date | null {
-  const m = /\b([A-Za-z]{3})[a-z]*\.? (\d{1,2})\b[^\d]*(\d{1,2})(?::(\d{2}))?\s?([AP]M)\b/i.exec(when);
+  const year = /\b(20\d{2})\b/.exec(when)?.[1];
+  const m = /\b([A-Za-z]{3})[a-z]*\.? (\d{1,2})\b[^\d]*(\d{1,2})(?::(\d{2}))?\s?([AP]M)\b/i.exec(when.replace(/\b20\d{2}\b/, ""));
   if (!m) return null;
   const month = MONTHS.indexOf(m[1].toLowerCase());
   if (month < 0) return null;
   const hour = (+m[3] % 12) + (m[5][0].toUpperCase() === "P" ? 12 : 0);
-  const start = new Date(now.getFullYear(), month, +m[2], hour, m[4] ? +m[4] : 0);
-  if (start.getTime() < now.getTime() - 12 * HOUR) start.setFullYear(start.getFullYear() + 1);
+  const start = new Date(year ? +year : now.getFullYear(), month, +m[2], hour, m[4] ? +m[4] : 0);
+  if (!year && start.getTime() < now.getTime() - 12 * HOUR) start.setFullYear(start.getFullYear() + 1);
   return start;
 }
 
@@ -74,4 +75,11 @@ export function effectLine(step: ActStep): string {
   if (step.kind === "email-draft") return "Email sent or saved to drafts.";
   if (step.kind === "calendar") return "Added to your calendar.";
   return "";
+}
+
+export function confirmNote(step: ActStep): string | null {
+  if (step.kind === "draft-message") return "Messages opens with this ready. Nothing is sent until you press Send.";
+  if (step.kind === "email-draft") return "Mail opens with this ready. Nothing is sent until you press Send.";
+  if (step.kind === "calendar") return "Psst asks for calendar access, then adds this event.";
+  return null;
 }

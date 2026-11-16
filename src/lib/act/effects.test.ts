@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { effectLine, parseEventWhen, runEffect } from "./effects";
+import { confirmNote, effectLine, parseEventWhen, runEffect } from "./effects";
 import type { ActStep } from "./types";
 
 const sms = vi.hoisted(() => ({ isAvailableAsync: vi.fn(), sendSMSAsync: vi.fn() }));
@@ -45,6 +45,10 @@ describe("parseEventWhen", () => {
   });
   test("rolls a past date into next year", () => {
     expect(parseEventWhen("Jan 5, 9:15 AM", now)).toEqual(new Date(2027, 0, 5, 9, 15));
+  });
+  test("keeps an explicit year instead of guessing", () => {
+    expect(parseEventWhen("Nov 22, 2027, 8:00 PM", now)).toEqual(new Date(2027, 10, 22, 20, 0));
+    expect(parseEventWhen("Jan 5, 2026, 9:15 AM", now)).toEqual(new Date(2026, 0, 5, 9, 15));
   });
   test("returns null when there is no time", () => {
     expect(parseEventWhen("Nov 22", now)).toBeNull();
@@ -131,6 +135,12 @@ describe("simulated steps", () => {
   test("orders and reminder moves are never run for real", async () => {
     expect(await runEffect({ kind: "order", merchant: "Pizza", items: [], deliverTo: "Home", total: "$20", eta: "30 min" })).toBe("fallback");
     expect(await runEffect({ kind: "move-reminder", from: "a", to: "b" })).toBe("fallback");
+  });
+  test("the confirm note tells the truth for the three real effects only", () => {
+    expect(confirmNote(text)).toContain("Nothing is sent until you press Send");
+    expect(confirmNote(email)).toContain("Nothing is sent until you press Send");
+    expect(confirmNote(event)).toBe("Psst asks for calendar access, then adds this event.");
+    expect(confirmNote({ kind: "move-reminder", from: "a", to: "b" })).toBeNull();
   });
   test("each real effect has a done line", () => {
     expect([text, email, event].map(effectLine)).toEqual(["Message sent.", "Email sent or saved to drafts.", "Added to your calendar."]);
