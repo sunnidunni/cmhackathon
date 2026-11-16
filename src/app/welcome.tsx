@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Footnote, Headline, KeeperRow, Lead, Page } from "@/components/onboarding/page";
@@ -14,7 +14,8 @@ const WHAT_WHEN_WHERE = [
 export default function Welcome() {
   const p = usePalette();
   const [step, setStep] = useState<"welcome" | "explainer">("welcome");
-  const toPriming = () => router.push("/priming");
+  const { replay } = useLocalSearchParams<{ replay?: string }>();
+  const toPriming = () => router.push(replay ? "/priming?replay=1" : "/priming");
 
   if (step === "explainer")
     return (

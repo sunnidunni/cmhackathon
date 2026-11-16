@@ -42,6 +42,9 @@ export function nextConfidentDate(dates: ShotDate[], now: number, tz: number) {
   return future[0] ?? null;
 }
 
+// The demo world clock: Sun Nov 15, 9:41 AM in the phone's time zone, so fixture reminders stay dated after the demo day.
+export const demoNow = (tz: number) => Date.UTC(2026, 10, 15, 9, 41) + tz * 60000;
+
 export const dueParts = (dueAt: number, tz: number) => ({ dueAt, label: `${local(dueAt, tz).dow} ${clock(dueAt, tz)}`, day: dayLabel(dueAt, tz), clock: clock(dueAt, tz) });
 
 // The backend schedules 9:00 local the day before (computeDueAt); this only previews it. A reminder that is already

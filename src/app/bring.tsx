@@ -1,15 +1,17 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { bringInHeadline, howManyLine } from "@/components/onboarding/format";
 import { KeeperFace, PsstButton, SoftCard, Skeleton, text, usePalette } from "@/design/psst";
 import { Footnote, Headline, KeeperRow, Lead, Page } from "@/components/onboarding/page";
 import { useBringCount } from "@/components/onboarding/use-bring-count";
+import { FIXTURES } from "@/lib/fixtures";
 import { usePhotoAccess } from "@/lib/photos";
 import { useImportStarted } from "@/lib/sync";
 
 export default function Bring() {
   const p = usePalette();
+  const { replay } = useLocalSearchParams<{ replay?: string }>();
   const { markStarted } = useImportStarted();
   const { access, openLimitedPicker } = usePhotoAccess();
   const { count, limit, recount } = useBringCount();
@@ -17,6 +19,7 @@ export default function Bring() {
 
   async function start() {
     setBusy(true);
+    if (FIXTURES && replay) return router.replace("/import?demo=play");
     await markStarted();
     router.replace("/import");
   }
