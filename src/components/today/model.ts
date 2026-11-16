@@ -3,6 +3,7 @@ import type { api } from "../../../convex/_generated/api";
 import { computeDueAt, localDay, parseWhen } from "../../../convex/lib/time";
 import { psstLine } from "../../design/psst/lines";
 import type { KeeperId } from "@/design/psst";
+import { chooseFocus, skippedToday, type FocusMemory } from "./focus";
 
 export type TodayData = FunctionReturnType<typeof api.today.get>;
 type Card = TodayData["handful"][number];
@@ -146,18 +147,24 @@ export type Screen =
   | { kind: "focus"; focus: Item; position: number; total: number; rows: Item[] }
   | { kind: "done"; rows: Item[] };
 
-export function buildScreen(today: TodayData | undefined, skipped: ReadonlySet<string>, fallback?: LineFallback): { screen: Screen; items: Item[] } {
-  if (!today) return { screen: { kind: "loading" }, items: [] };
-  const items = buildItems(today, fallback).filter((i) => !skipped.has(i.id));
-  const focus = items.find((i) => !i.handled && i.section !== "thin") ?? items.find((i) => !i.handled);
+export function buildScreen(
+  today: TodayData | undefined,
+  skipped: ReadonlySet<string>,
+  fallback?: LineFallback,
+  memory: FocusMemory | null = null,
+): { screen: Screen; items: Item[]; memory: FocusMemory | null } {
+  if (!today) return { screen: { kind: "loading" }, items: [], memory };
+  const gone = skippedToday(memory, today.day);
+  const items = buildItems(today, fallback).filter((i) => !skipped.has(i.id) && !gone.includes(i.id));
+  const { focus, next } = chooseFocus(items, memory, today.day);
   const waitingJustIn = !items.some((i) => i.section === "justIn" && !i.handled);
-  if (today.reading.pending > 0 && waitingJustIn) return { screen: { kind: "reading", pending: today.reading.pending, rows: items.slice(0, 3) }, items };
+  if (today.reading.pending > 0 && waitingJustIn) return { screen: { kind: "reading", pending: today.reading.pending, rows: items.slice(0, 3) }, items, memory };
   if (focus) {
     const rows = items.filter((i) => i !== focus).slice(0, 2);
-    return { screen: { kind: "focus", focus, position: items.indexOf(focus) + 1, total: items.length, rows }, items };
+    return { screen: { kind: "focus", focus, position: items.indexOf(focus) + 1, total: items.length, rows }, items, memory: next };
   }
-  if (items.length === 0 && today.reading.total === 0) return { screen: { kind: "empty" }, items };
-  return { screen: { kind: "done", rows: items.slice(0, 3) }, items };
+  if (items.length === 0 && today.reading.total === 0) return { screen: { kind: "empty" }, items, memory };
+  return { screen: { kind: "done", rows: items.slice(0, 3) }, items, memory };
 }
 
 export function captionFor(screen: Extract<Screen, { kind: "focus" }>): string {

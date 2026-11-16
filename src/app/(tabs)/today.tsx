@@ -17,7 +17,9 @@ import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
 import { previewToday } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
-import { DoneView, EmptyView, FailedCard, LoadingView, ReadingView } from "@/components/today/States";
+import { DoneView, EmptyView, FailedLine, LoadingView, ReadingView } from "@/components/today/States";
+import { sameMemory, withSkipped } from "@/components/today/focus";
+import { useFocusMemory } from "@/components/today/focusMemory";
 import { runSync } from "@/lib/sync";
 
 // Fixtures fill a keeper line only when the card has none and FIXTURES is on.
@@ -96,7 +98,11 @@ export default function Today() {
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [removed, setRemoved] = useState(false);
-  const { screen } = buildScreen(today, skipped, fixtureLine);
+  const [focusMemory, saveFocus] = useFocusMemory();
+  const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory ?? null);
+  useEffect(() => {
+    if (!demo && memory && !sameMemory(memory, focusMemory)) saveFocus(memory);
+  }, [demo, memory, focusMemory, saveFocus]);
   const rendered = screen.kind === "focus" ? [screen.focus, ...screen.rows] : screen.kind === "reading" || screen.kind === "done" ? screen.rows : [];
   const reminderRows = today ? extraReminders(today, rendered) : [];
   const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin", fixtureLine) : null;
@@ -117,7 +123,10 @@ export default function Today() {
       setFailed(true);
     }
   };
-  const skip = (item: Item) => setSkipped((s) => new Set(s).add(item.id));
+  const skip = (item: Item) => {
+    setSkipped((s) => new Set(s).add(item.id));
+    if (!demo && today) saveFocus(withSkipped(focusMemory, today.day, item.id));
+  };
   const open = (item: Item) => router.push(`/shot/${item.id}`);
   const remind = (item: Item) => router.push(`/remind/${item.id}` as never);
   const act = (item: Item, kind: ReturnType<typeof actionsFor>["primaryKind"] | ReturnType<typeof actionsFor>["secondaryKind"]) => {
@@ -169,7 +178,6 @@ export default function Today() {
         contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
         <View style={{ gap: 16 }}>
           <Header />
-          {today && today.reading.failed > 0 ? <FailedCard count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
@@ -203,6 +211,7 @@ export default function Today() {
           ) : null}
           {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Psst. Your original screenshot stays in Photos.</Text> : null}
           {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
+          {today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
         </View>
         {footer}
       </ScrollView>
