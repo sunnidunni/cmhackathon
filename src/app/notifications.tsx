@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, ScrollView, Text, View } from "react-native";
@@ -56,18 +56,6 @@ export default function Notifications() {
 
   return (
     <View style={{ flex: 1, backgroundColor: pal.paper }}>
-      <Stack.Screen
-        options={{
-          presentation: "formSheet",
-          headerShown: false,
-          sheetAllowedDetents: [0.6, 1],
-          sheetInitialDetentIndex: 0,
-          sheetGrabberVisible: true,
-          sheetCornerRadius: 24,
-          sheetExpandsWhenScrolledToEdge: true,
-          contentStyle: { backgroundColor: pal.paper },
-        }}
-      />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 24, paddingHorizontal: 20, paddingBottom: 8 }}>
         <Text accessibilityRole="header" maxFontSizeMultiplier={1.6} style={[text.largeTitle, { flex: 1, color: pal.ink }]}>
           Notifications
