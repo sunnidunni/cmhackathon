@@ -1,4 +1,3 @@
-import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -7,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { KeeperFace, PsstButton, text, useKeeperColors, usePalette } from "@/design/psst";
 import { buildTodoRows, showAllLabel, visibleTodos, type ShotInfo, type TodoItem, type TodoRow } from "./todoRows";
+import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
 
 function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
   const p = usePalette();
@@ -50,9 +50,9 @@ function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
 // demo is dev-only preview data; it replaces the live queries.
 export function TodoSection({ day, shown, demo }: { day: string | undefined; shown: string[]; demo?: { todos: TodoItem[]; shots: [string, ShotInfo][] } | null }) {
   const p = usePalette();
-  const live = useQuery(api.todos.list, demo ? "skip" : {});
-  const library = useQuery(api.rooms.all, demo ? "skip" : {});
-  const toggle = useMutation(api.todos.toggle);
+  const live = useSafeQuery(api.todos.list, demo ? "skip" : {}, []);
+  const library = useSafeQuery(api.rooms.all, demo ? "skip" : {}, undefined);
+  const toggle = useSafeMutation(api.todos.toggle);
   const [expanded, setExpanded] = useState(false);
   const [failed, setFailed] = useState(false);
   const todos = demo?.todos ?? live;

@@ -1,4 +1,3 @@
-import { useMutation, useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
@@ -21,7 +20,9 @@ import { Rise } from "@/components/today/Rise";
 import { DoneView, EmptyView, FailedLine, LoadingView, ReadingView } from "@/components/today/States";
 import { sameMemory, withSkipped } from "@/components/today/focus";
 import { useFocusMemory } from "@/components/today/focusMemory";
+import { useOffline } from "@/lib/offline";
 import { runSync } from "@/lib/sync";
+import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
 
 // Fixtures fill a keeper line only when the card has none and FIXTURES is on.
 const fixtureLine = FIXTURES
@@ -82,8 +83,9 @@ export default function Today() {
   const p = usePalette();
   const { preview } = useLocalSearchParams<{ preview?: string }>();
   const tz = new Date().getTimezoneOffset();
-  const live = useQuery(api.today.get, { tzOffsetMinutes: tz });
-  const demo = FIXTURES && preview ? previewToday(preview, tz) : null;
+  const offline = useOffline();
+  const live = useSafeQuery(api.today.get, { tzOffsetMinutes: tz }, undefined);
+  const demo = (FIXTURES && preview) || offline ? previewToday(preview ?? "td-2", tz) : null;
   const today = demo ? demo.data : live;
   const [clock, setClock] = useState(() => Date.now());
   useEffect(() => {
@@ -91,10 +93,10 @@ export default function Today() {
     return () => clearInterval(timer);
   }, []);
   const now = demo ? demo.now : clock;
-  const done = useMutation(api.shots.done);
-  const keep = useMutation(api.shots.keep);
-  const remove = useMutation(api.shots.remove);
-  const retryAll = useMutation(api.extract.retryAllFailed);
+  const done = useSafeMutation(api.shots.done);
+  const keep = useSafeMutation(api.shots.keep);
+  const remove = useSafeMutation(api.shots.remove);
+  const retryAll = useSafeMutation(api.extract.retryAllFailed);
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -179,6 +181,7 @@ export default function Today() {
         contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
         <View style={{ gap: 16 }}>
           <Header />
+          {offline ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
