@@ -118,13 +118,13 @@ export async function getLibraryDiagnostics(): Promise<LibraryDiagnostics> {
   };
 }
 
-// null while loading, a string when it failed. Only reads the library when DEV_TOOLS is on.
-export function useLibraryDiagnostics(): LibraryDiagnostics | string | null {
+// null while loading, a string when it failed. Only reads the library when enabled (DEV_TOOLS by default).
+export function useLibraryDiagnostics(enabled: boolean = DEV_TOOLS): LibraryDiagnostics | string | null {
   const [diag, setDiag] = useState<LibraryDiagnostics | string | null>(null);
   useEffect(() => {
-    if (!DEV_TOOLS) return;
+    if (!enabled) return;
     getLibraryDiagnostics().then(setDiag, (e: unknown) => setDiag(String(e)));
-  }, []);
+  }, [enabled]);
   return diag;
 }
 

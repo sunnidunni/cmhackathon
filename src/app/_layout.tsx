@@ -3,10 +3,12 @@ import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
+import { DevHotspot } from "@/components/dev/DevHotspot";
 import { LoadingView, MessageView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
 import { usePalette, usePsstFonts } from "@/design/psst";
 import { convex } from "@/lib/convex";
+import { setConnectionError } from "@/lib/connection-error";
 import { DEV_TOOLS } from "@/lib/dev-flags";
 import { AppLifecycle } from "@/lib/lifecycle";
 import { secureStorage, storageError } from "@/lib/secure-storage";
@@ -23,12 +25,19 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading || isAuthenticated) return;
-    signIn("anonymous").catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
+    signIn("anonymous").catch((e: unknown) => {
+      const message = e instanceof Error ? e.message : String(e);
+      setConnectionError(message);
+      setError(message);
+    });
   }, [isLoading, isAuthenticated, signIn, attempt]);
 
   useEffect(() => {
     if (isAuthenticated || error) return;
-    const timer = setTimeout(() => setError("Timed out while signing in"), SIGN_IN_TIMEOUT_MS);
+    const timer = setTimeout(() => {
+      setConnectionError("Timed out while signing in");
+      setError("Timed out while signing in");
+    }, SIGN_IN_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [isAuthenticated, error, attempt]);
 
@@ -59,6 +68,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
+        <DevHotspot />
         <AnonymousSession>
           <AppLifecycle />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
