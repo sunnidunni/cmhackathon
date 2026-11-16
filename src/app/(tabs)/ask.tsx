@@ -98,6 +98,9 @@ export default function Ask() {
     exchanges.some((ex) => ex._id === pending.result?.questionId || (ex.question === pending.sent && ex.createdAt >= pending.sentAt - 5000));
   const shownPending = synced ? null : pending;
   const empty = history !== undefined && exchanges.length === 0 && !shownPending;
+  const chips = visibleChips(FIXTURE_SUGGESTIONS, [...exchanges.map((ex) => shownQuestion(ex.question)), ...asked], input, pending?.status === "looking");
+  const followUps = FIXTURES ? chips.slice(0, 3) : undefined;
+  const lastFound = (shownPending?.result ?? exchanges[exchanges.length - 1])?.found === true;
   const lastId = shownPending?.result ? undefined : exchanges[exchanges.length - 1]?._id;
 
   return (
@@ -117,7 +120,7 @@ export default function Ask() {
           {exchanges.map((ex) => (
             <View key={ex._id} style={{ gap: 14 }}>
               <QuestionBubble question={shownQuestion(ex.question)} />
-              <AnswerBlock result={ex} latest={!shownPending && ex._id === lastId} />
+              <AnswerBlock result={ex} latest={!shownPending && ex._id === lastId} next={followUps} onAsk={send} />
             </View>
           ))}
           {shownPending ? (
@@ -125,13 +128,11 @@ export default function Ask() {
               <QuestionBubble question={shownPending.question} />
               {shownPending.status === "looking" && slowFor === shownPending.sentAt ? <LookingBlock count={rooms?.count} /> : null}
               {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question)} /> : null}
-              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} /> : null}
+              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} next={followUps} onAsk={send} /> : null}
             </View>
           ) : null}
         </ScrollView>
-        {!empty && FIXTURES ? (
-          <SuggestionChips items={visibleChips(FIXTURE_SUGGESTIONS, [...exchanges.map((ex) => shownQuestion(ex.question)), ...asked], input, pending?.status === "looking")} onPick={send} />
-        ) : null}
+        {!empty && FIXTURES && !lastFound ? <SuggestionChips items={chips} onPick={send} /> : null}
         <View style={{ paddingBottom: keyboardUp ? 0 : Math.max(insets.bottom, 83) - 8 }}>
           <Composer value={input} onChange={setInput} onSend={() => send(input)} busy={pending?.status === "looking"} />
         </View>

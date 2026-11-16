@@ -11,6 +11,8 @@ import { isConvexId } from "@/components/remind/ids";
 import { defaultReminder, dueParts, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
 import { KEEPERS, KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
 import { MurmurThinking } from "./MurmurThinking";
+import { SuggestionChips } from "./SuggestionChips";
+import type { Suggestion } from "./suggestions";
 
 const Decor = ({ children }: { children: ReactNode }) => (
   <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -96,7 +98,7 @@ function SourceRow({ source, card, shots }: { source: AskSource; card: boolean; 
 }
 
 // Two-tone answer: the answer in ink, then the source in ink-2 in the same paragraph. No keeper in it.
-function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boolean; shots?: Shots }) {
+function FoundAnswer({ result, latest, shots, next, onAsk }: { result: AskResult; latest: boolean; shots?: Shots; next?: Suggestion[]; onAsk?: (q: string) => void }) {
   const p = usePalette();
   const source = result.sources[0];
   const go = useGo();
@@ -125,11 +127,17 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
           <PsstButton
             kind={isSet ? "outline" : "filled"}
             label={isSet ? `Reminder set for ${reminder.label}` : `Remind me ${reminder.label}`}
-            onPress={() => go(`/remind/${source.screenshotId}`)}
+            onPress={() => router.push(`/remind/${source.screenshotId}` as never)}
           />
           <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
             {"One reminder, the day before. Change it or turn it off later."}
           </Text>
+        </View>
+      ) : null}
+      {latest && next && next.length > 0 && onAsk ? (
+        <View style={{ marginHorizontal: -16 }}>
+          <Text style={[text.caption, { color: p.ink2, paddingHorizontal: 16, paddingBottom: 8 }]}>Ask next</Text>
+          <SuggestionChips items={next} onPick={onAsk} />
         </View>
       ) : null}
     </View>
@@ -172,13 +180,13 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
   );
 }
 
-export function AnswerBlock({ result, latest, shots, demo = false }: { result: AskResult; latest: boolean; shots?: Shots; demo?: boolean }) {
+export function AnswerBlock({ result, latest, shots, demo = false, next, onAsk }: { result: AskResult; latest: boolean; shots?: Shots; demo?: boolean; next?: Suggestion[]; onAsk?: (q: string) => void }) {
   const p = usePalette();
   const offline = useOffline();
   return (
     <DemoCtx.Provider value={demo}>
       {demo && offline ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
-      {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />}
+      {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} next={next} onAsk={onAsk} /> : <NoMatch result={result} shots={shots} />}
     </DemoCtx.Provider>
   );
 }
