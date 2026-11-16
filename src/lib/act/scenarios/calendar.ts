@@ -1,3 +1,4 @@
+// Scripted: the calendar event and the leave-by time (nothing is added). Real: expo-calendar would create the event after the confirm tap (not installed yet); leave-by would need a travel-time source.
 import type { ActScenario } from "../types";
 import { CONCERT_IMAGE } from "./images";
 

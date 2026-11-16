@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { Keeper, KeeperFace, PsstButton, Skeleton, SoftCard, text, usePalette } from "@/design/psst";
+import { Keeper, KeeperFace, PsstButton, Skeleton, text, usePalette } from "@/design/psst";
 
 export function ScreenTitle({ children }: { children: string }) {
   const p = usePalette();
@@ -46,14 +46,16 @@ export function ReadingView({ pending }: { pending: number }) {
   );
 }
 
-export function FailedCard({ count, onRetry }: { count: number; onRetry: () => void }) {
+export function FailedLine({ count, onRetry }: { count: number; onRetry: () => void }) {
   const p = usePalette();
+  const one = count === 1;
   return (
-    <SoftCard style={{ gap: 4 }}>
-      <Text style={[text.bodyBold, { color: p.ink }]}>{`Couldn't read ${count} new ${count === 1 ? "screenshot" : "screenshots"}.`}</Text>
-      <Text style={[text.body, { color: p.ink2 }]}>{"It's still on your phone."}</Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", columnGap: 4 }}>
+      <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
+        {`Couldn't read ${count} new ${one ? "screenshot" : "screenshots"}. ${one ? "It's" : "They're"} still on your phone.`}
+      </Text>
       <PsstButton kind="text" label="Try again" onPress={onRetry} />
-    </SoftCard>
+    </View>
   );
 }
 

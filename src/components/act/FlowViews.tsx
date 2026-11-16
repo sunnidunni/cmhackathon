@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
-import { confirmFor, demoLine, reminderCopy, type ReminderStep } from "./pages";
+import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
 
@@ -30,7 +30,7 @@ export function WhyRow({ scenario }: { scenario: ActScenario }) {
   );
 }
 
-export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; keeper: ActScenario["keeper"] }) {
+export function Receipt({ step, edit, fixture }: { step: ActStep; edit: Edit; fixture: boolean }) {
   const p = usePalette();
   if (step.kind === "draft-message")
     return (
@@ -83,7 +83,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
           <Text style={[text.body, { color: p.ink }]}>{step.eta}</Text>
         </Row>
         <Row label="Pay with">
-          <Text style={[text.body, { color: p.ink }]}>Demo card</Text>
+          <Text style={[text.body, { color: p.ink }]}>{fixture ? "Card on file" : "Demo card"}</Text>
         </Row>
       </SoftCard>
     );
@@ -125,7 +125,7 @@ export function MovePage({ scenario, step, moved, nextLabel, onToggle, onNext }:
   );
 }
 
-export function EditPage({ scenario, step, edit, onChange, onNext }: { scenario: ActScenario; step: ActStep; edit: Edit; onChange: (e: Edit) => void; onNext: () => void }) {
+export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { scenario: ActScenario; step: ActStep; edit: Edit; fixture: boolean; onChange: (e: Edit) => void; onNext: () => void }) {
   const p = usePalette();
   const field = { fontFamily: fonts.ui, fontSize: 16, lineHeight: 22, color: p.ink, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair2, borderRadius: 12, padding: 12 } as const;
   const message = step.kind === "draft-message" || step.kind === "email-draft";
@@ -149,17 +149,27 @@ export function EditPage({ scenario, step, edit, onChange, onNext }: { scenario:
           style={[field, { minHeight: 96, textAlignVertical: "top" }]}
         />
       ) : (
-        <Receipt step={step} edit={edit} keeper={scenario.keeper} />
+        <Receipt step={step} edit={edit} fixture={fixture} />
       )}
       <Text style={[text.body, { color: p.ink2 }]}>
-        {message ? "You can change the words. Nothing is sent until you confirm on the next screen." : step.kind === "order" ? "Nothing is bought until you confirm on the next screen." : "Nothing is added until you confirm on the next screen."}
+        {fixture
+          ? message
+            ? "You can change the words. Nothing is sent until you confirm on the next screen."
+            : step.kind === "order"
+              ? "Nothing is bought until you confirm on the next screen."
+              : "Nothing is added until you confirm on the next screen."
+          : message
+            ? "You can change the words. Psst can't send this yet."
+            : step.kind === "calendar"
+              ? "Psst can't add this to your calendar yet."
+              : "Nothing is bought until you confirm on the next screen."}
       </Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label={label} disabled={message && edit.body.trim().length === 0} onPress={onNext} />
     </View>
   );
 }
 
-export function ConfirmPage({ scenario, step, final, edit, reply, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; reply?: { to: string; text: string }; onConfirm: () => void; onEdit?: () => void }) {
+export function ConfirmPage({ scenario, step, final, edit, fixture, reply, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; reply?: { to: string; text: string }; onConfirm: () => void; onEdit?: () => void }) {
   const p = usePalette();
   const [tapped, setTapped] = useState(false);
   const c = confirmFor(scenario, step, final);
@@ -167,21 +177,21 @@ export function ConfirmPage({ scenario, step, final, edit, reply, onConfirm, onE
     <View style={{ gap: 16 }}>
       {reply ? (
         <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink }]}>
-          {`Demo: pretend ${reply.to} answered. `}
+          {fixture ? `${reply.to.split(" (")[0]} answered. ` : `Demo: pretend ${reply.to} answered. `}
           <Text style={text.body}>{reply.text}</Text>
         </Text>
       ) : null}
       <WhyRow scenario={scenario} />
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{c.title}</Text>
-      <Receipt step={step} edit={edit} keeper={scenario.keeper} />
+      <Receipt step={step} edit={edit} fixture={fixture} />
       {c.lines.map((l) => (
         <Text key={l} style={[text.body, { color: p.ink2 }]}>{l}</Text>
       ))}
-      <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{demoLine(step, "will")}</Text>
+      {fixture ? null : <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{realLine(step)}</Text>}
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}
-        label={c.button}
+        label={fixture ? c.button : "Got it"}
         disabled={tapped}
         onPress={() => {
           if (tapped) return;
@@ -189,18 +199,27 @@ export function ConfirmPage({ scenario, step, final, edit, reply, onConfirm, onE
           onConfirm();
         }}
       />
-      {onEdit ? <PsstButton kind="text" label="Edit" onPress={onEdit} /> : null}
+      {onEdit ? <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} /> : null}
     </View>
   );
 }
 
-export function DonePage({ scenario, onClose }: { scenario: ActScenario; onClose: () => void }) {
+export function DonePage({ scenario, fixture, onClose }: { scenario: ActScenario; fixture: boolean; onClose: () => void }) {
   const p = usePalette();
+  const last = lastAction(scenario.steps);
+  const line = doneLine(scenario, last, fixture);
+  const end = realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
       <Keeper id={scenario.keeper} size={120} mood="react" />
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>That was the demo.</Text>
-      <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{scenario.done}</Text>
+      {fixture ? (
+        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
+      ) : (
+        <>
+          <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{end.title}</Text>
+          <Text accessibilityLiveRegion="polite" style={[text.body, { color: p.ink2, textAlign: "center" }]}>{end.body}</Text>
+        </>
+      )}
       <PsstButton kind="filled" keeper={scenario.keeper} label="Done" onPress={onClose} />
     </View>
   );

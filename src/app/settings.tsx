@@ -1,10 +1,11 @@
 import { useMutation } from "convex/react";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../convex/_generated/api";
 import { ActionRow, Footer, Group, SectionLabel, SwitchRow } from "@/components/settings/rows";
 import { fonts, KEEPER_IDS, KEEPERS, KeeperFace, SoftCard, text, usePalette } from "@/design/psst";
+import { resetActs } from "@/lib/act/store";
 import { useAutoRead } from "@/lib/auto-read";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
 import { DEV_TOOLS, useLibraryDiagnostics, usePhotoAccess, useReadAllPhotos } from "@/lib/photos";
@@ -113,17 +114,6 @@ export default function Settings() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          presentation: "formSheet",
-          headerShown: false,
-          sheetGrabberVisible: true,
-          sheetAllowedDetents: [0.94, 1],
-          sheetInitialDetentIndex: 0,
-          sheetExpandsWhenScrolledToEdge: true,
-          contentStyle: { backgroundColor: pal.paper },
-        }}
-      />
       <ScrollView
         style={{ flex: 1, backgroundColor: pal.paper }}
         contentContainerStyle={{ padding: 20, paddingTop: 28, paddingBottom: 48, gap: 24 }}
@@ -230,6 +220,7 @@ export default function Settings() {
             <SectionLabel>Developer</SectionLabel>
             <Group>
               <SwitchRow first title="Read all photos" value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
+              <ActionRow title="Reset demos" onPress={resetActs} />
               <ActionRow title="Replay onboarding" detail="Plays the walkthrough on demo data. Nothing of yours is changed." onPress={() => router.push("/welcome?replay=1")} />
             </Group>
             <Text style={[text.caption, { color: pal.ink2, fontFamily: fonts.ui }]} testID="diagnostics">
