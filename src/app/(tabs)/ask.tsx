@@ -62,7 +62,7 @@ export default function Ask() {
     const sent = withFocus(q, focusTitle);
     setPending({ question: q, sent, status: "looking", sentAt });
     if (FIXTURES && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
-      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true });
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
       return;
     }
     if (isOffline()) {
