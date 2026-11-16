@@ -66,6 +66,17 @@ describe("insights", () => {
     expect(computeInsights(input(items)).find((i) => i.id === "oldest")?.text).toBe("You've had this one since December 2025: old.");
   });
 
+  it("uses each timestamp's own offset when given a time zone", () => {
+    const july = Date.UTC(2026, 6, 2, 4, 30); // Thu Jul 2 00:30 in New York (UTC-4)
+    expect(localDay(july, 300)).toBe(localDay(Date.UTC(2026, 6, 1, 12), 0));
+    expect(localDay(july, 300, "America/New_York")).toBe(localDay(Date.UTC(2026, 6, 2, 12), 0));
+  });
+
+  it("does not claim an exact reminder count at the preview cap", () => {
+    const out = computeInsights(input(many(6), { reminders: 20 }));
+    expect(out.find((i) => i.id === "reminders")?.text).toBe("20 or more reminders are set.");
+  });
+
   it("only mentions to-dos and reminders when there are some", () => {
     const items = many(6);
     expect(computeInsights(input(items)).some((i) => i.id === "todos" || i.id === "reminders")).toBe(false);

@@ -27,6 +27,7 @@ export default function You() {
       items: all.items.map((i) => ({ _id: i._id, takenAt: i.takenAt, category: i.category, title: i.title })),
       now: Date.now(),
       tzOffsetMinutes: tz,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       openTodos: todos ? todos.filter((t) => !t.done).length : 0,
       reminders: today ? today.reminders.length : 0,
     });

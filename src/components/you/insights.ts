@@ -2,7 +2,9 @@ export type InsightShot = { _id: string; takenAt: number; category: string; titl
 
 export type Insight = { id: "total" | "room" | "weekday" | "day" | "oldest" | "todos" | "reminders"; text: string; shotId?: string };
 
-type Input = { items: InsightShot[]; now: number; tzOffsetMinutes: number; openTodos: number; reminders: number };
+type Input = { items: InsightShot[]; now: number; tzOffsetMinutes: number; timeZone?: string; openTodos: number; reminders: number };
+
+export const REMINDER_PREVIEW_CAP = 20;
 
 const DAY = 86400000;
 const MIN_SHOTS = 5;
@@ -12,16 +14,30 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-export const localDay = (ts: number, tzOffsetMinutes: number) => Math.floor((ts - tzOffsetMinutes * 60000) / DAY);
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+export function localDay(ts: number, tzOffsetMinutes: number, timeZone?: string): number {
+  if (timeZone) {
+    let fmt = formatters.get(timeZone);
+    if (!fmt) {
+      fmt = new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "numeric", day: "numeric" });
+      formatters.set(timeZone, fmt);
+    }
+    const parts = fmt.formatToParts(ts);
+    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+    return Math.floor(Date.UTC(get("year"), get("month") - 1, get("day")) / DAY);
+  }
+  return Math.floor((ts - tzOffsetMinutes * 60000) / DAY);
+}
 const weekdayOf = (day: number) => (((day + 4) % 7) + 7) % 7;
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
-export function computeInsights({ items, now, tzOffsetMinutes, openTodos, reminders }: Input): Insight[] {
+export function computeInsights({ items, now, tzOffsetMinutes, timeZone, openTodos, reminders }: Input): Insight[] {
   if (items.length < MIN_SHOTS) return [];
   const out: Insight[] = [];
   const total = items.length;
-  const today = localDay(now, tzOffsetMinutes);
-  const days = items.map((s) => localDay(s.takenAt, tzOffsetMinutes));
+  const today = localDay(now, tzOffsetMinutes, timeZone);
+  const days = items.map((s) => localDay(s.takenAt, tzOffsetMinutes, timeZone));
 
   const lastWeek = days.filter((d) => d >= today - 6 && d <= today).length;
   out.push({ id: "total", text: `${total} screenshots in all, ${lastWeek} in the last 7 days.` });
@@ -51,12 +67,13 @@ export function computeInsights({ items, now, tzOffsetMinutes, openTodos, remind
   }
 
   const oldest = items.reduce((a, b) => (b.takenAt < a.takenAt ? b : a));
-  const oldestDate = new Date(localDay(oldest.takenAt, tzOffsetMinutes) * DAY);
+  const oldestDate = new Date(localDay(oldest.takenAt, tzOffsetMinutes, timeZone) * DAY);
   const nowYear = new Date(today * DAY).getUTCFullYear();
   const since = oldestDate.getUTCFullYear() === nowYear ? MONTHS[oldestDate.getUTCMonth()] : `${MONTHS[oldestDate.getUTCMonth()]} ${oldestDate.getUTCFullYear()}`;
   out.push({ id: "oldest", text: `You've had this one since ${since}${oldest.title ? `: ${oldest.title}` : ""}.`, shotId: oldest._id });
 
   if (openTodos > 0) out.push({ id: "todos", text: `${openTodos} ${plural(openTodos, "thing", "things")} to do came out of your screenshots.` });
-  if (reminders > 0) out.push({ id: "reminders", text: `${reminders} ${plural(reminders, "reminder is", "reminders are")} set.` });
+  if (reminders >= REMINDER_PREVIEW_CAP) out.push({ id: "reminders", text: `${REMINDER_PREVIEW_CAP} or more reminders are set.` });
+  else if (reminders > 0) out.push({ id: "reminders", text: `${reminders} ${plural(reminders, "reminder is", "reminders are")} set.` });
   return out;
 }
