@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Text, View } from "react-native";
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { KeeperLine, PsstButton, SoftCard, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
-import { completeAct } from "@/lib/act/store";
-import { EU261_CLAIM_ACT_ID, FLIGHT, FLIGHT_UPDATES, scenario, UPDATE_EVERY_MS } from "@/lib/act/scenarios/flightStatus";
+import { EU261_CLAIM_ACT_ID, FLIGHT, FLIGHT_UPDATES, UPDATE_EVERY_MS } from "@/lib/act/scenarios/flightStatus";
 import { Fade } from "./Motion";
 
 function LiveDot({ live }: { live: boolean }) {
@@ -37,7 +36,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
   const p = usePalette();
   const last = FLIGHT_UPDATES.length - 1;
   const [at, setAt] = useState(Math.min(startAt, last));
-  const first = useRef(true);
+  const prev = useRef(at);
   const u = FLIGHT_UPDATES[at];
   const done = at === last;
 
@@ -48,10 +47,8 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
   }, [at, done]);
 
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    if (prev.current === at) return;
+    prev.current = at;
     const run = done ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning) : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     run.catch(() => undefined);
     AccessibilityInfo.announceForAccessibility(`${FLIGHT.number} now delayed ${u.delay}. Departs ${u.departs}, gate ${u.gate}.`);
@@ -63,7 +60,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
     <View style={{ gap: 16 }}>
       <View style={{ gap: 4 }}>
         <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{`${FLIGHT.number} is delayed ${u.delay}`}</Text>
-        <Text style={[text.body, { color: p.ink2 }]}>{`${FLIGHT.from.city} to ${FLIGHT.to.city} · Today`}</Text>
+        <Text style={[text.body, { color: p.ink2 }]}>{`${FLIGHT.airline} · ${FLIGHT.from.city} to ${FLIGHT.to.city}`}</Text>
       </View>
 
       <Wash keeper="tock" style={{ gap: 16 }}>
@@ -80,7 +77,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
           <Field label="Scheduled" value={FLIGHT.scheduled} />
           <Field label="Lands in SFO" value={u.arrives} />
         </View>
-        <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <LiveDot live={!done} />
           <Text style={[text.caption, { color: p.ink2 }]}>{done ? "Updated just now · Tock keeps watching" : "Updated just now · checking again"}</Text>
         </View>
@@ -108,10 +105,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
               kind="filled"
               keeper="tock"
               label="Start an EU 261 claim"
-              onPress={() => {
-                completeAct(scenario.id);
-                router.push(`/act/${EU261_CLAIM_ACT_ID}` as never);
-              }}
+              onPress={() => router.push(`/act/${EU261_CLAIM_ACT_ID}` as never)}
             />
             <PsstButton kind="text" label="Not now" onPress={onClose} />
           </View>

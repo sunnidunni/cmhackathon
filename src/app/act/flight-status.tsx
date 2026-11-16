@@ -3,6 +3,7 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlightStatusView } from "@/components/act/FlightStatusView";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
+import { FLIGHT_UPDATES } from "@/lib/act/scenarios/flightStatus";
 import { DEV_TOOLS } from "@/lib/dev-flags";
 
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
@@ -21,7 +22,7 @@ export default function FlightStatus() {
           </View>
           <PsstButton kind="text" label="Close" onPress={close} />
         </View>
-        <FlightStatusView onClose={close} startAt={DEV_TOOLS && at ? Number(at) || 0 : 0} />
+        <FlightStatusView onClose={close} startAt={DEV_TOOLS && at ? Math.max(0, Math.min(FLIGHT_UPDATES.length - 1, Number(at) || 0)) : 0} />
       </ScrollView>
     </SafeAreaView>
   );
