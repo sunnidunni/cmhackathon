@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
+import { useCallback } from "react";
 import type { FunctionReference, FunctionReturnType, OptionalRestArgs } from "convex/server";
 import { isOffline, useOffline } from "./offline";
 
@@ -16,5 +17,5 @@ export function useSafeQuery<Q extends FunctionReference<"query">>(
 // A mutation that quietly does nothing while Convex is unreachable.
 export function useSafeMutation<M extends FunctionReference<"mutation">>(ref: M) {
   const run = useMutation(ref);
-  return (...args: OptionalRestArgs<M>): Promise<FunctionReturnType<M> | null> => (isOffline() ? Promise.resolve(null) : run(...args));
+  return useCallback((...args: OptionalRestArgs<M>): Promise<FunctionReturnType<M> | null> => (isOffline() ? Promise.resolve(null) : run(...args)), [run]);
 }
