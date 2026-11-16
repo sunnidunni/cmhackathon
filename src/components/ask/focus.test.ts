@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fixtureAnswerFits, shownQuestion, withFocus } from "./focus";
+import { fixtureAnswerFits, isSamBookQuestion, shownQuestion, withFocus } from "./focus";
 
 describe("withFocus", () => {
   it("names the focus item for a bare that", () => {
@@ -41,5 +41,14 @@ describe("fixtureAnswerFits", () => {
     expect(fixtureAnswerFits("When is that due?", "Rent", flyer, true)).toBe(false);
     expect(fixtureAnswerFits("What time is the yoga class?", flyer, flyer, true)).toBe(false);
     expect(fixtureAnswerFits("What was that recipe?", flyer, flyer, true)).toBe(false);
+  });
+});
+
+describe("isSamBookQuestion", () => {
+  it("matches the exact question, any case, with or without the question mark", () => {
+    for (const q of ["what book did Sam recommend?", "What book did Sam recommend", " WHAT BOOK DID SAM RECOMMEND? "]) expect(isSamBookQuestion(q)).toBe(true);
+  });
+  it("does not match other questions", () => {
+    for (const q of ["What book did Sam like?", "what book did sam recommend to Alex?"]) expect(isSamBookQuestion(q)).toBe(false);
   });
 });

@@ -18,3 +18,6 @@ export function fixtureAnswerFits(question: string, focusTitle: string | null | 
   if (FLYER.test(question)) return true;
   return BARE.test(question) && (!focusTitle || focusTitle === flyerTitle);
 }
+
+// The on-camera demo question, matched exactly (any case, with or without the question mark).
+export const isSamBookQuestion = (question: string): boolean => /^what book did sam recommend\??$/i.test(question.trim());

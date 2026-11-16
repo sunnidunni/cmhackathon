@@ -10,7 +10,7 @@ import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
 import { FIXTURE_SUGGESTIONS, fixtureAnswer } from "@/components/ask/fixtureAsk";
-import { fixtureAnswerFits, shownQuestion, withFocus } from "@/components/ask/focus";
+import { fixtureAnswerFits, isSamBookQuestion, shownQuestion, withFocus } from "@/components/ask/focus";
 import { SuggestionChips } from "@/components/ask/SuggestionChips";
 import { visibleChips } from "@/components/ask/suggestions";
 import { useFocusMemory } from "@/components/today/focusMemory";
@@ -61,6 +61,11 @@ export default function Ask() {
     const sentAt = Date.now();
     const sent = withFocus(q, focusTitle);
     setPending({ question: q, sent, status: "looking", sentAt });
+    const sam = FIXTURES && isSamBookQuestion(q) ? fixtureAnswer(q) : null;
+    if (sam) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...sam.result, questionId: "demo" }, demo: true, shots: sam.shots });
+      return;
+    }
     if (FIXTURES && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
       setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
       return;
