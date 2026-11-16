@@ -124,24 +124,25 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
-        <DevHotspot />
-        <AnonymousSession>
-          <AppLifecycle />
-          <OfflineBoundary>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }}>
-            <Stack.Screen name="remind/[id]" options={sheet} />
-            <Stack.Screen name="act/[id]" options={sheet} />
-            <Stack.Screen name="act/flight-status" options={sheet} />
-            <Stack.Screen name="settings" options={settingsSheet} />
-            <Stack.Screen name="settings/actions" options={actionsSheet} />
-            <Stack.Screen name="notifications" options={notificationsSheet} />
-            <Stack.Screen name="dev" options={devModal} />
-            <Stack.Screen name="recap" options={recapModal} />
-            <Stack.Screen name="shot/[id]" options={backHeader} />
-            <Stack.Screen name="room/[key]" options={backHeader} />
-          </Stack>
-          </OfflineBoundary>
-        </AnonymousSession>
+        <DevHotspot>
+          <AnonymousSession>
+            <AppLifecycle />
+            <OfflineBoundary>
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }}>
+                <Stack.Screen name="remind/[id]" options={sheet} />
+                <Stack.Screen name="act/[id]" options={sheet} />
+                <Stack.Screen name="act/flight-status" options={sheet} />
+                <Stack.Screen name="settings" options={settingsSheet} />
+                <Stack.Screen name="settings/actions" options={actionsSheet} />
+                <Stack.Screen name="notifications" options={notificationsSheet} />
+                <Stack.Screen name="dev" options={devModal} />
+                <Stack.Screen name="recap" options={recapModal} />
+                <Stack.Screen name="shot/[id]" options={backHeader} />
+                <Stack.Screen name="room/[key]" options={backHeader} />
+              </Stack>
+            </OfflineBoundary>
+          </AnonymousSession>
+        </DevHotspot>
       </ConvexAuthProvider>
     </GestureHandlerRootView>
   );
