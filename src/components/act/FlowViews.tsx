@@ -4,6 +4,7 @@ import { Text, TextInput, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
 import { confirmNote } from "@/lib/act/effects";
+import { Confetti } from "@/components/delight/Confetti";
 import { useBigText } from "@/lib/bigText";
 import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
 import { Fade } from "./Motion";
@@ -252,7 +253,12 @@ export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scena
   const end = effectEnd ?? realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
-      <Keeper id={scenario.keeper} size={big ? 72 : fixture && scenario.timeline ? 88 : 120} reaction="celebrate" reactionKey="done" />
+      <View>
+        <Keeper id={scenario.keeper} size={big ? 72 : fixture && scenario.timeline ? 88 : 120} reaction="celebrate" reactionKey="done" />
+        <View pointerEvents="none" style={{ position: "absolute", left: "50%", top: "58%" }}>
+          <Confetti keeper={scenario.keeper} fireKey="done" />
+        </View>
+      </View>
       {fixture ? (
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
       ) : (

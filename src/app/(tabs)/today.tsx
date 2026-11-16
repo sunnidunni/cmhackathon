@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
 import { SymbolView } from "expo-symbols";
-import { AccessibilityInfo, Alert, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { AccessibilityInfo, Alert, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
@@ -14,13 +14,15 @@ import { FocusCard, Headline } from "@/components/today/FocusCard";
 import { HandfulRows } from "@/components/today/HandfulRows";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
-import { actionsFor, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
+import { FiledToast, useFiledToast } from "@/components/today/FiledToast";
+import { actionsFor, buildItems, buildScreen, captionFor, extraReminders, toItem, type Item } from "@/components/today/model";
 import { TodoSection } from "@/components/today/TodoSection";
 import { previewToday, previewTodos } from "@/components/today/preview";
 import { Rise } from "@/components/today/Rise";
 import { DoneView, EmptyView, FailedLine, LoadingView, ReadingView } from "@/components/today/States";
 import { sameMemory, withSkipped } from "@/components/today/focus";
 import { useFocusMemory } from "@/components/today/focusMemory";
+import { useWindUp } from "@/components/tabs/WindUp";
 import { useOffline } from "@/lib/offline";
 import { runSync } from "@/lib/sync";
 import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
@@ -100,10 +102,11 @@ export default function Today() {
   const retryAll = useSafeMutation(api.extract.retryAllFailed);
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
   const [failed, setFailed] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const windUp = useWindUp(runSync, () => setFailed(true));
   const [removed, setRemoved] = useState(false);
   const [focusMemory, saveFocus] = useFocusMemory();
   const { screen, memory } = buildScreen(focusMemory === undefined ? undefined : today, skipped, fixtureLine, focusMemory ?? null);
+  const filedItem = useFiledToast(demo || !today ? null : buildItems(today, fixtureLine));
   useEffect(() => {
     if (!demo && memory && !sameMemory(memory, focusMemory)) saveFocus(memory);
   }, [demo, memory, focusMemory, saveFocus]);
@@ -111,11 +114,7 @@ export default function Today() {
   const reminderRows = today ? extraReminders(today, rendered) : [];
   const resurfaced = today?.resurfaced && !skipped.has(today.resurfaced._id) ? toItem(today.resurfaced, "thin", fixtureLine) : null;
 
-  const checkForNew = async () => {
-    setRefreshing(true);
-    await runSync().catch(() => setFailed(true));
-    setRefreshing(false);
-  };
+  const checkForNew = windUp.refresh;
 
   const run = async (work: () => Promise<unknown>) => {
     setFailed(false);
@@ -179,10 +178,11 @@ export default function Today() {
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={checkForNew} />}
+        refreshControl={windUp.control}
         contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
         <View style={{ gap: 16 }}>
           <Header />
+          {windUp.banner}
           {offline ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
@@ -217,11 +217,12 @@ export default function Today() {
           ) : null}
           <TodoSection day={today?.day} shown={rendered.map((i) => i.id)} demo={FIXTURES && preview ? previewTodos(preview) : null} />
           {removed ? <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Reading removed from Psst. Your original screenshot stays in Photos.</Text> : null}
-          {failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
-          {today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
+          {!FIXTURES && failed ? <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{"That didn't work. Try again in a moment."}</Text> : null}
+          {!FIXTURES && today && today.reading.failed > 0 ? <FailedLine count={today.reading.failed} onRetry={() => run(() => retryAll({}))} /> : null}
         </View>
         {footer}
       </ScrollView>
+      <FiledToast item={filedItem} />
     </SafeAreaView>
   );
 }

@@ -1,7 +1,9 @@
 import { ScrollView, Text, View } from "react-native";
 import type { ShotDetail } from "@/components/ask/AnswerBlock";
 import { useBigText } from "@/lib/bigText";
+import { confettiFor } from "@/components/delight/confetti";
 import { PsstButton, text, usePalette } from "@/design/psst";
+import { localDay } from "../../../convex/lib/time";
 import { dayLabel, defaultReminder, dueParts, previewText, whenLabel } from "./plan";
 import { Banner, Headline, Options, Preview, Priming, TodayPreview } from "./ReminderViews";
 
@@ -62,7 +64,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 28, gap: 16, flexGrow: 1 }}>
-        <Headline celebrate={saved && notifOn === true} />
+        <Headline celebrate={saved && notifOn === true} confetti={saved && notifOn === true && confettiFor(shot?.category === "money" ? "penny" : "tock", { dueToday: plan ? plan.date.when.slice(0, 10) === localDay(now, tz) : false }) !== null} />
         {shot === undefined ? <Text style={[text.lead, { color: p.ink2 }]}>Opening your screenshot.</Text> : null}
         {shot === null ? <Text style={[text.lead, { color: p.ink2 }]}>I can&apos;t find that screenshot. It may have been deleted.</Text> : null}
         {shot && !plan ? <Text style={[text.lead, { color: p.ink2 }]}>This screenshot has no upcoming date, so there is nothing to remind you about.</Text> : null}

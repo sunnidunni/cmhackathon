@@ -5,6 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import { countLabel, dateLabel, roomHeadline, roomLine, type Category } from "@/components/rooms/format";
 import { Keeper, KeeperLine, keeperForRoom, PsstButton, Skeleton, text, usePalette, type KeeperId } from "@/design/psst";
 import type { RoomKey } from "@/design/theme";
+import { SleepyKeeper } from "@/components/keepers/SleepyKeeper";
 import { RoomWash } from "@/components/rooms/RoomWash";
 import { PhotoGrid, ShotGridSkeleton } from "@/components/rooms/PhotoGrid";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
@@ -119,7 +120,7 @@ function SingleRoom({ category }: { category: Category }) {
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
         {isEmpty && isRoom ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 8 }}>
-            <Keeper id={keeper} size={128} boop />
+            <SleepyKeeper id={keeper} size={128} />
             <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
               Nothing in {ROOM_LABEL[category]} yet.
             </Text>

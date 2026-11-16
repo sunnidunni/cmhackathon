@@ -8,6 +8,7 @@ import {
 } from "./_generated/server";
 import { EXTRACTION_SCHEMA, buildPrompt, parseExtraction } from "./lib/extraction";
 import { requireUserId } from "./lib/auth";
+import { insertTodos } from "./todos";
 
 export const MAX_PARALLEL = 10;
 export const MAX_ATTEMPTS = 3;
@@ -81,15 +82,18 @@ export const complete = internalMutation({
       v.literal("unsorted"),
     ),
     reason: v.string(),
+    todos: v.optional(v.array(v.string())),
     dates: v.array(v.object({ when: v.string(), what: v.string(), confident: v.boolean() })),
     importance: v.number(),
     reactionKey: v.string(),
   },
-  handler: async (ctx, { screenshotId, ...result }) => {
+  handler: async (ctx, { screenshotId, todos, ...result }) => {
     const row = await ctx.db.get(screenshotId);
     if (row === null || row.status !== "processing") return false;
+    if (row.todosExtracted !== true) await insertTodos(ctx, row.userId, screenshotId, todos ?? []);
     await ctx.db.patch(screenshotId, {
       ...result,
+      todosExtracted: true,
       // The user's own move wins over the model's category.
       ...(row.userMoved ? { category: row.category } : {}),
       status: "ready",

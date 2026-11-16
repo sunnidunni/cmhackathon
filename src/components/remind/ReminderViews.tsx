@@ -1,7 +1,8 @@
 import { SymbolView } from "expo-symbols";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useBigText } from "@/lib/bigText";
+import { Confetti } from "@/components/delight/Confetti";
 import { Keeper, KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette } from "@/design/psst";
 
 const Decor = ({ children }: { children: ReactNode }) => (
@@ -12,16 +13,24 @@ const Decor = ({ children }: { children: ReactNode }) => (
 
 export type OptionRow = { key: string; title: string; sub: string; selected: boolean; available: boolean };
 
-export function Headline({ celebrate = false }: { celebrate?: boolean }) {
+export function Headline({ celebrate = false, confetti = false }: { celebrate?: boolean; confetti?: boolean }) {
   const p = usePalette();
+  const [chest, setChest] = useState<{ x: number; y: number } | null>(null);
   return (
-    <Text maxFontSizeMultiplier={1.84} style={[text.headlineCard, { color: p.ink }]}>
-      Choose when Tock{" "}
-      <View style={{ transform: [{ translateY: 4 }] }}>
-        <Decor><KeeperFace id="tock" size={26} reaction="celebrate" reactionKey={celebrate ? "set" : undefined} /></Decor>
-      </View>{" "}
-      should remind you.
-    </Text>
+    <View>
+      <Text maxFontSizeMultiplier={1.84} style={[text.headlineCard, { color: p.ink }]}>
+        Choose when Tock{" "}
+        <View style={{ transform: [{ translateY: 4 }] }} onLayout={(e) => setChest({ x: e.nativeEvent.layout.x + 13, y: e.nativeEvent.layout.y + 17 })}>
+          <Decor><KeeperFace id="tock" size={26} reaction="celebrate" reactionKey={celebrate ? "set" : undefined} /></Decor>
+        </View>{" "}
+        should remind you.
+      </Text>
+      {chest ? (
+        <View pointerEvents="none" style={{ position: "absolute", left: chest.x, top: chest.y }}>
+          <Confetti keeper="tock" fireKey={confetti ? "set" : undefined} />
+        </View>
+      ) : null}
+    </View>
   );
 }
 

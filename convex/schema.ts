@@ -68,6 +68,7 @@ export default defineSchema({
     error: v.optional(v.string()),
     memoryStored: v.optional(v.boolean()),
     amount: v.optional(v.string()),
+    todosExtracted: v.optional(v.boolean()),
     readAt: v.optional(v.number()),
     doneAt: v.optional(v.number()),
     openedAt: v.optional(v.number()),
@@ -109,6 +110,12 @@ export default defineSchema({
     ids: v.array(v.id("screenshots")),
     thin: v.boolean(),
   }).index("by_user_day", ["userId", "day"]),
+
+  siriKeys: defineTable({
+    keyHash: v.string(),
+    userId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_keyHash", ["keyHash"]),
 
   questions: defineTable({
     userId: v.id("users"),
