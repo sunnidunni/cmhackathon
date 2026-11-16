@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { KeeperFace, ShotSticker, text, usePalette } from "@/design/psst";
+import { KeeperFace, PsstButton, ShotSticker, text, usePalette } from "@/design/psst";
+import { useBigText } from "@/lib/bigText";
 import { rowSubtitle, type Item } from "./model";
 
 function Bell({ color }: { color: string }) {
@@ -39,27 +40,33 @@ export function HandfulRows({
   onMenu: (item: Item) => void;
 }) {
   const p = usePalette();
+  const big = useBigText();
   if (rows.length === 0) return null;
   return (
     <View>
       {title ? <Text style={[text.caption, { color: p.ink2, marginBottom: 8 }]}>{title}</Text> : null}
       {rows.map((item) => (
-        <View key={item.id} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 68, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.hair }}>
+        <View key={item.id} style={{ flexDirection: big ? "column" : "row", alignItems: big ? "stretch" : "center", gap: 12, minHeight: 68, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.hair }}>
           <Pressable accessibilityRole="button" accessibilityLabel={`Open ${item.title}`} onPress={() => onOpen(item)} onLongPress={() => onMenu(item)} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
             <ShotSticker uri={item.imageUrl} title={item.title} size={44} />
             <View style={{ flex: 1, gap: 2 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <KeeperFace id={item.keeper} size={22} muted={item.handled} />
-                <Text numberOfLines={2} style={[text.bodyBold, { flexShrink: 1, color: item.handled ? p.ink2 : p.ink }]}>
+                <Text numberOfLines={big ? undefined : 2} style={[text.bodyBold, { flexShrink: 1, color: item.handled ? p.ink2 : p.ink }]}>
                   {item.title}
                 </Text>
               </View>
               <Text style={[text.caption, { color: p.ink2 }]}>{rowSubtitle(item, now, tz)}</Text>
             </View>
           </Pressable>
-          {item.handled ? (
+          {item.handled && big ? null : item.handled ? (
             <View style={{ width: 44, alignItems: "center" }}>
               <KeeperFace id={item.keeper} size={28} muted />
+            </View>
+          ) : big ? (
+            <View style={{ gap: 8 }}>
+              {item.actions.primary === "remind" ? <PsstButton kind="outline" label="Remind me" onPress={() => onRemind(item)} /> : null}
+              <PsstButton kind="outline" label="Not today" onPress={() => onSkip(item)} />
             </View>
           ) : (
             <View style={{ flexDirection: "row" }}>

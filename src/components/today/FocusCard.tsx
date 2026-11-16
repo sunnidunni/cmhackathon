@@ -1,18 +1,24 @@
 import { Pressable, Text, View } from "react-native";
 import { fonts, KeeperFace, KeeperLine, PsstButton, ShotSticker, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
+import { useBigText } from "@/lib/bigText";
 import { actionsFor, clockLabel, dateLabel, headline, sourceLine, type Item } from "./model";
 
 export function Headline({ item, now, tz }: { item: Item; now: number; tz: number }) {
   const p = usePalette();
+  const big = useBigText();
   const h = headline(item, now, tz);
   return (
     <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
       {h.name}
-      {"  "}
-      <View style={{ transform: [{ translateY: 4 }] }}>
-        <KeeperFace id={item.keeper} size={30} />
-      </View>
-      {"  "}
+      {big ? " " : "  "}
+      {big ? null : (
+        <>
+          <View style={{ transform: [{ translateY: 4 }] }}>
+            <KeeperFace id={item.keeper} size={30} />
+          </View>
+          {"  "}
+        </>
+      )}
       {h.rest}
     </Text>
   );
@@ -36,15 +42,16 @@ export function FocusCard({
   onRemoveReading: () => void;
 }) {
   const p = usePalette();
+  const big = useBigText();
   const c = useKeeperColors(item.keeper);
   const a = actionsFor(item, now, tz);
   return (
     <View style={{ gap: 12 }}>
-      <Wash keeper={item.keeper} style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+      <Wash keeper={item.keeper} style={{ flexDirection: big ? "column" : "row", gap: 16, alignItems: big ? "flex-start" : "center" }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Open ${item.title}`} onPress={onOpen}>
           <ShotSticker uri={item.imageUrl} title={item.title} tilt={-2} size={104} />
         </Pressable>
-        <View style={{ flex: 1, gap: 6 }}>
+        <View style={{ flex: big ? undefined : 1, gap: 6, alignSelf: big ? "stretch" : undefined }}>
           {item.section === "justIn" ? (
             <View style={{ alignSelf: "flex-start", backgroundColor: p.white, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 }}>
               <Text style={[text.caption, { color: p.ink, fontFamily: fonts.uiBold }]}>{`Just in · ${clockLabel(item.takenAt, tz)}`}</Text>

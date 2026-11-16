@@ -64,7 +64,7 @@ function Header() {
   );
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-      <Text accessibilityRole="header" style={[text.headline, { fontSize: 24, color: p.ink }]}>
+      <Text accessibilityRole="header" allowFontScaling={false} style={[text.headline, { fontSize: 24, color: p.ink }]}>
         Psst
       </Text>
       {glass ? (

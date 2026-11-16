@@ -1,6 +1,7 @@
 import { SymbolView } from "expo-symbols";
 import type { ReactNode } from "react";
-import { Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
+import { useBigText } from "@/lib/bigText";
 import { Keeper, KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette } from "@/design/psst";
 
 const Decor = ({ children }: { children: ReactNode }) => (
@@ -71,11 +72,12 @@ export function Preview({ label, body, time }: { label: string; body: string; ti
 
 export function TodayPreview({ title, sub, imageUrl }: { title: string; sub: string; imageUrl: string | null }) {
   const p = usePalette();
+  const big = useBigText();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair, borderRadius: 18, padding: 10 }}>
       <ShotSticker uri={imageUrl} title={title} size={40} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={[text.bodyBold, { color: p.ink }]} numberOfLines={2}>{title}</Text>
+        <Text style={[text.bodyBold, { color: p.ink }]} numberOfLines={big ? undefined : 2}>{title}</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>{sub}</Text>
       </View>
       <Decor><KeeperFace id="tock" size={32} /></Decor>
@@ -99,11 +101,12 @@ export function Banner({ kind, title, body }: { kind: "off" | "error"; title: st
 
 export function Priming({ preview, onAllow, onSkip }: { preview: { body: string; time: string }; onAllow: () => void; onSkip: () => void }) {
   const p = usePalette();
+  const big = useBigText();
   return (
     <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0, justifyContent: "flex-end", backgroundColor: p.scrim }}>
-      <View accessibilityViewIsModal style={{ backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 42, gap: 14 }}>
+      <ScrollView accessibilityViewIsModal style={{ flexGrow: 0, maxHeight: "92%", backgroundColor: p.paper, borderTopLeftRadius: 24, borderTopRightRadius: 24 }} contentContainerStyle={{ padding: 16, paddingBottom: 42, gap: 14 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Decor><Keeper id="tock" size={72} /></Decor>
+          <Decor><Keeper id="tock" size={big ? 48 : 72} /></Decor>
           <Text maxFontSizeMultiplier={1.84} style={[text.headlineCard, { color: p.ink, flex: 1 }]}>Tock can tap you on the shoulder.</Text>
         </View>
         <Preview label="What you'll get" body={preview.body} time={preview.time} />
@@ -111,7 +114,7 @@ export function Priming({ preview, onAllow, onSkip }: { preview: { body: string;
         <PsstButton kind="filled" keeper="tock" label="Turn on notifications" onPress={onAllow} />
         <PsstButton kind="text" label="Not now, show it in Today" onPress={onSkip} />
         <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>Your reminder is saved either way.</Text>
-      </View>
+      </ScrollView>
     </View>
   );
 }

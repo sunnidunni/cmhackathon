@@ -6,11 +6,13 @@ import Svg, { Path } from "react-native-svg";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { KeeperFace, PsstButton, text, useKeeperColors, usePalette } from "@/design/psst";
+import { useBigText } from "@/lib/bigText";
 import { buildTodoRows, showAllLabel, visibleTodos, type ShotInfo, type TodoItem, type TodoRow } from "./todoRows";
 
 function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
   const p = usePalette();
   const { main, deep } = useKeeperColors(row.keeper, row.done);
+  const big = useBigText();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", minHeight: 60, borderTopWidth: 1, borderTopColor: p.hair }}>
       <Pressable
@@ -37,7 +39,7 @@ function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
       >
         <KeeperFace id={row.keeper} size={22} muted={row.done} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text numberOfLines={2} style={[text.bodyBold, { color: row.done ? p.ink2 : p.ink }, row.done && { textDecorationLine: "line-through" }]}>
+          <Text numberOfLines={big ? undefined : 2} style={[text.bodyBold, { color: row.done ? p.ink2 : p.ink }, row.done && { textDecorationLine: "line-through" }]}>
             {row.text}
           </Text>
           {row.due && !row.done ? <Text style={[text.caption, { color: row.late ? p.ink2 : deep }]}>{row.due}</Text> : null}

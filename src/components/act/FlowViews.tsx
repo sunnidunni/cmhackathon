@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
 import { FIXTURES } from "@/lib/fixtures";
+import { useBigText } from "@/lib/bigText";
 import { confirmFor, demoLine, doneLine, lastAction, reminderCopy, stepDone, type ReminderStep } from "./pages";
 import { Fade, TypingDots } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
@@ -31,10 +32,11 @@ function Bubble({ mine, children, keeper }: { mine?: boolean; children: ReactNod
 
 export function WhyRow({ scenario }: { scenario: ActScenario }) {
   const p = usePalette();
+  const big = useBigText();
   return (
-    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+    <View style={{ flexDirection: big ? "column" : "row", gap: 12, alignItems: big ? "flex-start" : "center" }}>
       <SourceThumb source={scenario.source} size={44} />
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: big ? undefined : 1, gap: 2 }}>
         <Text style={[text.body, { color: p.ink }]}>{scenario.why}</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>{`From your screenshot${scenario.source.at ? `, ${scenario.source.at}` : ""}`}</Text>
       </View>
@@ -228,10 +230,11 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
 
 export function DonePage({ scenario, onClose }: { scenario: ActScenario; onClose: () => void }) {
   const p = usePalette();
+  const big = useBigText();
   const line = doneLine(scenario, lastAction(scenario.steps), FIXTURES);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
-      <Keeper id={scenario.keeper} size={120} mood="react" />
+      <Keeper id={scenario.keeper} size={big ? 72 : 120} mood="react" />
       {FIXTURES ? (
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
       ) : (
