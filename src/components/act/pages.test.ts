@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ActScenario, ActStep } from "../../lib/act/types";
-import { buildPages, confirmFor, doneLine, itemsSum, lastAction, nextLabel, reminderCopy, totalCents, demoLine } from "./pages";
+import { buildPages, confirmFor, doneLine, isFixtureAct, itemsSum, lastAction, nextLabel, realEnd, realLine, reminderCopy, totalCents, demoLine } from "./pages";
 
 vi.mock("../../lib/act/scenarios/images", () => ({ MOM_PIZZA_IMAGE: 1, FLIGHT_DELAY_IMAGE: 2, BILL_IMAGE: 3, CONCERT_IMAGE: 4 }));
 
@@ -61,7 +61,20 @@ describe("act pages", () => {
     expect(doneLine(pizza, lastAction(pizza.steps), false)).toBe("Demo: nothing was ordered or charged.");
     expect(doneLine({ ...delay, doneFixture: "Claim sent to the airline." }, lastAction(delay.steps), true)).toBe("Claim sent to the airline.");
     expect(doneLine({ ...delay, doneFixture: "Claim sent to the airline." }, lastAction(delay.steps), false)).toBe("Demo: nothing was sent.");
-    expect(doneLine(act("bill-willow-grid"), lastAction(act("bill-willow-grid").steps), true)).toBe("Email ready to send.");
+    expect(doneLine(act("bill-willow-grid"), lastAction(act("bill-willow-grid").steps), true)).toBe("Email sent to Willow Grid.");
     expect(doneLine(act("concert-calendar"), undefined, true)).toBeTruthy();
+  });
+  it("fixtures are gated per scenario: a detected act stays honest even with fixtures on", () => {
+    const real: ActScenario = { ...act("flight-delay"), id: "real:delay:26-flight-delay", done: "Nothing was sent." };
+    expect(isFixtureAct(act("flight-delay"), true)).toBe(true);
+    expect(isFixtureAct(act("flight-delay"), false)).toBe(false);
+    expect(isFixtureAct(real, true)).toBe(false);
+    expect(doneLine(real, lastAction(real.steps), isFixtureAct(real, true))).toBe("Nothing was sent.");
+    expect(realEnd(lastAction(real.steps))).toEqual({ title: "Nothing was sent.", body: "Sending isn't connected in this version." });
+    expect(realEnd({ kind: "calendar", title: "t", when: "w" }).title).toBe("Nothing was added.");
+    expect(realLine({ kind: "draft-message", to: "Sam", via: "Messages", body: "x" })).toBe("Psst can't send this yet.");
+  });
+  it("bill confirm has no demo-address line, and its fixture end says the email was sent", () => {
+    expect(act("bill-willow-grid").confirm.lines.join(" ")).not.toMatch(/demo/i);
   });
 });

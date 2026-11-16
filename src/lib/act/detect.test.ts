@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import actManifest from "../../../demo-screenshots/act-manifest.json";
 import manifest from "../../../demo-screenshots/manifest.json";
-import { detect, type DetectInput } from "./detect";
+import { detect, detectFirst, type DetectInput } from "./detect";
 
 const NOW = new Date(2026, 10, 15, 10, 0);
 const YESTERDAY = new Date(2026, 10, 14, 10, 0).toISOString();
@@ -85,7 +85,7 @@ describe("detect over the demo manifest", () => {
     const act = detect(asShot(manifest.find((r) => r.file.includes("utility-bill")) as Row), NOW);
     expect(act?.steps.map((x) => x.kind)).toEqual(["email-draft"]);
     expect(act?.noticed).toBe("Willow Grid Energy, $51.30, is due Nov 21.");
-    expect(act?.ready).toBe("I wrote a note to Willow Grid Energy. I won't pay it.");
+    expect(act?.ready).toBe("I wrote a note to Willow Grid Energy. Psst can't send it yet, and I won't pay it.");
     expect(act?.confirm.price).toBeUndefined();
     expect(act?.steps[0]).toMatchObject({ kind: "email-draft", to: "Willow Grid Energy billing", subject: "Question about my bill (account WG-4182)" });
   });
@@ -132,7 +132,8 @@ describe("chat that asks you to bring or buy something", () => {
     ]);
     expect(act?.noticed).toBe("Sam asked you to bring the lemonade on Saturday.");
     expect(act?.confirm.lines[0]).toBe("To: Sam, Messages");
-    expect(act?.done).toBe("Demo: nothing was sent.");
+    expect(act?.done).toBe("Nothing was sent.");
+    expect(act?.ready).toBe("I wrote a reply to Sam. Psst can't send it yet.");
   });
 
   test("works from the summary alone when the text is missing", () => {
@@ -294,5 +295,25 @@ describe("trust", () => {
       expect(act.didOnOwn).toBeUndefined();
       expect(act.ready + act.why).not.toMatch(/\b(I moved|I set|I sent|I paid|moved your)\b/i);
     }
+  });
+});
+
+describe("detectFirst", () => {
+  const inputs = ["03-concert-ticket", "04-dentist-text", "05-visa-email"].map((name) => asShot(manifest.find((r) => r.file.includes(name)) as Row));
+
+  test("returns the first eligible act up to the cap", () => {
+    expect(detectFirst(inputs, new Set(), 1, NOW).map((a) => a.id)).toEqual(["real:calendar:03-concert-ticket"]);
+    expect(detectFirst(inputs, new Set(), 2, NOW)).toHaveLength(2);
+  });
+
+  test("a dismissed or completed act makes room for the next one", () => {
+    expect(detectFirst(inputs, new Set(["real:calendar:03-concert-ticket"]), 1, NOW).map((a) => a.id)).toEqual(["real:calendar:04-dentist-text"]);
+    const both = new Set(["real:calendar:03-concert-ticket", "real:calendar:04-dentist-text"]);
+    expect(detectFirst(inputs, both, 1, NOW).map((a) => a.id)).toEqual(["real:calendar:05-visa-email"]);
+  });
+
+  test("returns nothing when every eligible act is skipped", () => {
+    const all = new Set(inputs.map((i) => "real:calendar:" + i.id));
+    expect(detectFirst(inputs, all, 1, NOW)).toEqual([]);
   });
 });
