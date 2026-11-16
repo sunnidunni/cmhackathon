@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -43,13 +44,10 @@ export default function Remind() {
     setFailed(false);
     setSaving(true);
     try {
-      if (real) {
-        const r = await actions.remind(shotId, plan.date.when);
-        setNotifOn(r.notified);
-      } else {
-        setNotifOn(await hasNotificationPermission());
-      }
+      const notified = real ? (await actions.remind(shotId, plan.date.when)).notified : await hasNotificationPermission();
+      setNotifOn(notified);
       setSaved(true);
+      if (notified) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     } catch {
       setFailed(true);
     } finally {
