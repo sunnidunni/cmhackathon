@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Text, View } from "react-native";
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { KeeperLine, PsstButton, SoftCard, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
 import { completeAct } from "@/lib/act/store";
 import { EU261_CLAIM_ACT_ID, FLIGHT, FLIGHT_UPDATES, scenario, UPDATE_EVERY_MS } from "@/lib/act/scenarios/flightStatus";
@@ -15,6 +15,7 @@ function LiveDot({ live }: { live: boolean }) {
   const o = useSharedValue(1);
   useEffect(() => {
     o.value = live && !reduce ? withRepeat(withTiming(0.3, { duration: 700 }), -1, true) : withTiming(1, { duration: 150 });
+    return () => cancelAnimation(o);
   }, [live, reduce, o]);
   const style = useAnimatedStyle(() => ({ opacity: o.value }));
   return <Animated.View style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: live ? c.main : p.ink3 }, style]} />;
@@ -109,7 +110,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
               label="Start an EU 261 claim"
               onPress={() => {
                 completeAct(scenario.id);
-                router.replace(`/act/${EU261_CLAIM_ACT_ID}` as never);
+                router.push(`/act/${EU261_CLAIM_ACT_ID}` as never);
               }}
             />
             <PsstButton kind="text" label="Not now" onPress={onClose} />

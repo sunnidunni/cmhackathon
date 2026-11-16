@@ -74,6 +74,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }}>
             <Stack.Screen name="remind/[id]" options={sheet} />
             <Stack.Screen name="act/[id]" options={sheet} />
+            <Stack.Screen name="act/flight-status" options={sheet} />
             <Stack.Screen name="settings" options={settingsSheet} />
           </Stack>
         </AnonymousSession>

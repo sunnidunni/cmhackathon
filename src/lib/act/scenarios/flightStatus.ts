@@ -3,7 +3,7 @@ import type { ActScenario } from "../types";
 import { scenario as delay } from "./delay";
 import { FLIGHT_DELAY_IMAGE } from "./images";
 
-export const EU261_CLAIM_ACT_ID = "flight-delay";
+export const EU261_CLAIM_ACT_ID = "flight-eu261";
 
 export const FLIGHT = {
   number: "PS 418",
