@@ -17,6 +17,7 @@ import { getDetectedAct } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
 
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
+const finish = () => router.dismissTo("/today");
 
 export default function Act() {
   const p = usePalette();
@@ -81,7 +82,7 @@ export default function Act() {
     if (page.kind === "done") {
       const lastIndex = scenario.steps.findLastIndex((s) => !isReminderStep(s));
       const end = fixture ? null : realEffectEnd(scenario.steps[lastIndex], results[lastIndex]);
-      return <DonePage scenario={scenario} fixture={fixture} end={end} onClose={close} />;
+      return <DonePage scenario={scenario} fixture={fixture} end={end} onClose={finish} />;
     }
     const step = scenario.steps[page.step];
     if (page.kind === "move" && isReminderStep(step))
