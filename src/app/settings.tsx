@@ -240,6 +240,10 @@ export default function Settings() {
             </Text>
           </View>
         ) : null}
+
+        <Group>
+          <ActionRow first title="Developer" onPress={() => router.push("/dev")} />
+        </Group>
       </ScrollView>
     </>
   );

@@ -1,13 +1,18 @@
 import { useConvexAuth } from "convex/react";
 import { router, usePathname } from "expo-router";
-import { useState } from "react";
-import { Modal, Pressable } from "react-native";
+import { useState, type ReactNode } from "react";
+import { Modal, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DevPanel } from "./DevPanel";
 
-// An invisible strip over the status bar. A long press opens the developer panel in every build.
+// A long press near the top of the screen opens the developer panel in every build.
+// iOS never delivers touches inside the status bar and Dynamic Island band, so the zone reaches
+// 44pt below the inset. It is a gesture on the app root rather than a view on top, so taps on
+// buttons in that zone still work; only a 900ms hold opens the panel.
+// Native sheets and modals are presented outside this view, so the Settings "Developer" row covers those.
 // Before sign-in succeeds there is no navigator to push onto, so the panel opens in a modal instead.
-export function DevHotspot() {
+export function DevHotspot({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useConvexAuth();
   const pathname = usePathname();
@@ -19,16 +24,17 @@ export function DevHotspot() {
     else setModal(true);
   }
 
+  const longPress = Gesture.LongPress()
+    .minDuration(900)
+    .hitSlop({ top: 0, height: insets.top + 44 })
+    .runOnJS(true)
+    .onStart(open);
+
   return (
     <>
-      <Pressable
-        accessible={false}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        delayLongPress={900}
-        onLongPress={open}
-        style={{ position: "absolute", top: 0, left: 0, right: 0, height: Math.max(insets.top, 20), zIndex: 1000 }}
-      />
+      <GestureDetector gesture={longPress}>
+        <View style={{ flex: 1 }}>{children}</View>
+      </GestureDetector>
       <Modal visible={modal} animationType="slide" onRequestClose={() => setModal(false)}>
         <DevPanel onClose={() => setModal(false)} openRoute={() => setModal(false)} />
       </Modal>

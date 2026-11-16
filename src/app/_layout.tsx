@@ -68,11 +68,12 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
-        <DevHotspot />
-        <AnonymousSession>
-          <AppLifecycle />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
-        </AnonymousSession>
+        <DevHotspot>
+          <AnonymousSession>
+            <AppLifecycle />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
+          </AnonymousSession>
+        </DevHotspot>
       </ConvexAuthProvider>
     </GestureHandlerRootView>
   );
