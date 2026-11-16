@@ -60,6 +60,13 @@
         {
           "enableRemoteNotifications": false
         }
+      ],
+      "expo-mail-composer",
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Psst adds an event to your calendar only after you confirm it."
+        }
       ]
     ],
     "experiments": {
