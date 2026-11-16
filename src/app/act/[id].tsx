@@ -5,9 +5,11 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmPage, DonePage, EditPage, MovePage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
+import { PizzaOrderFlow } from "@/components/act/PizzaOrderFlow";
 import { buildPages, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
+import { PIZZA_ORDER } from "@/lib/act/scenarios/pizzaOrder";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
 import { getDetectedAct } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
@@ -23,6 +25,7 @@ export default function Act() {
   const pages = useMemo(() => buildPages(scenario?.steps ?? []), [scenario]);
   const [index, setIndex] = useState(0);
   const [edits, setEdits] = useState<Record<number, Edit>>({});
+  const [ordering, setOrdering] = useState(false);
   const page = pages[index];
 
   useEffect(() => {
@@ -55,6 +58,7 @@ export default function Act() {
   };
 
   const body = () => {
+    if (ordering) return <PizzaOrderFlow scenario={scenario} sent={editFor(0).body} onPlaced={() => completeAct(scenario.id)} onClose={close} />;
     if (page.kind === "done") return <DonePage scenario={scenario} onClose={close} />;
     const step = scenario.steps[page.step];
     if (page.kind === "move" && isReminderStep(step))
@@ -86,6 +90,7 @@ export default function Act() {
           onEdit={step.kind === "order" ? undefined : () => go(index - 1)}
           onConfirm={() => {
             feedback("success");
+            if (scenario.id === PIZZA_ORDER.scenarioId && step.kind === "draft-message") return setOrdering(true);
             go(index + 1);
           }}
         />
@@ -102,11 +107,11 @@ export default function Act() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <KeeperFace id={scenario.keeper} size={32} />
-              <Text style={[text.caption, { color: p.ink2 }]}>{page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
+              <Text style={[text.caption, { color: p.ink2 }]}>{ordering ? "Pizza for tonight" : page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
             </View>
             {page.kind !== "done" ? <PsstButton kind="text" label="Close" onPress={close} /> : null}
           </View>
-          <Fade key={index}>{body()}</Fade>
+          <Fade key={ordering ? "order" : index}>{body()}</Fade>
         </ScrollView>
       </SafeAreaView>
     </>
