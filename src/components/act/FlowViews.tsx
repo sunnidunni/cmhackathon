@@ -224,13 +224,13 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
   );
 }
 
-export function DonePage({ scenario, onClose }: { scenario: ActScenario; onClose: () => void }) {
+export function DonePage({ scenario, onClose, heading = "That was the demo.", line }: { scenario: ActScenario; onClose: () => void; heading?: string; line?: string }) {
   const p = usePalette();
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
       <Keeper id={scenario.keeper} size={120} mood="react" />
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>That was the demo.</Text>
-      <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{scenario.done}</Text>
+      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{heading}</Text>
+      <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{line ?? scenario.done}</Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label="Done" onPress={onClose} />
     </View>
   );

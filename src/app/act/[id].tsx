@@ -7,6 +7,7 @@ import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from 
 import { Fade } from "@/components/act/Motion";
 import { buildPages } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
+import { effectLine, runEffect, type EffectResult } from "@/lib/act/effects";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { completeAct, setReminderMoved, useActState } from "@/lib/act/store";
 import { getDetectedAct } from "@/lib/act/useDetectedActs";
@@ -22,6 +23,7 @@ export default function Act() {
   const pages = useMemo(() => buildPages(scenario?.steps ?? []), [scenario]);
   const [index, setIndex] = useState(0);
   const [edits, setEdits] = useState<Record<number, Edit>>({});
+  const [results, setResults] = useState<Record<number, EffectResult>>({});
   const page = pages[index];
 
   useEffect(() => {
@@ -54,7 +56,12 @@ export default function Act() {
   };
 
   const body = () => {
-    if (page.kind === "done") return <DonePage scenario={scenario} onClose={close} />;
+    if (page.kind === "done") {
+      const sent = scenario.steps.filter((_, i) => results[i] === "done").map(effectLine);
+      const simulated = scenario.steps.some((s) => s.kind === "order");
+      if (sent.length === 0) return <DonePage scenario={scenario} onClose={close} />;
+      return <DonePage scenario={scenario} onClose={close} heading={simulated ? undefined : "Done."} line={[...sent, ...(simulated ? [scenario.done] : [])].join(" ")} />;
+    }
     const step = scenario.steps[page.step];
     if (page.kind === "move" && step.kind === "move-reminder")
       return (
@@ -79,8 +86,10 @@ export default function Act() {
           final={page.final}
           edit={editFor(page.step)}
           onEdit={() => go(index - 1)}
-          onConfirm={() => {
-            feedback("success");
+          onConfirm={async () => {
+            const result = await runEffect(step, editFor(page.step));
+            setResults((all) => ({ ...all, [page.step]: result }));
+            if (result === "done" || !scenario.id.startsWith("real:")) feedback("success");
             go(index + 1);
           }}
         />
