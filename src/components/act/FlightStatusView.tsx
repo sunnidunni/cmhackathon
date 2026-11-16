@@ -5,6 +5,7 @@ import { AccessibilityInfo, Text, View } from "react-native";
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { KeeperLine, PsstButton, SoftCard, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
 import { EU261_CLAIM_ACT_ID, FLIGHT, FLIGHT_UPDATES, UPDATE_EVERY_MS } from "@/lib/act/scenarios/flightStatus";
+import { play as playSfx } from "@/lib/sfx";
 import { Fade } from "./Motion";
 
 function LiveDot({ live }: { live: boolean }) {
@@ -51,6 +52,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
     prev.current = at;
     const run = done ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning) : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     run.catch(() => undefined);
+    playSfx(done ? "boop" : "pop");
     AccessibilityInfo.announceForAccessibility(`${FLIGHT.number} now delayed ${u.delay}. Departs ${u.departs}, gate ${u.gate}.`);
   }, [at, done, u]);
 

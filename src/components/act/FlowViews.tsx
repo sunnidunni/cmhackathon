@@ -4,6 +4,7 @@ import { Text, TextInput, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
 import { confirmNote } from "@/lib/act/effects";
+import { play as playSfx } from "@/lib/sfx";
 import { Confetti } from "@/components/delight/Confetti";
 import { useBigText } from "@/lib/bigText";
 import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
@@ -222,7 +223,9 @@ function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]>
     return () => clearTimeout(t);
   }, [shown, total]);
   useEffect(() => {
-    if (shown === total) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    if (shown !== total) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    playSfx("celebrate");
   }, [shown, total]);
   return (
     <View style={{ alignSelf: "stretch", gap: 8 }}>
