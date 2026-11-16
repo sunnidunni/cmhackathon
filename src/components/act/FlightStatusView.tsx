@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Text, View } from "react-native";
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import { play as playSfx } from "@/lib/sfx";
 import { KeeperLine, PsstButton, SoftCard, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
 import { EU261_CLAIM_ACT_ID, FLIGHT, FLIGHT_UPDATES, UPDATE_EVERY_MS } from "@/lib/act/scenarios/flightStatus";
 import { Fade } from "./Motion";
@@ -75,7 +76,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
         </View>
         <View style={{ flexDirection: "row", gap: 16 }}>
           <Field label="Scheduled" value={FLIGHT.scheduled} />
-          <Field label="Lands in SFO" value={u.arrives} />
+          <Field label={`Lands in ${FLIGHT.to.code}`} value={u.arrives} />
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <LiveDot live={!done} />
@@ -90,7 +91,7 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
           .map(({ x, i }) => (
             <Fade key={i}>
               <View style={{ flexDirection: "row", gap: 12 }}>
-                <Text style={[text.bodyBold, { width: 92, color: i === at ? p.ink : p.ink2 }]}>{`+${x.delay}`}</Text>
+                <Text style={[text.bodyBold, { minWidth: 92, flexShrink: 0, color: i === at ? p.ink : p.ink2 }]}>{`+${x.delay}`}</Text>
                 <Text style={[text.body, { flex: 1, color: i === at ? p.ink : p.ink2 }]}>{x.note}</Text>
               </View>
             </Fade>
@@ -105,7 +106,11 @@ export function FlightStatusView({ onClose, startAt = 0 }: { onClose: () => void
               kind="filled"
               keeper="tock"
               label="Start an EU 261 claim"
-              onPress={() => router.push(`/act/${EU261_CLAIM_ACT_ID}` as never)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+                playSfx("confirm");
+                router.push(`/act/${EU261_CLAIM_ACT_ID}` as never);
+              }}
             />
             <PsstButton kind="text" label="Not now" onPress={onClose} />
           </View>
