@@ -177,7 +177,7 @@ export function AnswerBlock({ result, latest, shots, demo = false }: { result: A
   const offline = useOffline();
   return (
     <DemoCtx.Provider value={demo}>
-      {demo ? <Text style={[text.caption, { color: offline ? p.ink2 : p.danger }]}>{offline ? "Showing sample screenshots." : "Dev fixture: the server did not answer, so this is the demo answer."}</Text> : null}
+      {demo && offline ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
       {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />}
     </DemoCtx.Provider>
   );
