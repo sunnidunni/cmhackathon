@@ -1,7 +1,7 @@
 import { ScrollView, Text, View } from "react-native";
 import type { ShotDetail } from "@/components/ask/AnswerBlock";
 import { useBigText } from "@/lib/bigText";
-import { confettiFor } from "@/components/delight/confetti";
+import { confettiFor } from "@/components/delight/confettiPattern";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { localDay } from "../../../convex/lib/time";
 import { dayLabel, defaultReminder, dueParts, previewText, whenLabel } from "./plan";
