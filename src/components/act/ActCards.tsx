@@ -1,10 +1,11 @@
 import { router } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { Pressable, Text, View } from "react-native";
+import { useEffect } from "react";
+import { AppState, Pressable, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { KeeperFace, KEEPERS, text, usePalette } from "@/design/psst";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
-import { setReminderMoved, useActState } from "@/lib/act/store";
+import { resetActs, setReminderMoved, useActState } from "@/lib/act/store";
 import type { ActScenario } from "@/lib/act/types";
 import { useDetectedActs } from "@/lib/act/useDetectedActs";
 import { FIXTURES } from "@/lib/fixtures";
@@ -40,6 +41,11 @@ function ActRow({ scenario }: { scenario: ActScenario }) {
 export function ActCards() {
   const p = usePalette();
   const { dismissed, completed, undone } = useActState();
+  useEffect(() => {
+    if (!FIXTURES) return;
+    const sub = AppState.addEventListener("change", (st) => st === "active" && resetActs());
+    return () => sub.remove();
+  }, []);
   const detected = useDetectedActs();
   const acts = (FIXTURES ? DEMO_ACTS : detected).filter((a) => a.steps.length > 0);
   const [first, ...rest] = acts.filter((a) => !dismissed.has(a.id) && !completed.has(a.id));
