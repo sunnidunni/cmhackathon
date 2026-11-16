@@ -10,6 +10,7 @@ export type Extraction = {
   summary: string;
   category: Category;
   reason: string;
+  todos: string[];
   dates: ExtractedDate[];
   importance: number;
   reactionKey: string;
@@ -31,6 +32,7 @@ export function buildPrompt(todayIso: string) {
 - dates: every date or time visibly shown. when is ISO 8601 (YYYY-MM-DD, or YYYY-MM-DDTHH:MM when a time is shown). what is a short label for the date, such as "RSVP deadline", "payment due", "event starts", "appointment", "flight departs", or "deal ends". Never guess a date, time, or price: only return what is visibly in the image. If the year or any other part is missing, write only what is visible (for example 11-21) and set confident to false. Use an empty array when there are no dates. Only return dates the user might need to act on or attend: skip publication dates, billing periods, order dates and other dates already in the past. The phone's own status bar (clock such as 9:41, battery, signal, carrier) is never a date; ignore it. A bare time with no day is not a date either.
 - importance: 1 to 5. Use 4 or 5 only for deadlines, payments due, codes or passwords the user will need, and anything with a date within 14 days of today. A booking, ticket or flight more than 14 days away is 3. A product, price or sale deal is 3 (a payment actually due is 4 or 5). A conversation is 1 or 2. Saved ideas, recipes, quotes and articles are 1.
 - If the image is not readable or does not fit a room, set category to unsorted and importance to 1.
+- todos: zero, one or two short instructions to this person, each starting with a verb and under 60 characters, such as "Pay the Brightside Power bill" or "Reply to Maya about Friday". Only when the screenshot clearly asks this person to do something (pay, reply, book, go, buy, send, sign up, renew). Most screenshots have none: memes, recipes saved for later, quotes, articles, AI answers and plain chat return an empty list (a chat only gets a to-do when a message directly asks this person to do something specific, not for plans that are simply being discussed). A sale price or product listing has none. Never include a date, time or price unless it is printed in the screenshot.
 - reactionKey: pick exactly one key from the list for the category you chose. Do not write your own line.
 ${keys}`;
 }
@@ -38,7 +40,7 @@ ${keys}`;
 export const EXTRACTION_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "amount", "text", "summary", "category", "reason", "dates", "importance", "reactionKey"],
+  required: ["title", "amount", "text", "summary", "category", "reason", "dates", "todos", "importance", "reactionKey"],
   properties: {
     title: { type: "string" },
     amount: { type: "string" },
@@ -46,6 +48,7 @@ export const EXTRACTION_SCHEMA = {
     summary: { type: "string" },
     category: { type: "string", enum: [...CATEGORIES] },
     reason: { type: "string" },
+    todos: { type: "array", items: { type: "string" } },
     dates: {
       type: "array",
       items: {
@@ -83,6 +86,20 @@ export function isUrgent(importance: number, dates: ExtractedDate[], now: number
 export function pickLineKey(category: Category, id: string, urgent: boolean) {
   const serious = urgent ? SERIOUS_KEYS[category] : [];
   return hashPick(serious.length > 0 ? serious : PLAYFUL_KEYS[category], id);
+}
+
+// 0 to 2 short instructions: trimmed, de-duplicated, anything else dropped.
+export function cleanTodos(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  for (const item of value) {
+    const text = typeof item === "string" ? item.trim() : "";
+    if (text === "" || text.length > 80) continue;
+    if (out.some((x) => x.toLowerCase() === text.toLowerCase())) continue;
+    out.push(text);
+    if (out.length === 2) break;
+  }
+  return out;
 }
 
 export function hashPick(keys: string[], seed: string) {
@@ -140,6 +157,7 @@ export function parseExtraction(raw: string, screenshotId?: string, now: number 
     summary: str(o.summary),
     category,
     reason: str(o.reason),
+    todos: cleanTodos(o.todos),
     dates,
     importance,
     reactionKey,

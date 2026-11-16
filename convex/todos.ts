@@ -4,6 +4,20 @@ import { mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 
+// Writes automatic to-dos for a screenshot; skips text already on that screenshot.
+export async function insertTodos(ctx: MutationCtx, userId: Id<"users">, screenshotId: Id<"screenshots">, texts: string[]) {
+  if (texts.length === 0) return;
+  const existing = await ctx.db
+    .query("todos")
+    .withIndex("by_user_createdAt", (q) => q.eq("userId", userId))
+    .collect();
+  const have = new Set(existing.filter((t) => t.screenshotId === screenshotId).map((t) => t.text.toLowerCase()));
+  for (const text of texts) {
+    if (have.has(text.toLowerCase())) continue;
+    await ctx.db.insert("todos", { userId, text, done: false, screenshotId, createdAt: Date.now() });
+  }
+}
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
