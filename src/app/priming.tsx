@@ -50,7 +50,7 @@ export default function Priming() {
     );
 
   const choices = [
-    ["Allow Full Access", "New screenshots are read when you open Psst. Your other photos stay on your phone."],
+    ["Allow Full Access", "New screenshots are read when you open Shots. Your other photos stay on your phone."],
     ["Limit Access", "iOS shows all your photos: tap Collections › Screenshots and tick the ones you want. Add more any time."],
   ] as const;
   return (

@@ -48,8 +48,8 @@ describe("tab helpers", () => {
   });
 
   test("nudge sample uses the item's own title", () => {
-    expect(nudgeSample("Brightside Power bill")).toBe("Psst: your Brightside Power bill is due tomorrow. Want to see it?");
-    expect(nudgeSample(undefined)).toBe("Psst: your reminder is due tomorrow. Want to see it?");
+    expect(nudgeSample("Brightside Power bill")).toBe("Shots: your Brightside Power bill is due tomorrow. Want to see it?");
+    expect(nudgeSample(undefined)).toBe("Shots: your reminder is due tomorrow. Want to see it?");
   });
 
   test("room names", () => {
