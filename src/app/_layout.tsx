@@ -71,7 +71,18 @@ export default function RootLayout() {
         <DevHotspot />
         <AnonymousSession>
           <AppLifecycle />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }} />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }}>
+            <Stack.Screen
+              name="settings"
+              options={{
+                presentation: "formSheet",
+                sheetGrabberVisible: true,
+                sheetAllowedDetents: [0.94, 1],
+                sheetInitialDetentIndex: 0,
+                sheetExpandsWhenScrolledToEdge: true,
+              }}
+            />
+          </Stack>
         </AnonymousSession>
       </ConvexAuthProvider>
     </GestureHandlerRootView>

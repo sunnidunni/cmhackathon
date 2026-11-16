@@ -1,5 +1,5 @@
 import { useMutation } from "convex/react";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { api } from "../../convex/_generated/api";
@@ -112,135 +112,122 @@ export default function Settings() {
     status === "syncing" ? "Checking now." : status === "error" ? "Couldn't check. Try again." : (checked ?? undefined);
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          presentation: "formSheet",
-          headerShown: false,
-          sheetGrabberVisible: true,
-          sheetAllowedDetents: [0.94, 1],
-          sheetInitialDetentIndex: 0,
-          sheetExpandsWhenScrolledToEdge: true,
-          contentStyle: { backgroundColor: pal.paper },
-        }}
-      />
-      <ScrollView
-        style={{ flex: 1, backgroundColor: pal.paper }}
-        contentContainerStyle={{ padding: 20, paddingTop: 28, paddingBottom: 48, gap: 24 }}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-          <Text accessibilityRole="header" maxFontSizeMultiplier={1.67} style={[text.headline, { flex: 1, color: pal.ink }]}>
-            Choose what Psst does for you.
-          </Text>
-          <CloseButton />
-        </View>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: pal.paper }}
+      contentContainerStyle={{ padding: 20, paddingTop: 28, paddingBottom: 48, gap: 24 }}
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+        <Text accessibilityRole="header" maxFontSizeMultiplier={1.67} style={[text.headline, { flex: 1, color: pal.ink }]}>
+          Choose what Psst does for you.
+        </Text>
+        <CloseButton />
+      </View>
 
-        <View style={{ gap: 8 }}>
-          <SectionLabel>Reading</SectionLabel>
-          <Group>
-            <SwitchRow
-              first
-              title="Read new screenshots automatically"
-              detail={autoRead ? "On. When you open Psst, each new one is sent to be read." : "Off. New screenshots wait until you check."}
-              value={autoRead}
-              onValueChange={setAutoReadSaved}
-              testID="auto-read-switch"
-            />
-            <ActionRow
-              title="Check for new screenshots now"
-              detail={checkDetail}
-              onPress={checkNow}
-              disabled={status === "syncing"}
-              chevron={false}
-              trailing={status === "syncing" ? <ActivityIndicator color={pal.ink2} /> : undefined}
-            />
-          </Group>
-        </View>
-
-        <View style={{ gap: 8 }}>
-          <SectionLabel>Reminders</SectionLabel>
-          <Group>
-            <SwitchRow
-              first
-              title="Reminder notifications"
-              detail="One per reminder you set."
-              value={notify}
-              onValueChange={toggleNotify}
-              testID="notifications-switch"
-            />
-          </Group>
-          <Footer>{"We'll remind you once per item. You can snooze or turn reminders off."}</Footer>
-        </View>
-
-        <View style={{ gap: 8 }}>
-          <SectionLabel>Privacy & photo access</SectionLabel>
-          <Group>
-            <ActionRow
-              first
-              title="Photo access"
-              detail={access ? ACCESS_DETAIL[access] : "Checking."}
-              value={access ? ACCESS_VALUE[access] : undefined}
-              onPress={() => (access === "limited" ? openLimitedPicker() : openSettings())}
-            />
-            <ActionRow title="Change in iOS Settings" onPress={() => openSettings()} />
-          </Group>
-          <SoftCard style={{ gap: 8, marginTop: 8 }}>
-            <Text accessibilityRole="header" style={[text.bodyBold, { color: pal.ink }]}>
-              What leaves your phone
-            </Text>
-            {PRIVACY_LINES.map((line) => (
-              <Text key={line} style={[text.body, { color: pal.ink2 }]}>
-                {line}
-              </Text>
-            ))}
-          </SoftCard>
-        </View>
-
-        <View style={{ gap: 8 }}>
-          <SectionLabel>Psst</SectionLabel>
-          <Group>
-            <View
-              accessible
-              accessibilityLabel="The keepers: Tock, Murmur, Penny Pocket, Mote"
-              style={{ minHeight: 64, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 }}
-            >
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={[text.bodyBold, { color: pal.ink }]}>The keepers</Text>
-                <Text style={[text.caption, { color: pal.ink2 }]}>{KEEPER_IDS.map((id) => KEEPERS[id].name).join(", ")}</Text>
-              </View>
-              <View style={{ flexDirection: "row" }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-                {KEEPER_IDS.map((id, i) => (
-                  <View key={id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
-                    <KeeperFace id={id} size={32} />
-                  </View>
-                ))}
-              </View>
-            </View>
-            <ActionRow title="Upgrade" detail="Bring in more than 50 screenshots." onPress={() => router.push("/upgrade")} />
-          </Group>
-        </View>
-
+      <View style={{ gap: 8 }}>
+        <SectionLabel>Reading</SectionLabel>
         <Group>
-          <ActionRow first title="Delete everything" tone="danger" onPress={confirmDelete} />
+          <SwitchRow
+            first
+            title="Read new screenshots automatically"
+            detail={autoRead ? "On. When you open Psst, each new one is sent to be read." : "Off. New screenshots wait until you check."}
+            value={autoRead}
+            onValueChange={setAutoReadSaved}
+            testID="auto-read-switch"
+          />
+          <ActionRow
+            title="Check for new screenshots now"
+            detail={checkDetail}
+            onPress={checkNow}
+            disabled={status === "syncing"}
+            chevron={false}
+            trailing={status === "syncing" ? <ActivityIndicator color={pal.ink2} /> : undefined}
+          />
         </Group>
+      </View>
 
-        {DEV_TOOLS ? (
-          <View style={{ gap: 8 }}>
-            <SectionLabel>Developer</SectionLabel>
-            <Group>
-              <SwitchRow first title="Read all photos" value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
-            </Group>
-            <Text style={[text.caption, { color: pal.ink2, fontFamily: fonts.ui }]} testID="diagnostics">
-              {diag === null
-                ? "Reading library…"
-                : typeof diag === "string"
-                  ? `Diagnostics failed: ${diag}`
-                  : `Smart albums: ${diag.smartAlbums.join(", ") || "none"}\nScreenshots album: ${diag.screenshotsAlbumCount ?? "missing"} · screenshot subtype: ${diag.screenshotSubtypeCount} · all images: ${diag.allImagesCount}`}
+      <View style={{ gap: 8 }}>
+        <SectionLabel>Reminders</SectionLabel>
+        <Group>
+          <SwitchRow
+            first
+            title="Reminder notifications"
+            detail="One per reminder you set."
+            value={notify}
+            onValueChange={toggleNotify}
+            testID="notifications-switch"
+          />
+        </Group>
+        <Footer>{"We'll remind you once per item. You can snooze or turn reminders off."}</Footer>
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <SectionLabel>Privacy & photo access</SectionLabel>
+        <Group>
+          <ActionRow
+            first
+            title="Photo access"
+            detail={access ? ACCESS_DETAIL[access] : "Checking."}
+            value={access ? ACCESS_VALUE[access] : undefined}
+            onPress={() => (access === "limited" ? openLimitedPicker() : openSettings())}
+          />
+          <ActionRow title="Change in iOS Settings" onPress={() => openSettings()} />
+        </Group>
+        <SoftCard style={{ gap: 8, marginTop: 8 }}>
+          <Text accessibilityRole="header" style={[text.bodyBold, { color: pal.ink }]}>
+            What leaves your phone
+          </Text>
+          {PRIVACY_LINES.map((line) => (
+            <Text key={line} style={[text.body, { color: pal.ink2 }]}>
+              {line}
             </Text>
+          ))}
+        </SoftCard>
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <SectionLabel>Psst</SectionLabel>
+        <Group>
+          <View
+            accessible
+            accessibilityLabel="The keepers: Tock, Murmur, Penny Pocket, Mote"
+            style={{ minHeight: 64, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 }}
+          >
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[text.bodyBold, { color: pal.ink }]}>The keepers</Text>
+              <Text style={[text.caption, { color: pal.ink2 }]}>{KEEPER_IDS.map((id) => KEEPERS[id].name).join(", ")}</Text>
+            </View>
+            <View style={{ flexDirection: "row" }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+              {KEEPER_IDS.map((id, i) => (
+                <View key={id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
+                  <KeeperFace id={id} size={32} />
+                </View>
+              ))}
+            </View>
           </View>
-        ) : null}
-      </ScrollView>
-    </>
+          <ActionRow title="Upgrade" detail="Bring in more than 50 screenshots." onPress={() => router.push("/upgrade")} />
+        </Group>
+      </View>
+
+      <Group>
+        <ActionRow first title="Delete everything" tone="danger" onPress={confirmDelete} />
+      </Group>
+
+      {DEV_TOOLS ? (
+        <View style={{ gap: 8 }}>
+          <SectionLabel>Developer</SectionLabel>
+          <Group>
+            <SwitchRow first title="Read all photos" value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
+          </Group>
+          <Text style={[text.caption, { color: pal.ink2, fontFamily: fonts.ui }]} testID="diagnostics">
+            {diag === null
+              ? "Reading library…"
+              : typeof diag === "string"
+                ? `Diagnostics failed: ${diag}`
+                : `Smart albums: ${diag.smartAlbums.join(", ") || "none"}\nScreenshots album: ${diag.screenshotsAlbumCount ?? "missing"} · screenshot subtype: ${diag.screenshotSubtypeCount} · all images: ${diag.allImagesCount}`}
+          </Text>
+        </View>
+      ) : null}
+    </ScrollView>
   );
 }
