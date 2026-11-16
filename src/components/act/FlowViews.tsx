@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
-import { FIXTURES } from "@/lib/fixtures";
+import { confirmNote } from "@/lib/act/effects";
 import { useBigText } from "@/lib/bigText";
-import { confirmFor, demoLine, doneLine, lastAction, reminderCopy, stepDone, type ReminderStep } from "./pages";
+import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, stepDone, type ReminderStep } from "./pages";
 import { Fade, TypingDots } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
@@ -44,7 +44,7 @@ export function WhyRow({ scenario }: { scenario: ActScenario }) {
   );
 }
 
-export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; keeper: ActScenario["keeper"] }) {
+export function Receipt({ step, edit, fixture }: { step: ActStep; edit: Edit; fixture: boolean }) {
   const p = usePalette();
   if (step.kind === "draft-message")
     return (
@@ -97,7 +97,7 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
           <Text style={[text.body, { color: p.ink }]}>{step.eta}</Text>
         </Row>
         <Row label="Pay with">
-          <Text style={[text.body, { color: p.ink }]}>{FIXTURES ? "Card on file" : "Demo card"}</Text>
+          <Text style={[text.body, { color: p.ink }]}>{fixture ? "Card on file" : "Demo card"}</Text>
         </Row>
       </SoftCard>
     );
@@ -139,7 +139,7 @@ export function MovePage({ scenario, step, moved, nextLabel, onToggle, onNext }:
   );
 }
 
-export function EditPage({ scenario, step, edit, onChange, onNext }: { scenario: ActScenario; step: ActStep; edit: Edit; onChange: (e: Edit) => void; onNext: () => void }) {
+export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { scenario: ActScenario; step: ActStep; edit: Edit; fixture: boolean; onChange: (e: Edit) => void; onNext: () => void }) {
   const p = usePalette();
   const field = { fontFamily: fonts.ui, fontSize: 16, lineHeight: 22, color: p.ink, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair2, borderRadius: 12, padding: 12 } as const;
   const message = step.kind === "draft-message" || step.kind === "email-draft";
@@ -163,17 +163,27 @@ export function EditPage({ scenario, step, edit, onChange, onNext }: { scenario:
           style={[field, { minHeight: 96, textAlignVertical: "top" }]}
         />
       ) : (
-        <Receipt step={step} edit={edit} keeper={scenario.keeper} />
+        <Receipt step={step} edit={edit} fixture={fixture} />
       )}
       <Text style={[text.body, { color: p.ink2 }]}>
-        {message ? "You can change the words. Nothing is sent until you confirm on the next screen." : step.kind === "order" ? "Nothing is bought until you confirm on the next screen." : "Nothing is added until you confirm on the next screen."}
+        {fixture
+          ? message
+            ? "You can change the words. Nothing is sent until you confirm on the next screen."
+            : step.kind === "order"
+              ? "Nothing is bought until you confirm on the next screen."
+              : "Nothing is added until you confirm on the next screen."
+          : message
+            ? "You can change the words. Psst can't send this yet."
+            : step.kind === "calendar"
+              ? "Psst can't add this to your calendar yet."
+              : "Nothing is bought until you confirm on the next screen."}
       </Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label={label} disabled={message && edit.body.trim().length === 0} onPress={onNext} />
     </View>
   );
 }
 
-export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; onConfirm: () => void; onEdit: () => void }) {
+export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; openLabel: string | null; onConfirm: () => void; onEdit: () => void }) {
   const p = usePalette();
   const [tapped, setTapped] = useState(false);
   const c = confirmFor(scenario, step, final);
@@ -181,15 +191,15 @@ export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: 
     <View style={{ gap: 16 }}>
       <WhyRow scenario={scenario} />
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{c.title}</Text>
-      <Receipt step={step} edit={edit} keeper={scenario.keeper} />
+      <Receipt step={step} edit={edit} fixture={fixture} />
       {c.lines.map((l) => (
         <Text key={l} style={[text.body, { color: p.ink2 }]}>{l}</Text>
       ))}
-      {FIXTURES ? null : <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{demoLine(step, "will")}</Text>}
+      {fixture ? null : <Text style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{openLabel ? confirmNote(step) : realLine(step)}</Text>}
       <PsstButton
         kind="filled"
         keeper={scenario.keeper}
-        label={c.button}
+        label={fixture ? c.button : (openLabel ?? "Got it")}
         disabled={tapped}
         onPress={() => {
           if (tapped) return;
@@ -197,12 +207,12 @@ export function ConfirmPage({ scenario, step, final, edit, onConfirm, onEdit }: 
           onConfirm();
         }}
       />
-      <PsstButton kind="text" label="Edit" onPress={onEdit} />
+      <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} />
     </View>
   );
 }
 
-export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenario: ActScenario; step: Extract<ActStep, { kind: "draft-message" }>; edit: Edit; nextLabel: string; onNext: () => void }) {
+export function ReplyPage({ scenario, step, edit, fixture, nextLabel, onNext }: { scenario: ActScenario; step: Extract<ActStep, { kind: "draft-message" }>; edit: Edit; fixture: boolean; nextLabel: string; onNext: () => void }) {
   const p = usePalette();
   const [shown, setShown] = useState(false);
   useEffect(() => {
@@ -211,7 +221,7 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
   }, []);
   return (
     <View style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{FIXTURES ? stepDone(step) : demoLine(step, "was")}</Text>
+      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{fixture ? stepDone(step) : realEnd(step).title}</Text>
       <View style={{ gap: 8 }}>
         <Bubble mine keeper={scenario.keeper}>
           <Text style={[text.lead, { color: p.kl }]}>{edit.body}</Text>
@@ -221,26 +231,28 @@ export function ReplyPage({ scenario, step, edit, nextLabel, onNext }: { scenari
             {shown ? <Text accessibilityLiveRegion="polite" style={[text.lead, { color: p.ink }]}>{step.reply}</Text> : <TypingDots />}
           </Bubble>
         </Fade>
-        {shown ? <Text style={[text.caption, { color: p.ink2 }]}>{FIXTURES ? `${step.to.split(" (")[0]} answered.` : `Demo: pretend ${step.to} answered.`}</Text> : null}
+        {shown ? <Text style={[text.caption, { color: p.ink2 }]}>{fixture ? `${step.to.split(" (")[0]} answered.` : `Demo: pretend ${step.to} answered.`}</Text> : null}
       </View>
       {shown ? <PsstButton kind="filled" keeper={scenario.keeper} label={nextLabel} onPress={onNext} /> : null}
     </View>
   );
 }
 
-export function DonePage({ scenario, onClose }: { scenario: ActScenario; onClose: () => void }) {
+export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scenario: ActScenario; fixture: boolean; end: { title: string; body: string } | null; onClose: () => void }) {
   const p = usePalette();
   const big = useBigText();
-  const line = doneLine(scenario, lastAction(scenario.steps), FIXTURES);
+  const last = lastAction(scenario.steps);
+  const line = doneLine(scenario, last, fixture);
+  const end = effectEnd ?? realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
       <Keeper id={scenario.keeper} size={big ? 72 : 120} mood="react" />
-      {FIXTURES ? (
+      {fixture ? (
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
       ) : (
         <>
-          <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>That was the demo.</Text>
-          <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink, textAlign: "center" }]}>{line}</Text>
+          <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{end.title}</Text>
+          <Text accessibilityLiveRegion="polite" style={[text.body, { color: p.ink2, textAlign: "center" }]}>{end.body}</Text>
         </>
       )}
       <PsstButton kind="filled" keeper={scenario.keeper} label="Done" onPress={onClose} />

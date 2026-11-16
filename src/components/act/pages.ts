@@ -71,11 +71,22 @@ export function stepDone(step: ActStep) {
   return "Done.";
 }
 
+// Per scenario, not global: with fixtures on, a detected (real:) act still gets the honest copy.
+export const isFixtureAct = (scenario: ActScenario, fixtures: boolean) => fixtures && !scenario.id.startsWith("real:");
+
+// How a detected act ends. Nothing is sent, added or bought, and the copy says so plainly.
+export function realEnd(step: ActStep | undefined) {
+  if (step?.kind === "calendar") return { title: "Nothing was added.", body: "Adding to your calendar isn't connected in this version." };
+  return { title: "Nothing was sent.", body: "Sending isn't connected in this version." };
+}
+
 // The one place that decides how an act ends. Real and detected acts never claim anything happened.
 export function doneLine(scenario: ActScenario, step: ActStep | undefined, fixtures: boolean) {
   if (!fixtures) return scenario.done;
   return scenario.doneFixture ?? (step ? stepDone(step) : scenario.done);
 }
+
+export const realLine = (step: ActStep) => (step.kind === "calendar" ? "Psst can't add this to your calendar yet." : "Psst can't send this yet.");
 
 export function demoLine(step: ActStep, tense: "will" | "was") {
   const what = step.kind === "order" ? "ordered or charged" : step.kind === "calendar" ? "added to your calendar" : "sent";
