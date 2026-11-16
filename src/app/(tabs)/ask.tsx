@@ -1,4 +1,5 @@
 import { useAction } from "convex/react";
+import * as Haptics from "expo-haptics";
 import type { FunctionReturnType } from "convex/server";
 import { useEffect, useRef, useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
@@ -12,7 +13,7 @@ import { shownQuestion, withFocus } from "@/components/ask/focus";
 import { useFocusMemory } from "@/components/today/focusMemory";
 import { buildScreen } from "@/components/today/model";
 import { text, usePalette } from "@/design/psst";
-import { FIXTURES } from "@/lib/fixtures";
+import { DEMO_COUNTS, FIXTURES } from "@/lib/fixtures";
 import { isOffline } from "@/lib/offline";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 
@@ -22,7 +23,7 @@ type Pending = { question: string; sent: string; status: "looking" | "failed" | 
 export default function Ask() {
   const p = usePalette();
   const history = useSafeQuery(api.ask.history, {}, []);
-  const rooms = useSafeQuery(api.rooms.all, {}, { count: 0, items: [] });
+  const rooms = useSafeQuery(api.rooms.all, {}, { count: DEMO_COUNTS.read, items: [] });
   const today = useSafeQuery(api.today.get, { tzOffsetMinutes: new Date().getTimezoneOffset() }, undefined);
   const [focusMemory] = useFocusMemory();
   const { screen } = buildScreen(focusMemory === undefined ? undefined : today, new Set(), undefined, focusMemory ?? null);
@@ -47,6 +48,7 @@ export default function Ask() {
   async function send(question: string) {
     const q = question.trim();
     if (!q || pending?.status === "looking") return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     setInput("");
     const sentAt = Date.now();
     const sent = withFocus(q, focusTitle);
