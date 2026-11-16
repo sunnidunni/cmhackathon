@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { confirmNote, effectLine, parseEventWhen, runEffect } from "./effects";
+import { confirmNote, effectLabel, parseEventWhen, realEffectEnd, runEffect } from "./effects";
 import type { ActStep } from "./types";
 
 const sms = vi.hoisted(() => ({ isAvailableAsync: vi.fn(), sendSMSAsync: vi.fn() }));
@@ -14,6 +14,7 @@ const calendar = vi.hoisted(() => ({
   requestCalendarPermissions: vi.fn(),
   getDefaultCalendarSync: vi.fn(),
   getCalendars: vi.fn(),
+  getCalendarPermissions: vi.fn(),
 }));
 
 vi.mock("expo-sms", () => sms);
@@ -66,11 +67,13 @@ describe("text", () => {
     await runEffect({ ...text, to: "+1 415 555 0100" });
     expect(sms.sendSMSAsync).toHaveBeenCalledWith(["+1 415 555 0100"], text.body);
   });
-  test("cancelled, unknown, unavailable and thrown all fall back", async () => {
+  test("a cancelled or unknown composer counts as opened, never as done", async () => {
     sms.sendSMSAsync.mockResolvedValue({ result: "cancelled" });
-    expect(await runEffect(text)).toBe("fallback");
+    expect(await runEffect(text)).toBe("opened");
     sms.sendSMSAsync.mockResolvedValue({ result: "unknown" });
-    expect(await runEffect(text)).toBe("fallback");
+    expect(await runEffect(text)).toBe("opened");
+  });
+  test("unavailable and thrown fall back", async () => {
     sms.isAvailableAsync.mockResolvedValue(false);
     expect(await runEffect(text)).toBe("fallback");
     sms.isAvailableAsync.mockRejectedValue(new Error("no module"));
@@ -89,25 +92,25 @@ describe("email", () => {
     await runEffect({ ...email, to: "billing@example.com" });
     expect(mail.composeAsync).toHaveBeenCalledWith(expect.objectContaining({ recipients: ["billing@example.com"] }));
   });
-  test("a cancelled composer falls back", async () => {
+  test("a cancelled composer counts as opened", async () => {
     mail.composeAsync.mockResolvedValue({ status: "cancelled" });
-    expect(await runEffect(email)).toBe("fallback");
+    expect(await runEffect(email)).toBe("opened");
   });
   test("Android reports sent for everything, so it never counts", async () => {
     process.env.EXPO_OS = "android";
     mail.composeAsync.mockResolvedValue({ status: "sent" });
-    expect(await runEffect(email)).toBe("fallback");
+    expect(await runEffect(email)).toBe("opened");
   });
-  test("with no mail account it opens a mailto link and still falls back", async () => {
+  test("with no mail account it opens a mailto link and counts as opened", async () => {
     mail.isAvailableAsync.mockResolvedValue(false);
-    expect(await runEffect(email)).toBe("fallback");
+    expect(await runEffect(email)).toBe("opened");
     expect(linking.openURL).toHaveBeenCalledWith("mailto:?subject=Question%20about%20my%20bill&body=Hi.");
   });
 });
 
 describe("calendar", () => {
   test("adds the event after permission is granted", async () => {
-    createEvent.mockResolvedValue({});
+    createEvent.mockResolvedValue({ id: "evt-1" });
     expect(await runEffect(event)).toBe("done");
     const made = createEvent.mock.calls[0][0];
     expect(made.title).toBe("Juniper Vale at Northline Hall");
@@ -131,6 +134,24 @@ describe("calendar", () => {
   });
 });
 
+describe("effectLabel", () => {
+  test("names the app when the module is available", async () => {
+    calendar.getCalendarPermissions.mockResolvedValue({ status: "undetermined", canAskAgain: true });
+    expect(await effectLabel(text)).toBe("Open in Messages");
+    expect(await effectLabel(email)).toBe("Open in Mail");
+    expect(await effectLabel(event)).toBe("Add to Calendar");
+  });
+  test("is null when unavailable, denied for good, or the module throws", async () => {
+    sms.isAvailableAsync.mockResolvedValue(false);
+    mail.isAvailableAsync.mockRejectedValue(new Error("no module"));
+    calendar.getCalendarPermissions.mockResolvedValue({ status: "denied", canAskAgain: false });
+    expect(await effectLabel(text)).toBeNull();
+    expect(await effectLabel(email)).toBeNull();
+    expect(await effectLabel(event)).toBeNull();
+    expect(await effectLabel({ kind: "order", merchant: "x", items: [], deliverTo: "x", total: "x", eta: "x" })).toBeNull();
+  });
+});
+
 describe("simulated steps", () => {
   test("orders and reminder moves are never run for real", async () => {
     expect(await runEffect({ kind: "order", merchant: "Pizza", items: [], deliverTo: "Home", total: "$20", eta: "30 min" })).toBe("fallback");
@@ -142,7 +163,17 @@ describe("simulated steps", () => {
     expect(confirmNote(event)).toBe("Psst asks for calendar access, then adds this event.");
     expect(confirmNote({ kind: "move-reminder", from: "a", to: "b" })).toBeNull();
   });
-  test("each real effect has a done line", () => {
-    expect([text, email, event].map(effectLine)).toEqual(["Message sent.", "Email sent or saved to drafts.", "Added to your calendar."]);
+  test("an event the calendar did not confirm with an id does not count", async () => {
+    createEvent.mockResolvedValue({});
+    expect(await runEffect(event)).toBe("fallback");
+  });
+  test("the end copy says opened for composers and added only for a saved event", () => {
+    expect(realEffectEnd(text, "opened")).toEqual({ title: "Opened in Messages.", body: "Psst can't see whether you sent it." });
+    expect(realEffectEnd(text, "done")).toEqual({ title: "Opened in Messages.", body: "Messages says it was sent." });
+    expect(realEffectEnd(email, "opened")?.title).toBe("Opened in Mail.");
+    expect(realEffectEnd(event, "done")?.title).toBe("Added to your calendar.");
+    expect(realEffectEnd(event, "opened")?.title).toBe("Added to your calendar.");
+    expect(realEffectEnd(text, "fallback")).toBeNull();
+    expect(realEffectEnd(text, undefined)).toBeNull();
   });
 });

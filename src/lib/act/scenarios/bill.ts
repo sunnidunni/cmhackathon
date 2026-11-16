@@ -1,3 +1,4 @@
+// Scripted: the email draft and its send (no email is sent). Real: expo-mail-composer opens the draft in the mail app (not installed yet); the address is a demo address.
 import type { ActScenario } from "../types";
 import { BILL_IMAGE } from "./images";
 
@@ -24,8 +25,9 @@ export const scenario: ActScenario = {
   ],
   confirm: {
     title: "Send this email to Willow Grid?",
-    lines: ["The address is a demo address, not from your bill.", "Penny Pocket never pays a bill. This email only asks."],
+    lines: ["Penny Pocket never pays a bill. This email only asks."],
     button: "Send email",
   },
   done: "Demo: nothing was sent.",
+  doneFixture: "Email sent to Willow Grid.",
 };
