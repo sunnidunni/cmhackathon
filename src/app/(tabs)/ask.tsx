@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
-import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult, type Shots } from "@/components/ask/AnswerBlock";
+import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult, type OnAsk, type Shots } from "@/components/ask/AnswerBlock";
+import { fixtureNextAnswer } from "@/components/ask/askNext";
 import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
@@ -21,7 +22,8 @@ import { isOffline } from "@/lib/offline";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 
 type Exchange = FunctionReturnType<typeof api.ask.history>[number];
-type Pending = { question: string; sent: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean; shots?: Shots };
+type About = Parameters<OnAsk>[1];
+type Pending = { question: string; sent: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean; shots?: Shots; about?: About };
 
 export default function Ask() {
   const p = usePalette();
@@ -50,47 +52,59 @@ export default function Ask() {
   }, []);
 
   // Sample-data answers (fixtures on, no real answer): the flyer for pottery or a bare "that", else the chip's own screenshot.
-  const fixtureFor = (q: string) => (!FIXTURES ? null : fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES) ? { result: demoResult, shots: demoShots } : fixtureAnswer(q));
+  // A follow-up about one screenshot only takes that screenshot's own sample answer, never another one's.
+  const fixtureFor = (q: string, about?: About) => {
+    if (about) {
+      const answer = fixtureNextAnswer(q, about.shotId);
+      return answer ? { result: { ...demoResult, answer }, shots: demoShots } : null;
+    }
+    return !FIXTURES ? null : fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES) ? { result: demoResult, shots: demoShots } : fixtureAnswer(q);
+  };
 
-  async function send(question: string) {
+  // `about` is set for an Ask next chip: the question is about that answer's screenshot, not Today's focus.
+  async function send(question: string, about?: About) {
     const q = question.trim();
     if (!q || pending?.status === "looking") return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     setInput("");
     setAsked((a) => [...a, q]);
     const sentAt = Date.now();
-    const sent = withFocus(q, focusTitle);
-    setPending({ question: q, sent, status: "looking", sentAt });
-    const sam = FIXTURES && isSamBookQuestion(q) ? fixtureAnswer(q) : null;
+    const sent = about ? `${q} (about: ${about.title})` : withFocus(q, focusTitle);
+    setPending({ question: q, sent, status: "looking", sentAt, about });
+    const nextAnswer = about && (FIXTURES || isOffline()) ? fixtureFor(q, about) : null;
+    if (nextAnswer) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...nextAnswer.result, questionId: "demo" }, demo: true, shots: nextAnswer.shots, about });
+      return;
+    }
+    const sam = FIXTURES && !about && isSamBookQuestion(q) ? fixtureAnswer(q) : null;
     if (sam) {
       setPending({ question: q, sent, status: "done", sentAt, result: { ...sam.result, questionId: "demo" }, demo: true, shots: sam.shots });
       return;
     }
-    if (FIXTURES && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
-      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
+    const instant = FIXTURES && !about ? fixtureFor(q) : null;
+    if (instant) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...instant.result, questionId: "demo" }, demo: true, shots: instant.shots });
       return;
     }
     if (isOffline()) {
-      const fixture = fixtureFor(q);
+      const fixture = fixtureFor(q, about);
       const result = fixture ? { ...fixture.result, questionId: "demo" } : { answer: "I can't reach your screenshots right now.", found: false, sources: [], questionId: "offline" };
-      setPending({ question: q, sent, status: "done", sentAt, result, demo: fixture !== null, shots: fixture?.shots });
+      setPending({ question: q, sent, status: "done", sentAt, result, demo: fixture !== null, shots: fixture?.shots, about });
       return;
     }
     setTimeout(() => setSlowFor(sentAt), 400);
     try {
       const result = await askAction({ question: sent });
-      const fixture = !result.found || result.sources.length === 0 ? fixtureFor(q) : null;
+      const fixture = !result.found || result.sources.length === 0 ? fixtureFor(q, about) : null;
       if (fixture) {
-        setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots });
+        setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots, about });
         return;
       }
-      setPending({ question: q, sent, status: "done", sentAt, result });
+      setPending({ question: q, sent, status: "done", sentAt, result, about });
     } catch {
-      if (FIXTURES) {
-        const fixture = fixtureFor(q) ?? { result: demoResult, shots: demoShots };
-        setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots });
-      }
-      else setPending({ question: q, sent, status: "failed", sentAt });
+      const fixture = FIXTURES ? (fixtureFor(q, about) ?? (about ? null : { result: demoResult, shots: demoShots })) : null;
+      if (fixture) setPending({ question: q, sent, status: "done", sentAt, result: { ...fixture.result, questionId: "demo" }, demo: true, shots: fixture.shots, about });
+      else setPending({ question: q, sent, status: "failed", sentAt, about });
     }
   }
 
@@ -104,7 +118,6 @@ export default function Ask() {
   const shownPending = synced ? null : pending;
   const empty = history !== undefined && exchanges.length === 0 && !shownPending;
   const chips = visibleChips(FIXTURE_SUGGESTIONS, [...exchanges.map((ex) => shownQuestion(ex.question)), ...asked], input, pending?.status === "looking");
-  const followUps = FIXTURES ? chips.slice(0, 3) : undefined;
   const lastFound = (shownPending?.result ?? exchanges[exchanges.length - 1])?.found === true;
   const lastId = shownPending?.result ? undefined : exchanges[exchanges.length - 1]?._id;
 
@@ -125,15 +138,15 @@ export default function Ask() {
           {exchanges.map((ex) => (
             <View key={ex._id} style={{ gap: 14 }}>
               <QuestionBubble question={shownQuestion(ex.question)} />
-              <AnswerBlock result={ex} latest={!shownPending && ex._id === lastId} next={followUps} onAsk={send} />
+              <AnswerBlock result={ex} latest={!shownPending && ex._id === lastId} onAsk={send} />
             </View>
           ))}
           {shownPending ? (
             <View style={{ gap: 14 }}>
               <QuestionBubble question={shownPending.question} />
               {shownPending.status === "looking" && slowFor === shownPending.sentAt ? <LookingBlock count={rooms?.count} /> : null}
-              {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question)} /> : null}
-              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} next={followUps} onAsk={send} /> : null}
+              {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question, shownPending.about)} /> : null}
+              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} onAsk={send} /> : null}
             </View>
           ) : null}
         </ScrollView>
