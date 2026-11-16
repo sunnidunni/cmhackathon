@@ -14,7 +14,10 @@
         "tinted": "./assets/images/psst-icon-tinted.png"
       },
       "bundleIdentifier": "com.sunnidunni.cmhackathon.rooms",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
