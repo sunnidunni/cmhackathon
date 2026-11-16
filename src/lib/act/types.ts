@@ -20,4 +20,5 @@ export type ActScenario = {
   steps: ActStep[];
   confirm: { title: string; lines: string[]; price?: string; button: string };
   done: string;
+  doneFixture?: string;
 };

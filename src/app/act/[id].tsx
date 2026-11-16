@@ -102,7 +102,7 @@ export default function Act() {
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <KeeperFace id={scenario.keeper} size={32} />
-              <Text style={[text.caption, { color: p.ink2 }]}>{page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
+              <Text style={[text.caption, { color: p.ink2 }]}>{FIXTURES ? "" : page.kind === "done" ? "Finished" : `Step ${index + 1} of ${pages.length - 1}`}</Text>
             </View>
             {page.kind !== "done" ? <PsstButton kind="text" label="Close" onPress={close} /> : null}
           </View>
