@@ -68,8 +68,9 @@ export default function Ask() {
       setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, answer: nextAnswer, questionId: "demo" }, demo: true, shots: demoShots });
       return;
     }
-    if (FIXTURES && (!about || about.shotId === DEMO_FLYER.id) && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
-      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
+    const instant = FIXTURES && (!about || about.shotId === DEMO_FLYER.id) ? fixtureFor(q) : null;
+    if (instant) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...instant.result, questionId: "demo" }, demo: true, shots: instant.shots });
       return;
     }
     if (isOffline()) {
