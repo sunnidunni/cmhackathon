@@ -1,4 +1,4 @@
-import { useAction, useQuery } from "convex/react";
+import { useAction } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { useEffect, useRef, useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
@@ -13,15 +13,17 @@ import { useFocusMemory } from "@/components/today/focusMemory";
 import { buildScreen } from "@/components/today/model";
 import { text, usePalette } from "@/design/psst";
 import { FIXTURES } from "@/lib/fixtures";
+import { isOffline } from "@/lib/offline";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 
 type Exchange = FunctionReturnType<typeof api.ask.history>[number];
 type Pending = { question: string; sent: string; status: "looking" | "failed" | "done"; sentAt: number; result?: AskResult & { questionId: string }; demo?: boolean };
 
 export default function Ask() {
   const p = usePalette();
-  const history = useQuery(api.ask.history);
-  const rooms = useQuery(api.rooms.all);
-  const today = useQuery(api.today.get, { tzOffsetMinutes: new Date().getTimezoneOffset() });
+  const history = useSafeQuery(api.ask.history, {}, []);
+  const rooms = useSafeQuery(api.rooms.all, {}, { count: 0, items: [] });
+  const today = useSafeQuery(api.today.get, { tzOffsetMinutes: new Date().getTimezoneOffset() }, undefined);
   const [focusMemory] = useFocusMemory();
   const { screen } = buildScreen(focusMemory === undefined ? undefined : today, new Set(), undefined, focusMemory ?? null);
   const focusTitle = screen.kind === "focus" ? screen.focus.title : null;
@@ -49,6 +51,12 @@ export default function Ask() {
     const sentAt = Date.now();
     const sent = withFocus(q, focusTitle);
     setPending({ question: q, sent, status: "looking", sentAt });
+    if (isOffline()) {
+      const pottery = /pottery/i.test(q);
+      const result = pottery ? { ...demoResult, questionId: "demo" } : { answer: "I can't reach your screenshots right now.", found: false, sources: [], questionId: "offline" };
+      setPending({ question: q, sent, status: "done", sentAt, result, demo: pottery });
+      return;
+    }
     setTimeout(() => setSlowFor(sentAt), 400);
     try {
       const result = await askAction({ question: sent });

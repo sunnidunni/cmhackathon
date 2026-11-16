@@ -1,4 +1,3 @@
-import { useQuery } from "convex/react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
@@ -10,6 +9,7 @@ import { RoomWash } from "@/components/rooms/RoomWash";
 import { PhotoGrid, ShotGridSkeleton } from "@/components/rooms/PhotoGrid";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 import { runSync } from "@/lib/sync";
 
 const CATEGORIES: Category[] = ["deadlines", "chats", "money", "ideas", "unsorted"];
@@ -31,7 +31,7 @@ export default function RoomScreen() {
 
 function AllScreen() {
   const p = usePalette();
-  const realAll = useQuery(api.rooms.all, {});
+  const realAll = useSafeQuery(api.rooms.all, {}, { count: 0, items: [] });
   const demoOn = useDemoFallback();
   const all =
     realAll && realAll.count === 0 && demoOn
@@ -66,8 +66,8 @@ function AllScreen() {
 
 function SingleRoom({ category }: { category: Category }) {
   const p = usePalette();
-  const realData = useQuery(api.rooms.get, { category });
-  const list = useQuery(api.rooms.list, {});
+  const realData = useSafeQuery(api.rooms.get, { category }, { category, count: 0, newestLineKey: null, items: [] });
+  const list = useSafeQuery(api.rooms.list, {}, []);
   const libraryEmpty = list !== undefined && list.every((r) => r.count === 0);
   const demoOn = useDemoFallback();
   const demoItems = demoRoom(category);
