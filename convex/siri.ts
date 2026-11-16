@@ -31,15 +31,36 @@ export const userForKey = internalQuery({
 const text = (body: string, status = 200) =>
   new Response(body, { status, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 
-export const ask = httpAction(async (ctx, req) => {
-  const url = new URL(req.url);
-  let key = url.searchParams.get("key") ?? "";
-  let question = url.searchParams.get("q") ?? url.searchParams.get("question") ?? "";
-  if (req.method === "POST") {
-    const body = await req.json().catch(() => ({}) as Record<string, unknown>);
-    key = String(body.key ?? key);
-    question = String(body.question ?? body.q ?? question);
+// Field names are matched case-insensitively, and a body field wins only when it has a value, so a
+// Shortcut that sends JSON, a form, or just a URL all work.
+async function readFields(req: Request) {
+  const fields = new Map<string, string>();
+  const put = (name: string, value: unknown) => {
+    const text = typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
+    if (text.trim() !== "") fields.set(name.toLowerCase(), text);
+  };
+  new URL(req.url).searchParams.forEach((value, name) => put(name, value));
+  if (req.method !== "POST") return fields;
+  const type = (req.headers.get("content-type") ?? "").toLowerCase();
+  if (type.includes("multipart/form-data") || type.includes("application/x-www-form-urlencoded")) {
+    const form = await req.formData().catch(() => null);
+    (form as { forEach(cb: (value: unknown, name: string) => void): void } | null)?.forEach((value: unknown, name: string) => put(name, value));
+    return fields;
   }
+  const raw = await req.text().catch(() => "");
+  try {
+    const body = JSON.parse(raw);
+    if (body !== null && typeof body === "object") for (const [name, value] of Object.entries(body)) put(name, value);
+  } catch {
+    new URLSearchParams(raw).forEach((value, name) => put(name, value));
+  }
+  return fields;
+}
+
+export const ask = httpAction(async (ctx, req) => {
+  const fields = await readFields(req);
+  const key = (fields.get("key") ?? "").replace(/[\s"'\u2018\u2019\u201c\u201d]/g, "");
+  const question = fields.get("question") ?? fields.get("q") ?? "";
   const userId = key === "" ? null : await ctx.runQuery(internal.siri.userForKey, { keyHash: await hash(key) });
   if (userId === null) return text("Psst doesn't know this key.", 401);
   const q = question.trim().slice(0, MAX_QUESTION);

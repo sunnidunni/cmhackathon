@@ -74,6 +74,7 @@ export default defineSchema({
     openedAt: v.optional(v.number()),
   })
     .index("by_status", ["status"])
+    .index("by_status_todosExtracted", ["status", "todosExtracted"])
     .index("by_user_category", ["userId", "category"])
     .index("by_user_deviceAssetId", ["userId", "deviceAssetId"])
     .index("by_user_importance", ["userId", "importance"])

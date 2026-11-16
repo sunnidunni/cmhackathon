@@ -7,10 +7,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useConvexAuth } from "convex/react";
 import { useEffect, useMemo, type ComponentProps } from "react";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
+import { DevHotspot } from "@/components/dev/DevHotspot";
 import { LoadingView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
 import { fonts, usePalette, usePsstFonts } from "@/design/psst";
 import { convex } from "@/lib/convex";
+import { setConnectionError } from "@/lib/connection-error";
 import { AppLifecycle } from "@/lib/lifecycle";
 import { setOffline, useOffline } from "@/lib/offline";
 import { preloadSfx } from "@/lib/sfx";
@@ -28,12 +30,19 @@ function AnonymousSession({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading || isAuthenticated || offline) return;
-    signIn("anonymous").catch((e: unknown) => setOffline(e instanceof Error ? e.message : String(e)));
+    signIn("anonymous").catch((e: unknown) => {
+      const message = e instanceof Error ? e.message : String(e);
+      setConnectionError(message);
+      setOffline(message);
+    });
   }, [isLoading, isAuthenticated, offline, signIn]);
 
   useEffect(() => {
     if (isAuthenticated || offline) return;
-    const timer = setTimeout(() => setOffline("Timed out while signing in"), SIGN_IN_TIMEOUT_MS);
+    const timer = setTimeout(() => {
+      setConnectionError("Timed out while signing in");
+      setOffline("Timed out while signing in");
+    }, SIGN_IN_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [isAuthenticated, offline]);
 
@@ -104,6 +113,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
+        <DevHotspot />
         <AnonymousSession>
           <AppLifecycle />
           <OfflineBoundary>

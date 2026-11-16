@@ -81,4 +81,43 @@ describe("backfill for screenshots read before this change", () => {
     await t.action(internal.todosBackfill.run, {});
     expect((await t.run((ctx) => ctx.db.get(id)))?.todosExtracted).toBeUndefined();
   });
+
+  test("pending rows are found through an index, so a batch never scans the ready set", async () => {
+    const { t, shot } = await setup();
+    const open = await shot({ status: "ready", category: "money", title: "a", text: "b" });
+    const marked = await shot({ status: "ready", category: "money", title: "c", text: "d", todosExtracted: true });
+    const pending = await t.run((ctx) =>
+      ctx.db
+        .query("screenshots")
+        .withIndex("by_status_todosExtracted", (q) => q.eq("status", "ready").eq("todosExtracted", undefined))
+        .collect(),
+    );
+    expect(pending.map((r) => r._id)).toEqual([open]);
+    expect(pending.map((r) => r._id)).not.toContain(marked);
+  });
+
+  test("a batch holds at most 60 rows and the run reschedules itself until nothing is left", async () => {
+    vi.useFakeTimers();
+    const { t, shot } = await setup();
+    for (let i = 0; i < 130; i++) await shot({ status: "ready", category: "money", title: "t" + i, text: "x", summary: "s" });
+    todosFromText.mockResolvedValue([]);
+    expect((await t.query(internal.todosBackfill.batch, {})).rows.length).toBe(60);
+    await t.action(internal.todosBackfill.run, {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    const left = await t.run(async (ctx) => (await ctx.db.query("screenshots").collect()).filter((r) => r.todosExtracted !== true).length);
+    expect(left).toBe(0);
+    expect(realCalls()).toBe(130);
+    vi.useRealTimers();
+  });
+
+  test("a batch where every row fails stops instead of rescheduling forever", async () => {
+    vi.useFakeTimers();
+    const { t, shot } = await setup();
+    for (let i = 0; i < 61; i++) await shot({ status: "ready", category: "money", title: "t" + i, text: "x", summary: "s" });
+    todosFromText.mockRejectedValue(new Error("down"));
+    await t.action(internal.todosBackfill.run, {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+    expect(realCalls()).toBe(60);
+    vi.useRealTimers();
+  });
 });

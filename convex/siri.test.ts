@@ -77,4 +77,58 @@ describe("siri/ask", () => {
     expect(JSON.stringify(rows)).not.toContain(key);
     expect(key.length).toBeGreaterThanOrEqual(40);
   });
+
+  describe("a phone's Shortcut can send it a few different ways", () => {
+    const ok = () => model.mockResolvedValue({ found: true, answer: "It is on Friday.", sourceIds: [] });
+    const post = (t: ReturnType<typeof convexTest>, body: string, type: string) =>
+      t.fetch("/siri/ask", { method: "POST", headers: { "content-type": type }, body });
+
+    test("capitalised JSON field names", async () => {
+      const { t, key } = await setup();
+      ok();
+      const res = await post(t, JSON.stringify({ Key: key, Question: "when" }), "application/json");
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe("It is on Friday.");
+    });
+
+    test("a key with spaces, a newline or quotes around it", async () => {
+      const { t, key } = await setup();
+      ok();
+      for (const k of [` ${key} `, `${key}\n`, `"${key}"`]) {
+        expect((await get(t, "when", k)).status).toBe(200);
+      }
+    });
+
+    test("a form body", async () => {
+      const { t, key } = await setup();
+      ok();
+      const res = await post(t, new URLSearchParams({ key, Question: "when" }).toString(), "application/x-www-form-urlencoded");
+      expect(res.status).toBe(200);
+    });
+
+    test("a multipart form body", async () => {
+      const { t, key } = await setup();
+      ok();
+      const fd = new FormData();
+      fd.set("key", key);
+      fd.set("question", "when");
+      const res = await t.fetch("/siri/ask", { method: "POST", body: fd });
+      expect(res.status).toBe(200);
+    });
+
+    test("the key in the URL and the question in the body, with an empty body field not overriding the URL", async () => {
+      const { t, key } = await setup();
+      ok();
+      const res = await post(t, JSON.stringify({ key: "", question: "when" }), "application/json");
+      expect(res.status).toBe(401);
+      const res2 = await t.fetch(`/siri/ask?key=${key}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: "", Question: "when" }) });
+      expect(res2.status).toBe(200);
+    });
+
+    test("a wrong key is still 401 and an empty question still 400", async () => {
+      const { t, key } = await setup();
+      expect((await get(t, "when", " nope ")).status).toBe(401);
+      expect((await post(t, JSON.stringify({ Key: key, Question: " " }), "application/json")).status).toBe(400);
+    });
+  });
 });
