@@ -19,3 +19,14 @@ describe("formSheet routes", () => {
     expect(layout).toMatch(/const settingsSheet = useMemo<SheetOptions>\(/);
   });
 });
+
+describe("header routes", () => {
+  it.each(["shot/[id].tsx", "room/[key].tsx"])("%s sets no inline Stack.Screen options", (file) => {
+    expect(src(file)).not.toMatch(/<Stack\.Screen/);
+  });
+  it("the root layout declares their header once, as a module constant", () => {
+    const layout = src("_layout.tsx");
+    expect(layout).toMatch(/^const backHeader: SheetOptions = /m);
+    for (const name of ["shot/[id]", "room/[key]"]) expect(layout).toContain(`name="${name}" options={backHeader}`);
+  });
+});
