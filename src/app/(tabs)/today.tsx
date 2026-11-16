@@ -89,7 +89,8 @@ export default function Today() {
   const offline = useOffline();
   const live = useSafeQuery(api.today.get, { tzOffsetMinutes: tz }, undefined);
   const emptyAccount = FIXTURES && !!live && live.reading.total === 0 && live.justIn.length + live.missed.length + live.handful.length === 0 && !live.thin;
-  const demo = (FIXTURES && preview) || offline || emptyAccount ? previewToday(preview ?? "td-2", tz) : null;
+  const prefill = FIXTURES && live === undefined;
+  const demo = (FIXTURES && preview) || offline || emptyAccount || prefill ? previewToday(preview ?? "td-2", tz) : null;
   const today = demo ? demo.data : live;
   const [clock, setClock] = useState(() => Date.now());
   useEffect(() => {
@@ -187,7 +188,7 @@ export default function Today() {
         <View style={{ gap: 16 }}>
           <Header />
           {windUp.banner}
-          {offline ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
+          {offline && !FIXTURES ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
