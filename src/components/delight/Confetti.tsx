@@ -4,7 +4,7 @@ import Animated, { Easing, interpolate, useAnimatedStyle, useReducedMotion, useS
 import Svg, { Path, Rect } from "react-native-svg";
 import { KEEPER_ART } from "@/design/keepers-v2/keeperArt";
 import type { KeeperId } from "@/design/psst";
-import { confettiFor, confettiPieces, type Piece, type PieceShape } from "./confetti";
+import { confettiFor, confettiPieces, type Piece, type PieceShape } from "./confettiPattern";
 
 const TOTAL_MS = 1100;
 
