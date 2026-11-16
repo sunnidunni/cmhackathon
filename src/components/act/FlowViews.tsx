@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
-import { fonts, Keeper, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
-import { confirmFor, demoLine } from "./pages";
+import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
+import { confirmFor, demoLine, reminderCopy, type ReminderStep } from "./pages";
 import { Fade, TypingDots } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
@@ -120,17 +120,18 @@ export function Receipt({ step, edit, keeper }: { step: ActStep; edit: Edit; kee
   return null;
 }
 
-export function MovePage({ scenario, step, moved, onToggle, onNext }: { scenario: ActScenario; step: Extract<ActStep, { kind: "move-reminder" }>; moved: boolean; onToggle: () => void; onNext: () => void }) {
+export function MovePage({ scenario, step, moved, nextLabel, onToggle, onNext }: { scenario: ActScenario; step: ReminderStep; moved: boolean; nextLabel: string; onToggle: () => void; onNext: () => void }) {
+  const copy = reminderCopy(step, KEEPERS[scenario.keeper].name);
   const p = usePalette();
   return (
     <View style={{ gap: 16 }}>
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>
-        {moved ? `Tock moved your airport reminder from ${step.from} to ${step.to}.` : `Your airport reminder is back at ${step.from}.`}
+        {moved ? copy.done : copy.reverted}
       </Text>
       <WhyRow scenario={scenario} />
       <Text style={[text.body, { color: p.ink2 }]}>You can change it back any time.</Text>
-      <PsstButton kind="filled" keeper={scenario.keeper} label="Next: text to Sam" onPress={onNext} />
-      <PsstButton kind="text" label={moved ? `Undo · back to ${step.from}` : `Move it to ${step.to}`} onPress={onToggle} />
+      <PsstButton kind="filled" keeper={scenario.keeper} label={nextLabel} onPress={onNext} />
+      <PsstButton kind="text" label={moved ? copy.undo : copy.redo} onPress={onToggle} />
     </View>
   );
 }
@@ -162,7 +163,7 @@ export function EditPage({ scenario, step, edit, onChange, onNext }: { scenario:
         <Receipt step={step} edit={edit} keeper={scenario.keeper} />
       )}
       <Text style={[text.body, { color: p.ink2 }]}>
-        {message ? "You can change the words. Nothing is sent until you confirm on the next screen." : "Nothing is bought until you confirm on the next screen."}
+        {message ? "You can change the words. Nothing is sent until you confirm on the next screen." : step.kind === "order" ? "Nothing is bought until you confirm on the next screen." : "Nothing is added until you confirm on the next screen."}
       </Text>
       <PsstButton kind="filled" keeper={scenario.keeper} label={label} disabled={message && edit.body.trim().length === 0} onPress={onNext} />
     </View>

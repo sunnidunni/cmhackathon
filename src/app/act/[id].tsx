@@ -2,10 +2,10 @@ import * as Haptics from "expo-haptics";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmPage, DonePage, EditPage, MovePage, ReplyPage, type Edit } from "@/components/act/FlowViews";
 import { Fade } from "@/components/act/Motion";
-import { buildPages } from "@/components/act/pages";
+import { buildPages, isReminderStep, nextLabel } from "@/components/act/pages";
 import { KeeperFace, PsstButton, text, usePalette } from "@/design/psst";
 import { effectLine, runEffect, type EffectResult } from "@/lib/act/effects";
 import { DEMO_ACTS } from "@/lib/act/scenarios";
@@ -17,6 +17,7 @@ const close = () => (router.canGoBack() ? router.back() : router.replace("/today
 
 export default function Act() {
   const p = usePalette();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const scenario = (FIXTURES ? DEMO_ACTS.find((a) => a.id === id) : undefined) ?? getDetectedAct(id);
   const { undone } = useActState();
@@ -63,12 +64,13 @@ export default function Act() {
       return <DonePage scenario={scenario} onClose={close} heading={simulated ? undefined : "Done."} line={[...sent, ...(simulated ? [scenario.done] : [])].join(" ")} />;
     }
     const step = scenario.steps[page.step];
-    if (page.kind === "move" && step.kind === "move-reminder")
+    if (page.kind === "move" && isReminderStep(step))
       return (
         <MovePage
           scenario={scenario}
           step={step}
           moved={!undone.has(scenario.id)}
+          nextLabel={nextLabel(scenario.steps[page.step + 1])}
           onToggle={() => {
             feedback("light");
             setReminderMoved(scenario.id, undone.has(scenario.id));
@@ -96,7 +98,7 @@ export default function Act() {
       );
     if (page.kind === "reply" && step.kind === "draft-message") {
       const next = scenario.steps[page.step + 1];
-      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} nextLabel={next?.kind === "order" ? "Set up the order" : "Next"} onNext={() => go(index + 1)} />;
+      return <ReplyPage scenario={scenario} step={step} edit={editFor(page.step)} nextLabel={next?.kind === "order" ? "Set up the order" : nextLabel(next)} onNext={() => go(index + 1)} />;
     }
     return null;
   };
@@ -105,7 +107,7 @@ export default function Act() {
     <>
       {sheet}
       <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: p.paper }}>
-        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, gap: 16 }}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, gap: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <KeeperFace id={scenario.keeper} size={32} />
