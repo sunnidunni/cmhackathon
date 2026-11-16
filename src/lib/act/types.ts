@@ -11,6 +11,7 @@ export type ActStep =
 export type ActScenario = {
   id: string;
   keeper: KeeperId;
+  flowKeeper?: KeeperId;
   source: { shotId?: string; image: number | string | null; title: string; at?: string };
   noticed: string;
   why: string;
@@ -21,4 +22,5 @@ export type ActScenario = {
   confirm: { title: string; lines: string[]; price?: string; button: string };
   done: string;
   doneFixture?: string;
+  timeline?: { caption: string; rows: { label: string; when: string }[] };
 };
