@@ -1,13 +1,9 @@
 import { useMutation, useQuery } from "convex/react";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
-import { SymbolView } from "expo-symbols";
-import { AccessibilityInfo, Alert, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Svg, { Circle, Path } from "react-native-svg";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { Alert, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import { ActCards } from "@/components/act/ActCards";
 import { ReminderRows, RememberCard } from "@/components/today/Extras";
 import { FocusCard, Headline } from "@/components/today/FocusCard";
@@ -30,51 +26,19 @@ const fixtureLine = FIXTURES
 
 const asId = (id: string) => id as Id<"screenshots">;
 
-function Header() {
+// iOS and Android draw the gear as a native toolbar button in the header; web has no toolbar, so it keeps a plain one.
+function WebSettings() {
   const p = usePalette();
-  const [solid, setSolid] = useState(false);
-  useEffect(() => {
-    if (Platform.OS !== "ios") return;
-    AccessibilityInfo.isReduceTransparencyEnabled().then(setSolid, () => undefined);
-  }, []);
-  const glass = !solid && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
-  const icon = (
-    <SymbolView
-      name="gearshape"
-      size={22}
-      tintColor={p.ink}
-      fallback={
-        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={p.ink} strokeWidth={1.8} strokeLinecap="round">
-          <Path d="M4 8h9M19 8h1M4 16h1M11 16h9" />
-          <Circle cx={16} cy={8} r={2.4} />
-          <Circle cx={8} cy={16} r={2.4} />
-        </Svg>
-      }
-    />
-  );
-  const button = (
+  if (Platform.OS !== "web") return null;
+  return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Settings"
       onPress={() => router.push("/settings")}
-      style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
+      style={{ alignSelf: "flex-end", minHeight: 44, justifyContent: "center", paddingHorizontal: 4 }}
     >
-      {icon}
+      <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Settings</Text>
     </Pressable>
-  );
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-      <Text accessibilityRole="header" style={[text.headline, { fontSize: 24, color: p.ink }]}>
-        Psst
-      </Text>
-      {glass ? (
-        <GlassView isInteractive style={{ width: 44, height: 44, borderRadius: 22 }}>
-          {button}
-        </GlassView>
-      ) : (
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: p.white, borderWidth: 1, borderColor: p.hair }}>{button}</View>
-      )}
-    </View>
   );
 }
 
@@ -173,12 +137,16 @@ export default function Today() {
     ) : null;
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
+    <View style={{ flex: 1, backgroundColor: p.paper }}>
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button icon="gearshape" accessibilityLabel="Settings" onPress={() => router.push("/settings")} />
+      </Stack.Toolbar>
       <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={checkForNew} />}
         contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16, justifyContent: footer ? "space-between" : "flex-start" }}>
         <View style={{ gap: 16 }}>
-          <Header />
+          <WebSettings />
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>
@@ -217,6 +185,6 @@ export default function Today() {
         </View>
         {footer}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -1,8 +1,7 @@
 import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { api } from "../../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { AllRow, LimitedAccessCard, RoomCard, ROOM_KEYS, UnsortedRow } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
@@ -10,7 +9,6 @@ import { usePhotoAccess } from "@/lib/photos";
 
 export default function Rooms() {
   const p = usePalette();
-  const insets = useSafeAreaInsets();
   const list = useQuery(api.rooms.list, {});
   const { access, openLimitedPicker } = usePhotoAccess();
 
@@ -25,10 +23,7 @@ export default function Rooms() {
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, paddingBottom: 24, gap: 16, flexGrow: 1 }}>
-        <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.largeTitle, { color: p.ink }]}>
-          Rooms
-        </Text>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, gap: 16, flexGrow: 1 }}>
         <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>{empty ? "Your rooms are empty for now." : "Your screenshots live in four rooms."}</Text>
         {access === "limited" ? <LimitedAccessCard onPress={() => openLimitedPicker()} /> : null}
         {[ROOM_KEYS.slice(0, 2), ROOM_KEYS.slice(2)].map((pair) => (
