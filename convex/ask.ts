@@ -5,6 +5,7 @@ import { action, internalAction, query, type ActionCtx } from "./_generated/serv
 import { toSources, type Source } from "./askData";
 import { requireUserId } from "./lib/auth";
 import { askModel } from "./lib/llm";
+import { suggestionsFrom } from "./lib/suggestions";
 import { addMemory, searchMemory, type MemoryHit } from "./lib/memoryClient";
 
 export type { Source };
@@ -85,6 +86,19 @@ export const ask = action({
 export const askAs = internalAction({
   args: { userId: v.id("users"), question: v.string() },
   handler: async (ctx, { userId, question }): Promise<AskResult> => answerQuestion(ctx, userId, question),
+});
+
+export const suggestions = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const rows = await ctx.db
+      .query("screenshots")
+      .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(200);
+    return suggestionsFrom(rows.map((r) => ({ ...r, id: r._id })));
+  },
 });
 
 export const history = query({
