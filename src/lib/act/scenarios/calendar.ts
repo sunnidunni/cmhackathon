@@ -1,14 +1,33 @@
+// Scripted: the calendar event and the leave-by time (nothing is added). Real: expo-calendar would create the event after the confirm tap (not installed yet); leave-by would need a travel-time source.
 import type { ActScenario } from "../types";
+import { CONCERT_IMAGE } from "./images";
 
 export const scenario: ActScenario = {
-  id: "calendar-placeholder",
+  id: "concert-calendar",
   keeper: "tock",
-  source: { image: null, title: "Placeholder" },
-  noticed: "Placeholder",
-  why: "Placeholder",
-  ready: "Placeholder",
-  cta: "Placeholder",
-  steps: [],
-  confirm: { title: "Placeholder", lines: [], button: "Placeholder" },
-  done: "Demo: nothing was sent.",
+  source: {
+    shotId: "03-concert-ticket",
+    image: CONCERT_IMAGE,
+    title: "Juniper Vale concert",
+    at: "Nov 14, 10:00 AM",
+  },
+  noticed: "You have tickets for Juniper Vale on Nov 22.",
+  why: "Your screenshot says doors are Nov 22, 8:00 PM at Northline Hall.",
+  ready: "Ready to add it to your calendar with a leave-by reminder. Nothing is added yet.",
+  cta: "Review event",
+  steps: [
+    {
+      kind: "calendar",
+      title: "Juniper Vale at Northline Hall",
+      when: "Nov 22, 8:00 PM (doors)",
+      where: "Northline Hall",
+      leaveBy: "7:15 PM",
+    },
+  ],
+  confirm: {
+    title: "Add this to your calendar?",
+    lines: ["The leave-by time is an estimate. Check your travel time before you go."],
+    button: "Add to Calendar",
+  },
+  done: "Demo: nothing was added.",
 };

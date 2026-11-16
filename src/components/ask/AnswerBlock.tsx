@@ -1,4 +1,5 @@
-import { useQuery } from "convex/react";
+import { useOffline } from "@/lib/offline";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 import { router } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { createContext, useContext, useState, type ReactNode } from "react";
@@ -8,7 +9,10 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import type { FunctionReturnType } from "convex/server";
 import { isConvexId } from "@/components/remind/ids";
 import { defaultReminder, dueParts, nextConfidentDate, savedLabel, whenLabel } from "@/components/remind/plan";
-import { KEEPERS, KeeperFace, PsstButton, ShotSticker, Skeleton, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
+import { KEEPERS, KeeperFace, PsstButton, ShotSticker, text, useKeeperColors, usePalette, type KeeperId } from "@/design/psst";
+import { FIXTURES } from "@/lib/fixtures";
+import { askNext, reminderNote } from "./askNext";
+import { MurmurThinking } from "./MurmurThinking";
 
 const Decor = ({ children }: { children: ReactNode }) => (
   <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -21,6 +25,8 @@ export type AskResult = { answer: string; found: boolean; sources: AskSource[] }
 export type ShotDetail = NonNullable<FunctionReturnType<typeof api.shots.detail>>;
 // `shots` lets a caller hand in already-loaded details; otherwise each block subscribes to its own.
 export type Shots = Record<string, ShotDetail>;
+// A follow-up question and the screenshot it is about, so the server answers about that one.
+export type OnAsk = (question: string, about: { shotId: string; title: string }) => void;
 
 const tz = () => new Date().getTimezoneOffset();
 
@@ -57,7 +63,7 @@ export function QuestionBubble({ question }: { question: string }) {
 
 function useShot(id: Id<"screenshots"> | undefined, shots?: Shots) {
   const given = id ? shots?.[id] : undefined;
-  const fetched = useQuery(api.shots.detail, id && !given && isConvexId(id) ? { id } : "skip");
+  const fetched = useSafeQuery(api.shots.detail, id && !given && isConvexId(id) ? { id } : "skip", null);
   return given ?? fetched;
 }
 
@@ -94,27 +100,26 @@ function SourceRow({ source, card, shots }: { source: AskSource; card: boolean; 
 }
 
 // Two-tone answer: the answer in ink, then the source in ink-2 in the same paragraph. No keeper in it.
-function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boolean; shots?: Shots }) {
+function FoundAnswer({ result, latest, shots, onAsk }: { result: AskResult; latest: boolean; shots?: Shots; onAsk?: OnAsk }) {
   const p = usePalette();
   const source = result.sources[0];
   const go = useGo();
+  const demo = useContext(DemoCtx);
+  const [sampleNote, setSampleNote] = useState(false);
   const shot = useShot(source?.screenshotId, shots);
   const now = useNow();
   const fresh = shot ? defaultReminder(shot.dates, now, tz()) : null;
   const existing = fresh ? shot?.dates.find((d) => d.when === fresh.date.when)?.reminder : null;
   const reminder = fresh && existing?.state === "scheduled" ? { ...fresh, ...dueParts(existing.dueAt, tz()) } : fresh;
   const isSet = existing?.state === "scheduled";
+  const keeper = shot?.category ? ROOM_KEEPER[shot.category] : undefined;
+  const next = latest && shot && onAsk ? askNext(shot, fresh?.date.when ?? null, FIXTURES || demo) : [];
   return (
     <View style={{ gap: 14 }}>
       <Text selectable style={[text.lead, { color: p.ink }]}>
         {result.answer}
         {shot ? <Text style={{ color: p.ink2 }}>{` · from a screenshot saved ${savedLabel(shot.takenAt, now, tz())}`}</Text> : null}
       </Text>
-      {source ? (
-        <Pressable accessibilityRole="link" onPress={() => go(`/shot/${source.screenshotId}`)} style={{ minHeight: 44, alignSelf: "flex-start", justifyContent: "center" }}>
-          <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>Fix the date</Text>
-        </Pressable>
-      ) : null}
       {result.sources.map((s) => (
         <SourceRow key={s.screenshotId} source={s} card shots={shots} />
       ))}
@@ -122,12 +127,35 @@ function FoundAnswer({ result, latest, shots }: { result: AskResult; latest: boo
         <View style={{ gap: 8 }}>
           <PsstButton
             kind={isSet ? "outline" : "filled"}
+            keeper={keeper ?? "tock"}
             label={isSet ? `Reminder set for ${reminder.label}` : `Remind me ${reminder.label}`}
-            onPress={() => go(`/remind/${source.screenshotId}`)}
+            onPress={() => router.push(`/remind/${source.screenshotId}` as never)}
           />
-          <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
-            {"One reminder, the day before. Change it or turn it off later."}
-          </Text>
+          <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{reminderNote(reminder.date.what)}</Text>
+          <PsstButton kind="outline" label="Wrong date?" onPress={() => (demo ? setSampleNote(true) : go(`/shot/${source.screenshotId}`))} />
+          {sampleNote ? (
+            <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
+              This is a sample screenshot, so its date can&apos;t be changed.
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+      {source && shot && next.length > 0 ? (
+        <View style={{ gap: 8 }}>
+          <Text style={[text.caption, { color: p.ink2 }]} accessibilityRole="header">Ask next</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {next.map((n) => (
+              <Pressable
+                key={n.question}
+                accessibilityRole="button"
+                accessibilityLabel={`Ask: ${n.question}`}
+                onPress={() => onAsk?.(n.question, { shotId: source.screenshotId, title: shot.title || source.title || "this screenshot" })}
+                style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, borderColor: p.hair, backgroundColor: pressed ? p.fill : p.paper })}
+              >
+                <Text maxFontSizeMultiplier={1.6} style={[text.body, { color: p.ink }]}>{n.question}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       ) : null}
     </View>
@@ -170,35 +198,25 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
   );
 }
 
-export function AnswerBlock({ result, latest, shots, demo = false }: { result: AskResult; latest: boolean; shots?: Shots; demo?: boolean }) {
+export function AnswerBlock({ result, latest, shots, demo = false, onAsk }: { result: AskResult; latest: boolean; shots?: Shots; demo?: boolean; onAsk?: OnAsk }) {
   const p = usePalette();
+  const offline = useOffline();
   return (
     <DemoCtx.Provider value={demo}>
-      {demo ? <Text style={[text.caption, { color: p.danger }]}>Dev fixture: the server did not answer, so this is the demo answer.</Text> : null}
-      {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />}
+      {demo && offline ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
+      {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} onAsk={onAsk} /> : <NoMatch result={result} shots={shots} />}
     </DemoCtx.Provider>
   );
 }
 
 export function LookingBlock({ count }: { count: number | undefined }) {
   const p = usePalette();
-  const bar = (w: `${number}%`, h = 14) => <Skeleton w={w} h={h} />;
   return (
     <View accessibilityState={{ busy: true }} accessibilityLabel="Looking through your screenshots" style={{ gap: 14 }}>
       <Text maxFontSizeMultiplier={2.95} style={[text.headline, { color: p.ink }]}>
         {count === undefined ? "Looking through your screenshots." : `Looking through your ${count} screenshot${count === 1 ? "" : "s"}.`}
       </Text>
-      <View style={{ gap: 10 }}>
-        {bar("92%")}
-        {bar("62%")}
-      </View>
-      <View style={{ flexDirection: "row", gap: 12, padding: 8, borderRadius: 16, borderWidth: 1, borderColor: p.hair }}>
-        <Skeleton w={44} h={66} />
-        <View style={{ flex: 1, gap: 10, justifyContent: "center" }}>
-          {bar("70%", 12)}
-          {bar("40%", 12)}
-        </View>
-      </View>
+      <MurmurThinking />
     </View>
   );
 }

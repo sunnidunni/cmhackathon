@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Footnote, Headline, KeeperRow, Lead, Page } from "@/components/onboarding/page";
@@ -14,7 +14,8 @@ const WHAT_WHEN_WHERE = [
 export default function Welcome() {
   const p = usePalette();
   const [step, setStep] = useState<"welcome" | "explainer">("welcome");
-  const toPriming = () => router.push("/priming");
+  const { replay } = useLocalSearchParams<{ replay?: string }>();
+  const toPriming = () => router.push(replay ? "/priming?replay=1" : "/priming");
 
   if (step === "explainer")
     return (
@@ -32,9 +33,9 @@ export default function Welcome() {
         }
       >
         <View style={{ flexGrow: 1, gap: 20, paddingTop: 8 }}>
-          <Headline>Psst pulls the date, price or place out of a screenshot.</Headline>
+          <Headline>Shots pulls the date, price or place out of a screenshot.</Headline>
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-            <ShotSticker uri={null} title={DEMO_FLYER.title} size={132} tilt />
+            <ShotSticker uri={DEMO_FLYER.image} title={DEMO_FLYER.title} size={132} tilt />
             <View style={{ flex: 1, gap: 8 }}>
               {WHAT_WHEN_WHERE.map(([label, value]) => (
                 <View key={label} style={{ backgroundColor: p.fill, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>
@@ -61,8 +62,8 @@ export default function Welcome() {
       <View style={{ flexGrow: 1, justifyContent: "center", gap: 28 }}>
         <KeeperRow size={76} />
         <View style={{ gap: 12 }}>
-          <Headline large>Psst. You saved these for a reason.</Headline>
-          <Lead>Psst reads your screenshots, files them into four rooms, and brings back the few that matter today.</Lead>
+          <Headline large>Shots. You saved these for a reason.</Headline>
+          <Lead>Shots reads your screenshots, files them into four rooms, and brings back the few that matter today.</Lead>
         </View>
       </View>
     </Page>

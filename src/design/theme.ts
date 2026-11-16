@@ -1,4 +1,4 @@
-export const APP_NAME = "Psst";
+export const APP_NAME = "Shots";
 
 export const colors = {
   paper: "#FAF6EE",

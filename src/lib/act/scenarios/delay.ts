@@ -1,23 +1,38 @@
+// Scripted: the claim send, the airline reply, the approval and the payout timeline. Real: send the email with expo-mail-composer; claim status and payout would come from the airline or a claims partner.
 import type { ActScenario } from "../types";
-import { FLIGHT_DELAY_IMAGE } from "./images";
+import { FLIGHT_LATE_IMAGE } from "./images";
 
 export const scenario: ActScenario = {
-  id: "flight-delay",
+  id: "flight-eu261",
   keeper: "tock",
-  source: { image: FLIGHT_DELAY_IMAGE, title: "Flight alert", at: "2:14 PM" },
-  noticed: "Your flight to Seattle is delayed 1 h 40 min.",
-  why: "Your screenshot says CA 482 now leaves 7:25 PM, was 5:45 PM.",
-  didOnOwn: "Tock moved your airport reminder from 3:30 PM to 5:10 PM.",
-  ready: "A text to Sam is ready. As of your screenshot. Delays change. Check the airline before you leave.",
-  cta: "Review text to Sam",
+  flowKeeper: "penny",
+  source: { image: FLIGHT_LATE_IMAGE, title: "Flight landed late", at: "9:07 PM" },
+  noticed: "Your flight home was 6 hours late. You're owed €600.",
+  why: "EU rule 261/2004: long-haul delay over 3 hours.",
+  ready: "Your screenshot says NW 88 landed 6 h 5 min late. A claim email is ready. The airline can say no, and nothing is sent.",
+  cta: "Review claim",
   steps: [
-    { kind: "move-reminder", from: "3:30 PM", to: "5:10 PM" },
-    { kind: "draft-message", to: "Sam (picking you up)", via: "iMessage", body: "Flight's delayed, landing 9:55 PM now instead of 8:15. Sorry!" },
+    {
+      kind: "email-draft",
+      to: "claims@northwind.example",
+      subject: "EU 261/2004 compensation claim: flight NW 88, Nov 14",
+      body: "Hello,\n\nI was a passenger on Northwind flight NW 88 from Lisbon (LIS) to San Francisco (SFO) on Nov 14, booking reference NWQ4TZ. The flight was due to arrive at 2:40 PM and landed at 8:45 PM, a delay of 6 hours 5 minutes.\n\nUnder Regulation (EC) No 261/2004, I am claiming €600 compensation for a delay of more than 3 hours on a flight over 3,500 km. Please confirm you received this and tell me when to expect payment.\n\nThank you,\nAlex Rowan",
+    },
   ],
   confirm: {
-    title: "Send this to Sam?",
-    lines: ["As of your screenshot. Delays change. Check the airline before you leave."],
-    button: "Send to Sam",
+    title: "Send this claim to Northwind?",
+    lines: ["Any payment comes from the airline, not from Shots."],
+    button: "Send claim",
   },
   done: "Demo: nothing was sent.",
+  doneFixture: "Claim sent to the airline.",
+  timeline: {
+    caption: "Timeline. Days count from landing.",
+    rows: [
+      { label: "Claim sent", when: "Day 1" },
+      { label: "Airline replied", when: "Day 4" },
+      { label: "Approved", when: "Day 14" },
+      { label: "Paid €600 (about $700)", when: "Day 21" },
+    ],
+  },
 };

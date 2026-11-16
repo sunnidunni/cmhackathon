@@ -1,18 +1,24 @@
 import { Pressable, Text, View } from "react-native";
 import { fonts, KeeperFace, KeeperLine, PsstButton, ShotSticker, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
+import { useBigText } from "@/lib/bigText";
 import { actionsFor, clockLabel, dateLabel, headline, sourceLine, type Item } from "./model";
 
 export function Headline({ item, now, tz }: { item: Item; now: number; tz: number }) {
   const p = usePalette();
+  const big = useBigText();
   const h = headline(item, now, tz);
   return (
-    <Text accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
+    <Text accessibilityRole="header" style={{ fontFamily: fonts.uiBold, fontSize: 20, lineHeight: 27, color: p.ink }}>
       {h.name}
-      {"  "}
-      <View style={{ transform: [{ translateY: 4 }] }}>
-        <KeeperFace id={item.keeper} size={30} />
-      </View>
-      {"  "}
+      {big ? " " : "  "}
+      {big ? null : (
+        <>
+          <View style={{ transform: [{ translateY: 4 }] }}>
+            <KeeperFace id={item.keeper} size={30} reaction="filed" reactionKey={item.section === "justIn" && !item.handled ? item.id : undefined} />
+          </View>
+          {"  "}
+        </>
+      )}
       {h.rest}
     </Text>
   );
@@ -36,15 +42,16 @@ export function FocusCard({
   onRemoveReading: () => void;
 }) {
   const p = usePalette();
+  const big = useBigText();
   const c = useKeeperColors(item.keeper);
   const a = actionsFor(item, now, tz);
   return (
     <View style={{ gap: 12 }}>
-      <Wash keeper={item.keeper} style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+      <Wash keeper={item.keeper} style={{ flexDirection: big ? "column" : "row", gap: 16, alignItems: big ? "flex-start" : "center" }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Open ${item.title}`} onPress={onOpen}>
           <ShotSticker uri={item.imageUrl} title={item.title} tilt={-2} size={104} />
         </Pressable>
-        <View style={{ flex: 1, gap: 6 }}>
+        <View style={{ flex: big ? undefined : 1, gap: 6, alignSelf: big ? "stretch" : undefined }}>
           {item.section === "justIn" ? (
             <View style={{ alignSelf: "flex-start", backgroundColor: p.white, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 }}>
               <Text style={[text.caption, { color: p.ink, fontFamily: fonts.uiBold }]}>{`Just in · ${clockLabel(item.takenAt, tz)}`}</Text>
@@ -62,7 +69,14 @@ export function FocusCard({
         </View>
       </Wash>
       <PsstButton kind="filled" keeper={item.keeper} label={a.primary} onPress={onPrimary} />
-      <PsstButton kind="text" label={a.secondary} onPress={onSecondary} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={a.secondary}
+        onPress={onSecondary}
+        style={({ pressed }) => ({ minHeight: 50, borderRadius: 10, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, backgroundColor: pressed ? p.fill2 : p.fill })}
+      >
+        <Text maxFontSizeMultiplier={2.6} style={[text.bodyBold, { color: p.ink }]}>{a.secondary}</Text>
+      </Pressable>
       <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>{a.note}</Text>
     </View>
   );

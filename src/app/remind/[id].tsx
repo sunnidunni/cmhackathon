@@ -1,30 +1,29 @@
-import { useQuery } from "convex/react";
+import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { usePalette } from "@/design/psst";
 import { fixtureShot } from "@/components/remind/fixture";
 import { isConvexId } from "@/components/remind/ids";
-import { defaultReminder } from "@/components/remind/plan";
+import { defaultReminder, demoNow } from "@/components/remind/plan";
 import { RemindBody } from "@/components/remind/RemindBody";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
 import { FIXTURES } from "@/lib/fixtures";
 import { useReminderActions } from "@/lib/reminders";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 
 const tz = () => new Date().getTimezoneOffset();
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
 
 export default function Remind() {
-  const p = usePalette();
   const { id } = useLocalSearchParams<{ id: string }>();
   const shotId = id as Id<"screenshots">;
   const real = isConvexId(id);
-  const fetched = useQuery(api.shots.detail, real ? { id: shotId } : "skip");
+  const fetched = useSafeQuery(api.shots.detail, real ? { id: shotId } : "skip", null);
   const shot = real ? fetched : (fixtureShot(id) ?? null);
   const actions = useReminderActions();
-  const [now] = useState(Date.now);
+  const [now] = useState(() => (real ? Date.now() : demoNow(tz())));
   const [notifOn, setNotifOn] = useState<boolean | null>(null);
   const [priming, setPriming] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -45,13 +44,10 @@ export default function Remind() {
     setFailed(false);
     setSaving(true);
     try {
-      if (real) {
-        const r = await actions.remind(shotId, plan.date.when);
-        setNotifOn(r.notified);
-      } else {
-        setNotifOn(await hasNotificationPermission());
-      }
+      const notified = real ? (await actions.remind(shotId, plan.date.when)).notified : await hasNotificationPermission();
+      setNotifOn(notified);
       setSaved(true);
+      if (notified) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     } catch {
       setFailed(true);
     } finally {
@@ -68,7 +64,6 @@ export default function Remind() {
 
   return (
     <>
-      <Stack.Screen options={{ presentation: "formSheet", headerShown: false, sheetGrabberVisible: true, sheetAllowedDetents: [0.95], sheetCornerRadius: 24, contentStyle: { backgroundColor: p.paper } }} />
       <RemindBody
         shot={shot}
         now={now}

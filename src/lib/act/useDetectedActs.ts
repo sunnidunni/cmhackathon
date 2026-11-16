@@ -1,15 +1,18 @@
-import { useQueries, useQuery } from "convex/react";
+import { useQueries } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { useMemo } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
-import { detect, type DetectInput } from "./detect";
+import { detect, detectFirst, type DetectInput } from "./detect";
+import { useOffline } from "@/lib/offline";
+import { useSafeQuery } from "@/lib/useSafeQuery";
+import { useActState } from "./store";
 import type { ActScenario } from "./types";
 
 type Detail = NonNullable<FunctionReturnType<typeof api.shots.detail>>;
 
-const MAX_ACTS = 2;
+const MAX_ACTS = 1;
 const LOOKBACK = 8;
 
 const seen = new Map<string, ActScenario>();
@@ -29,15 +32,9 @@ function demoInputs(): DetectInput[] {
     }));
 }
 
-function firstActs(inputs: DetectInput[]) {
-  const acts: ActScenario[] = [];
-  for (const input of inputs) {
-    const act = detect(input);
-    if (!act) continue;
-    seen.set(act.id, act);
-    acts.push(act);
-    if (acts.length === MAX_ACTS) break;
-  }
+function firstActs(inputs: DetectInput[], skip: ReadonlySet<string>) {
+  const acts = detectFirst(inputs, skip, MAX_ACTS);
+  acts.forEach((act) => seen.set(act.id, act));
   return acts;
 }
 
@@ -53,7 +50,8 @@ export function getDetectedAct(id: string): ActScenario | null {
 }
 
 export function useDetectedActs(): ActScenario[] {
-  const rooms = useQuery(api.rooms.all, {});
+  const offline = useOffline();
+  const rooms = useSafeQuery(api.rooms.all, {}, undefined);
   const recent = useMemo(
     () =>
       (rooms?.items ?? [])
@@ -66,10 +64,12 @@ export function useDetectedActs(): ActScenario[] {
     [recent],
   );
   const details = useQueries(requests);
-  const useDemo = FIXTURES && (rooms === undefined || rooms.count === 0);
+  const { dismissed, completed } = useActState();
+  const useDemo = (FIXTURES || offline) && (rooms === undefined || rooms.count === 0);
 
   return useMemo(() => {
-    if (useDemo) return firstActs(demoInputs());
+    const skip = new Set([...dismissed, ...completed]);
+    if (useDemo) return firstActs(demoInputs(), skip);
     const inputs: DetectInput[] = [];
     for (const item of recent) {
       const shot = details[item._id] as Detail | Error | null | undefined;
@@ -85,6 +85,6 @@ export function useDetectedActs(): ActScenario[] {
         image: shot.imageUrl,
       });
     }
-    return firstActs(inputs);
-  }, [useDemo, recent, details]);
+    return firstActs(inputs, skip);
+  }, [useDemo, recent, details, dismissed, completed]);
 }

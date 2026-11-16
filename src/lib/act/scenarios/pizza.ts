@@ -10,7 +10,7 @@ export const scenario: ActScenario = {
   ready: "I wrote a reply. Nothing is sent.",
   cta: "Review text to Mom",
   steps: [
-    { kind: "draft-message", to: "Mom", via: "iMessage", body: "Which pizza do you want? Pepperoni again?", reply: "Pepperoni and a veggie, thanks!" },
+    { kind: "draft-message", to: "Mom", via: "Messages", body: "Which pizza do you want? Pepperoni again?", reply: "Pepperoni and a veggie, thanks!" },
     {
       kind: "order",
       merchant: "Tony's Pizza",
@@ -27,7 +27,7 @@ export const scenario: ActScenario = {
   ],
   confirm: {
     title: "Place this order?",
-    lines: ["Ready: pizza for tonight. Nothing is ordered yet.", "Psst never orders on its own. It happens only when you tap."],
+    lines: ["Ready: pizza for tonight. Nothing is ordered yet.", "Shots never orders on its own. It happens only when you tap."],
     price: "$41.75",
     button: "Place order · $41.75",
   },

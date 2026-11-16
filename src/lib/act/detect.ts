@@ -75,22 +75,22 @@ function chatRequest(shot: DetectInput, saved: string): ActScenario | null {
   const reply: Record<string, string> = { me: "you", my: "your", your: "my" };
   const swap = (map: Record<string, string>) => phrase.replace(/\b(me|my|your)\b/gi, (w) => map[w.toLowerCase()] ?? w);
   const body = "Yes, I can " + verb + " " + swap(reply) + ".";
-  const steps: ActStep[] = [{ kind: "draft-message", to: who, via: "iMessage", body }];
+  const steps: ActStep[] = [{ kind: "draft-message", to: who, via: "Messages", body }];
   return {
     id: "real:chat:" + shot.id,
     keeper: "murmur",
     source: { shotId: shot.id, image: shot.image ?? null, title: shot.title },
     noticed: who + " asked you to " + verb + " " + swap(asker) + ".",
     why: "From a screenshot saved " + saved + ". The message asks you to bring or buy something.",
-    ready: "I wrote a reply to " + who + ". You choose whether it goes.",
+    ready: "I wrote a reply to " + who + ". Shots can't send it yet.",
     cta: "Review the reply",
     steps,
     confirm: {
       title: "Send this to " + who + "?",
-      lines: ["To: " + who + ", iMessage", "\"" + body + "\""],
+      lines: ["To: " + who + ", Messages", "\"" + body + "\""],
       button: "Send to " + who,
     },
-    done: "Demo: nothing was sent.",
+    done: "Nothing was sent.",
   };
 }
 
@@ -132,26 +132,23 @@ function travelDelay(shot: DetectInput, saved: string, now: Date): ActScenario |
   if (!original || !moved || instant(moved) === instant(original) || instant(moved) < now.getTime()) return null;
   const newTime = fmtWhen(moved);
   const contact = PICKUP.exec(hay)?.[1] ?? null;
-  const steps: ActStep[] = [{ kind: "move-reminder", from: "Reminder for " + fmtWhen(original), to: "Reminder for " + newTime }];
+  if (!contact) return null;
   const body = "Heads up, my trip is delayed. The new time is " + newTime + ".";
-  if (contact) steps.push({ kind: "draft-message", to: contact, via: "iMessage", body });
   return {
     id: "real:delay:" + shot.id,
     keeper: "tock",
     source: { shotId: shot.id, image: shot.image ?? null, title: shot.title },
     noticed: shot.title + ": now " + newTime + ".",
-    why: "From a screenshot saved " + saved + ". It shows a delay and a new time.",
-    ready: contact ? "I can move your reminder and write " + contact + " the new time." : "I can move your reminder to the new time.",
-    cta: "Review changes",
-    steps,
-    confirm: contact
-      ? {
-          title: "Send this to " + contact + "?",
-          lines: ["To: " + contact + ", iMessage", "\"" + body + "\"", "Also moves your reminder to " + newTime + "."],
-          button: "Send and move reminder",
-        }
-      : { title: "Move your reminder?", lines: ["From " + fmtWhen(original), "To " + newTime], button: "Move reminder" },
-    done: contact ? "Demo: nothing was sent." : "Demo: nothing was changed.",
+    why: "From a screenshot saved " + saved + ". It shows a delay. The new time is " + newTime + ".",
+    ready: "I wrote " + contact + " the new time. Shots can't send it yet.",
+    cta: "Review the message",
+    steps: [{ kind: "draft-message", to: contact, via: "Messages", body }],
+    confirm: {
+      title: "Send this to " + contact + "?",
+      lines: ["To: " + contact + ", Messages", "\"" + body + "\""],
+      button: "Send to " + contact,
+    },
+    done: "Nothing was sent.",
   };
 }
 
@@ -167,9 +164,6 @@ function bill(shot: DetectInput, saved: string, now: Date): ActScenario | null {
     .map((d) => parse(d.when))
     .find((p): p is Parts => p !== null && instant(p) >= now.getTime());
   if (!due) return null;
-  const dayBefore = new Date(due.y, due.m - 1, due.d - 1);
-  const remindAt: Parts = { y: dayBefore.getFullYear(), m: dayBefore.getMonth() + 1, d: dayBefore.getDate(), h: 9, min: 0 };
-  if (instant(remindAt) <= now.getTime()) return null;
   const amount = shot.amount ?? /\$\d[\d,]*(?:\.\d{2})?/.exec(shot.summary)?.[0] ?? null;
   const billerRaw =
     /^([A-Z][A-Z&' -]{3,40})\./.exec(shot.text ?? "")?.[1] ??
@@ -178,29 +172,25 @@ function bill(shot: DetectInput, saved: string, now: Date): ActScenario | null {
   const biller = billerRaw === billerRaw.toUpperCase() ? titleCase(billerRaw) : billerRaw;
   const account = /\bAccount\s+([A-Z0-9-]{3,})/.exec(shot.text ?? "")?.[1];
   const dueLabel = fmtDay(due);
-  const remindLabel = fmtWhen(remindAt);
   const to = biller + " billing";
   const subject = "Question about my bill" + (account ? " (account " + account + ")" : "");
   const body = "Hi, I'm checking my bill" + (amount ? " of " + amount : "") + " due " + dueLabel + ". Could you confirm the amount and the ways to pay? Thank you.";
-  const steps: ActStep[] = [
-    { kind: "move-reminder", from: "Due " + dueLabel, to: "Reminder " + remindLabel },
-    { kind: "email-draft", to, subject, body },
-  ];
+  const steps: ActStep[] = [{ kind: "email-draft", to, subject, body }];
   return {
     id: "real:bill:" + shot.id,
     keeper: "penny",
     source: { shotId: shot.id, image: shot.image ?? null, title: shot.title },
     noticed: biller + (amount ? ", " + amount + "," : "") + " is due " + dueLabel + ".",
     why: "From a screenshot saved " + saved + ". It shows a bill with a due date still ahead.",
-    ready: "I can set a reminder for " + remindLabel + " and write a note to " + biller + ". I won't pay it.",
+    ready: "I wrote a note to " + biller + ". Shots can't send it yet, and I won't pay it.",
     cta: "Review the note",
     steps,
     confirm: {
       title: "Send this to " + biller + "?",
-      lines: ["To: " + to + ", email", "Subject: " + subject, "\"" + body + "\"", "Also sets a reminder for " + remindLabel + "."],
-      button: "Send note and set reminder",
+      lines: ["To: " + to + ", email", "Subject: " + subject, "\"" + body + "\""],
+      button: "Send note to " + biller,
     },
-    done: "Demo: nothing was sent.",
+    done: "Nothing was sent.",
   };
 }
 
@@ -225,7 +215,7 @@ function calendar(shot: DetectInput, saved: string, now: Date): ActScenario | nu
   const where = GATE.exec(text)?.[1] ?? VENUE.exec(text)?.[1] ?? ADDRESS.exec(text)?.[1] ?? AT_PLACE.exec(text)?.[1];
   const leave = where ? shift(start, isFlight ? -120 : -45) : null;
   const leaveBy = leave ? fmtClock(leave.h as number, leave.min) : undefined;
-  const when = fmtWhen(start);
+  const when = start.y === now.getFullYear() || start.h === null ? fmtWhen(start) : fmtDay(start) + ", " + start.y + ", " + fmtClock(start.h, start.min);
   const step: ActStep = { kind: "calendar", title: event.what, when, ...(where ? { where } : {}), ...(leaveBy ? { leaveBy } : {}) };
   return {
     id: "real:calendar:" + shot.id,
@@ -246,7 +236,7 @@ function calendar(shot: DetectInput, saved: string, now: Date): ActScenario | nu
       ],
       button: "Add to calendar",
     },
-    done: "Demo: nothing was added to your calendar.",
+    done: "Nothing was added.",
   };
 }
 
@@ -254,4 +244,15 @@ export function detect(shot: DetectInput, now: Date = new Date()): ActScenario |
   if (shot.room === "ideas" || shot.room === "unsorted") return null;
   const saved = savedLabel(shot.savedAt, now);
   return chatRequest(shot, saved) ?? travelDelay(shot, saved, now) ?? bill(shot, saved, now) ?? calendar(shot, saved, now);
+}
+
+export function detectFirst(inputs: DetectInput[], skip: ReadonlySet<string>, max: number, now: Date = new Date()): ActScenario[] {
+  const acts: ActScenario[] = [];
+  for (const input of inputs) {
+    const act = detect(input, now);
+    if (!act || skip.has(act.id)) continue;
+    acts.push(act);
+    if (acts.length === max) break;
+  }
+  return acts;
 }

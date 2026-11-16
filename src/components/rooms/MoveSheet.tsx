@@ -41,7 +41,7 @@ export function MoveSheet({ visible, current, onClose, onMove }: { visible: bool
             </Pressable>
           );
         })}
-        <Text style={[text.caption, { color: p.ink2, borderTopWidth: 1, borderColor: p.hair, paddingTop: 12 }]}>{"It stays where you put it. Psst won't move it back."}</Text>
+        <Text style={[text.caption, { color: p.ink2, borderTopWidth: 1, borderColor: p.hair, paddingTop: 12 }]}>{"It stays where you put it. Shots won't move it back."}</Text>
         <View style={{ flex: 1 }} />
         <PsstButton kind="filled"
           label={target ? `Move to ${ROOM_LABEL[target]}` : "Pick a room"}

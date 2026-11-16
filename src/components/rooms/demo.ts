@@ -3,12 +3,14 @@ import { useLocalSearchParams } from "expo-router";
 import manifest from "../../../demo-screenshots/manifest.json";
 import { psstLine } from "@/design/psst";
 import { FIXTURES } from "@/lib/fixtures";
+import { useOffline } from "@/lib/offline";
 import { dateLabel, weekdayName, type Category } from "./format";
 
 // Fixtures fill in only when the real list is empty, and only in a dev-tools build. Add ?fixtures=off to see the real empty states.
 export function useDemoFallback(): boolean {
   const { fixtures } = useLocalSearchParams<{ fixtures?: string }>();
-  return FIXTURES && fixtures !== "off";
+  const offline = useOffline();
+  return offline || (FIXTURES && fixtures !== "off");
 }
 
 const PNG: Record<string, number> = {

@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { Keeper, KeeperFace, PsstButton, Skeleton, SoftCard, text, usePalette } from "@/design/psst";
+import { Keeper, KeeperFace, PsstButton, Skeleton, text, usePalette } from "@/design/psst";
 
 export function ScreenTitle({ children }: { children: string }) {
   const p = usePalette();
@@ -28,7 +28,7 @@ export function ReadingView({ pending }: { pending: number }) {
       <View style={{ gap: 8 }}>
         <ScreenTitle>{`Reading ${pending} new ${pending === 1 ? "screenshot" : "screenshots"}.`}</ScreenTitle>
         <Text style={[text.body, { color: p.ink2 }]}>
-          Usually a few seconds. Psst reads new screenshots when you open it. Screenshots are sent to our server and an AI model to be read. You can turn this off in Settings.
+          Usually a few seconds. Shots reads new screenshots when you open it. Screenshots are sent to our server and an AI model to be read. You can turn this off in Settings.
         </Text>
       </View>
       <View style={{ backgroundColor: p.fill, borderRadius: 16, padding: 16, flexDirection: "row", gap: 16, minHeight: 150 }}>
@@ -46,14 +46,16 @@ export function ReadingView({ pending }: { pending: number }) {
   );
 }
 
-export function FailedCard({ count, onRetry }: { count: number; onRetry: () => void }) {
+export function FailedLine({ count, onRetry }: { count: number; onRetry: () => void }) {
   const p = usePalette();
+  const one = count === 1;
   return (
-    <SoftCard style={{ gap: 4 }}>
-      <Text style={[text.bodyBold, { color: p.ink }]}>{`Couldn't read ${count} new ${count === 1 ? "screenshot" : "screenshots"}.`}</Text>
-      <Text style={[text.body, { color: p.ink2 }]}>{"It's still on your phone."}</Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "center", columnGap: 4 }}>
+      <Text accessibilityLiveRegion="polite" style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
+        {`Couldn't read ${count} new ${one ? "screenshot" : "screenshots"}. ${one ? "It's" : "They're"} still on your phone.`}
+      </Text>
       <PsstButton kind="text" label="Try again" onPress={onRetry} />
-    </SoftCard>
+    </View>
   );
 }
 
@@ -61,7 +63,7 @@ export function DoneView({ children }: { children?: React.ReactNode }) {
   const p = usePalette();
   return (
     <View style={{ alignItems: "center", gap: 12 }}>
-      <Keeper id="tock" size={128} sticker />
+      <Keeper id="tock" size={128} sticker boop />
       <Text accessibilityRole="header" style={[text.headline, { color: p.ink, textAlign: "center" }]}>
         {"That's today's handful."}
       </Text>
@@ -75,12 +77,12 @@ export function EmptyView() {
   const p = usePalette();
   return (
     <View style={{ alignItems: "center", gap: 12, paddingTop: 48 }}>
-      <Keeper id="murmur" size={128} sticker />
+      <Keeper id="murmur" size={128} sticker boop />
       <Text accessibilityRole="header" style={[text.headline, { color: p.ink, textAlign: "center" }]}>
         No screenshots to keep yet.
       </Text>
       <Text style={[text.lead, { color: p.ink2, textAlign: "center" }]}>
-        Take a screenshot of anything you want to remember: a flyer, a receipt, a plan in a chat. Open Psst to read it and file it into a room.
+        Take a screenshot of anything you want to remember: a flyer, a receipt, a plan in a chat. Open Shots to read it and file it into a room.
       </Text>
     </View>
   );

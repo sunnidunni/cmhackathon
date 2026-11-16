@@ -1,9 +1,8 @@
 import { SymbolView } from "expo-symbols";
 import { Pressable, Text, View } from "react-native";
-import { DEV_TOOLS } from "@/lib/dev-flags";
 import { Keeper, KeeperLine, PsstButton, text, usePalette } from "@/design/psst";
 
-const TRY = DEV_TOOLS ? "When does pottery sign-up close?" : "When is that due?";
+const TRY = "When does the pottery sign-up close?";
 const MORE = ["What's the Wi-Fi password from Mom?", "What are my flight details?", "What was that recipe?"];
 
 export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | undefined; onPick: (q: string) => void; showSuggestions: boolean }) {
@@ -11,7 +10,7 @@ export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | u
   return (
     <View style={{ flex: 1 }}>
       <View style={{ gap: 8 }}>
-        <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>Ask about screenshots Psst has read.</Text>
+        <Text maxFontSizeMultiplier={1.67} style={[text.headline, { color: p.ink }]}>Ask about screenshots Shots has read.</Text>
         <Text style={[text.lead, { color: p.ink2 }]}>Each answer comes with its source screenshot. Open it to check the details.</Text>
       </View>
       {showSuggestions ? (
@@ -22,7 +21,7 @@ export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | u
               key={q}
               accessibilityRole="button"
               onPress={() => onPick(q)}
-              style={{ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: i === 0 ? 0 : 1, borderBottomWidth: i === MORE.length - 1 ? 1 : 0, borderColor: p.hair }}
+              style={({ pressed }) => ({ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: i === 0 ? 0 : 1, borderBottomWidth: i === MORE.length - 1 ? 1 : 0, borderColor: p.hair, backgroundColor: pressed ? p.fill : "transparent" })}
             >
               <Text style={[text.lead, { color: p.ink }]}>{q}</Text>
               <SymbolView name="chevron.right" size={13} weight="semibold" tintColor={p.ink3} fallback={<Text style={{ color: p.ink3 }}>›</Text>} />
