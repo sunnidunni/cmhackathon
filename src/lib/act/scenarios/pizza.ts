@@ -10,7 +10,7 @@ export const scenario: ActScenario = {
   ready: "I wrote a reply. Nothing is sent.",
   cta: "Review text to Mom",
   steps: [
-    { kind: "draft-message", to: "Mom", via: "iMessage", body: "Which pizza do you want? Pepperoni again?", reply: "Pepperoni and a veggie, thanks!" },
+    { kind: "draft-message", to: "Mom", via: "Messages", body: "Which pizza do you want? Pepperoni again?", reply: "Pepperoni and a veggie, thanks!" },
     {
       kind: "order",
       merchant: "Tony's Pizza",
