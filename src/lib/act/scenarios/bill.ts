@@ -25,8 +25,9 @@ export const scenario: ActScenario = {
   ],
   confirm: {
     title: "Send this email to Willow Grid?",
-    lines: ["The address is a demo address, not from your bill.", "Penny Pocket never pays a bill. This email only asks."],
+    lines: ["Penny Pocket never pays a bill. This email only asks."],
     button: "Send email",
   },
   done: "Demo: nothing was sent.",
+  doneFixture: "Email sent to Willow Grid.",
 };
