@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
-import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult, type Shots } from "@/components/ask/AnswerBlock";
+import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult, type OnAsk, type Shots } from "@/components/ask/AnswerBlock";
+import { fixtureNextAnswer } from "@/components/ask/askNext";
 import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
@@ -52,16 +53,22 @@ export default function Ask() {
   // Sample-data answers (fixtures on, no real answer): the flyer for pottery or a bare "that", else the chip's own screenshot.
   const fixtureFor = (q: string) => (!FIXTURES ? null : fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, FIXTURES) ? { result: demoResult, shots: demoShots } : fixtureAnswer(q));
 
-  async function send(question: string) {
+  // `about` is set for an Ask next chip: the question is about that answer's screenshot, not Today's focus.
+  async function send(question: string, about?: Parameters<OnAsk>[1]) {
     const q = question.trim();
     if (!q || pending?.status === "looking") return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     setInput("");
     setAsked((a) => [...a, q]);
     const sentAt = Date.now();
-    const sent = withFocus(q, focusTitle);
+    const sent = about ? `${q} (about: ${about.title})` : withFocus(q, focusTitle);
     setPending({ question: q, sent, status: "looking", sentAt });
-    if (FIXTURES && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
+    const nextAnswer = about && (FIXTURES || isOffline()) ? fixtureNextAnswer(q, about.shotId) : null;
+    if (nextAnswer) {
+      setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, answer: nextAnswer, questionId: "demo" }, demo: true, shots: demoShots });
+      return;
+    }
+    if (FIXTURES && (!about || about.shotId === DEMO_FLYER.id) && fixtureAnswerFits(q, focusTitle, DEMO_FLYER.title, true)) {
       setPending({ question: q, sent, status: "done", sentAt, result: { ...demoResult, questionId: "demo" }, demo: true, shots: demoShots });
       return;
     }
@@ -117,7 +124,7 @@ export default function Ask() {
           {exchanges.map((ex) => (
             <View key={ex._id} style={{ gap: 14 }}>
               <QuestionBubble question={shownQuestion(ex.question)} />
-              <AnswerBlock result={ex} latest={!shownPending && ex._id === lastId} />
+              <AnswerBlock result={ex} latest={!shownPending && ex._id === lastId} onAsk={send} />
             </View>
           ))}
           {shownPending ? (
@@ -125,7 +132,7 @@ export default function Ask() {
               <QuestionBubble question={shownPending.question} />
               {shownPending.status === "looking" && slowFor === shownPending.sentAt ? <LookingBlock count={rooms?.count} /> : null}
               {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question)} /> : null}
-              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} /> : null}
+              {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} onAsk={send} /> : null}
             </View>
           ) : null}
         </ScrollView>
