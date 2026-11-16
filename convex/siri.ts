@@ -44,7 +44,7 @@ async function readFields(req: Request) {
   const type = (req.headers.get("content-type") ?? "").toLowerCase();
   if (type.includes("multipart/form-data") || type.includes("application/x-www-form-urlencoded")) {
     const form = await req.formData().catch(() => null);
-    form?.forEach((value, name) => put(name, value));
+    (form as { forEach(cb: (value: unknown, name: string) => void): void } | null)?.forEach((value: unknown, name: string) => put(name, value));
     return fields;
   }
   const raw = await req.text().catch(() => "");
