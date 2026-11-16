@@ -2,53 +2,38 @@ import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useConvexAuth } from "convex/react";
-import { useEffect, useMemo, useState, type ComponentProps } from "react";
-import { LoadingView, MessageView } from "@/components/state-views";
+import { useEffect, useMemo, type ComponentProps } from "react";
+import { OfflineBoundary } from "@/components/OfflineBoundary";
+import { LoadingView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
 import { usePalette, usePsstFonts } from "@/design/psst";
 import { convex } from "@/lib/convex";
-import { DEV_TOOLS } from "@/lib/dev-flags";
 import { AppLifecycle } from "@/lib/lifecycle";
-import { secureStorage, storageError } from "@/lib/secure-storage";
+import { setOffline, useOffline } from "@/lib/offline";
+import { secureStorage } from "@/lib/secure-storage";
 
-const SIGN_IN_TIMEOUT_MS = 20000;
+const SIGN_IN_TIMEOUT_MS = 4000;
 
 // No sign-up: the first launch silently creates an anonymous Convex Auth user and the
 // session token is kept in the keychain, so every later launch is the same user.
+// When sign-in fails or has not settled in time, the app goes offline and shows sample data instead of waiting.
 function AnonymousSession({ children }: { children: React.ReactNode }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { signIn } = useAuthActions();
-  const [error, setError] = useState<string | null>(null);
-  const [attempt, setAttempt] = useState(0);
+  const offline = useOffline();
 
   useEffect(() => {
-    if (isLoading || isAuthenticated) return;
-    signIn("anonymous").catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
-  }, [isLoading, isAuthenticated, signIn, attempt]);
+    if (isLoading || isAuthenticated || offline) return;
+    signIn("anonymous").catch((e: unknown) => setOffline(e instanceof Error ? e.message : String(e)));
+  }, [isLoading, isAuthenticated, offline, signIn]);
 
   useEffect(() => {
-    if (isAuthenticated || error) return;
-    const timer = setTimeout(() => setError("Timed out while signing in"), SIGN_IN_TIMEOUT_MS);
+    if (isAuthenticated || offline) return;
+    const timer = setTimeout(() => setOffline("Timed out while signing in"), SIGN_IN_TIMEOUT_MS);
     return () => clearTimeout(timer);
-  }, [isAuthenticated, error, attempt]);
+  }, [isAuthenticated, offline]);
 
-  if (isAuthenticated) return <>{children}</>;
-  if (error)
-    return (
-      <MessageView
-        title="Couldn't connect"
-        body={
-          DEV_TOOLS
-            ? `${error} (loading: ${isLoading}, keychain: ${storageError ?? "ok"})`
-            : "Check your connection and try again."
-        }
-        actionLabel="Try again"
-        onAction={() => {
-          setError(null);
-          setAttempt((n) => n + 1);
-        }}
-      />
-    );
+  if (isAuthenticated || offline) return <>{children}</>;
   return <LoadingView label="Getting things ready…" />;
 }
 
@@ -74,6 +59,7 @@ export default function RootLayout() {
       <ConvexAuthProvider client={convex} storage={secureStorage}>
         <AnonymousSession>
           <AppLifecycle />
+          <OfflineBoundary>
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: pal.paper } }}>
             <Stack.Screen name="remind/[id]" options={sheet} />
             <Stack.Screen name="act/[id]" options={sheet} />
@@ -82,6 +68,7 @@ export default function RootLayout() {
             <Stack.Screen name="shot/[id]" options={backHeader} />
             <Stack.Screen name="room/[key]" options={backHeader} />
           </Stack>
+          </OfflineBoundary>
         </AnonymousSession>
       </ConvexAuthProvider>
     </GestureHandlerRootView>

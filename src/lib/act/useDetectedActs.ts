@@ -1,10 +1,12 @@
-import { useQueries, useQuery } from "convex/react";
+import { useQueries } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { useMemo } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 import { detect, detectFirst, type DetectInput } from "./detect";
+import { useOffline } from "@/lib/offline";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 import { useActState } from "./store";
 import type { ActScenario } from "./types";
 
@@ -48,7 +50,8 @@ export function getDetectedAct(id: string): ActScenario | null {
 }
 
 export function useDetectedActs(): ActScenario[] {
-  const rooms = useQuery(api.rooms.all, {});
+  const offline = useOffline();
+  const rooms = useSafeQuery(api.rooms.all, {}, undefined);
   const recent = useMemo(
     () =>
       (rooms?.items ?? [])
@@ -62,7 +65,7 @@ export function useDetectedActs(): ActScenario[] {
   );
   const details = useQueries(requests);
   const { dismissed, completed } = useActState();
-  const useDemo = FIXTURES && (rooms === undefined || rooms.count === 0);
+  const useDemo = (FIXTURES || offline) && (rooms === undefined || rooms.count === 0);
 
   return useMemo(() => {
     const skip = new Set([...dismissed, ...completed]);

@@ -25,7 +25,7 @@ export function previewToday(kind: string, tz: number): { data: TodayData | unde
     const e = entry(file);
     const date = e.dates[0] ?? null;
     return {
-      _id: file,
+      _id: `demo-${file.slice(4, 6)}`,
       title: e.title,
       category: e.room,
       lineKey: null,

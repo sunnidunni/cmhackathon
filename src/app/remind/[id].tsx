@@ -1,4 +1,3 @@
-import { useQuery } from "convex/react";
 import * as Notifications from "expo-notifications";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -11,6 +10,7 @@ import { RemindBody } from "@/components/remind/RemindBody";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
 import { FIXTURES } from "@/lib/fixtures";
 import { useReminderActions } from "@/lib/reminders";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 
 const tz = () => new Date().getTimezoneOffset();
 const close = () => (router.canGoBack() ? router.back() : router.replace("/today"));
@@ -19,7 +19,7 @@ export default function Remind() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const shotId = id as Id<"screenshots">;
   const real = isConvexId(id);
-  const fetched = useQuery(api.shots.detail, real ? { id: shotId } : "skip");
+  const fetched = useSafeQuery(api.shots.detail, real ? { id: shotId } : "skip", null);
   const shot = real ? fetched : (fixtureShot(id) ?? null);
   const actions = useReminderActions();
   const [now] = useState(() => (real ? Date.now() : demoNow(tz())));

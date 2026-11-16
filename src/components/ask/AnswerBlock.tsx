@@ -1,4 +1,5 @@
-import { useQuery } from "convex/react";
+import { useOffline } from "@/lib/offline";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 import { router } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { createContext, useContext, useState, type ReactNode } from "react";
@@ -58,7 +59,7 @@ export function QuestionBubble({ question }: { question: string }) {
 
 function useShot(id: Id<"screenshots"> | undefined, shots?: Shots) {
   const given = id ? shots?.[id] : undefined;
-  const fetched = useQuery(api.shots.detail, id && !given && isConvexId(id) ? { id } : "skip");
+  const fetched = useSafeQuery(api.shots.detail, id && !given && isConvexId(id) ? { id } : "skip", null);
   return given ?? fetched;
 }
 
@@ -173,9 +174,10 @@ function NoMatch({ result, shots }: { result: AskResult; shots?: Shots }) {
 
 export function AnswerBlock({ result, latest, shots, demo = false }: { result: AskResult; latest: boolean; shots?: Shots; demo?: boolean }) {
   const p = usePalette();
+  const offline = useOffline();
   return (
     <DemoCtx.Provider value={demo}>
-      {demo ? <Text style={[text.caption, { color: p.danger }]}>Dev fixture: the server did not answer, so this is the demo answer.</Text> : null}
+      {demo ? <Text style={[text.caption, { color: offline ? p.ink2 : p.danger }]}>{offline ? "Showing sample screenshots." : "Dev fixture: the server did not answer, so this is the demo answer."}</Text> : null}
       {result.found ? <FoundAnswer result={result} latest={latest} shots={shots} /> : <NoMatch result={result} shots={shots} />}
     </DemoCtx.Provider>
   );

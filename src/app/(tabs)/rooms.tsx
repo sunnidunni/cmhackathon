@@ -1,4 +1,3 @@
-import { useQuery } from "convex/react";
 import { router } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,11 +6,12 @@ import { PsstButton, text, usePalette } from "@/design/psst";
 import { AllRow, LimitedAccessCard, RoomCard, ROOM_KEYS, UnsortedRow } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
 import { usePhotoAccess } from "@/lib/photos";
+import { useSafeQuery } from "@/lib/useSafeQuery";
 
 export default function Rooms() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
-  const list = useQuery(api.rooms.list, {});
+  const list = useSafeQuery(api.rooms.list, {}, []);
   const { access, openLimitedPicker } = usePhotoAccess();
 
   const demoOn = useDemoFallback();
