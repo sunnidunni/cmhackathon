@@ -271,8 +271,38 @@ describe("sorting new screenshots during extraction", () => {
     const id = await shot("Concert ticket", { status: "processing" });
     await me.mutation(api.albums.setShot, { albumId: mine, screenshotId: id, inAlbum: false });
     const { amount: _a, ...rest } = reply;
-    await t.mutation(internal.extract.complete, { screenshotId: id, ...rest, category: "money", albumIds: [mine, theirs] });
+    const seen = [{ albumId: mine, run: 1 }, { albumId: theirs, run: 1 }];
+    await t.mutation(internal.extract.complete, { screenshotId: id, ...rest, category: "money", albums: { seen, matched: [mine, theirs] } });
+    await settle();
     expect(await t.run((ctx) => ctx.db.query("albumShots").collect())).toMatchObject([{ albumId: mine, removed: true }]);
+  });
+
+  test("an album edited while the vision call ran ignores the stale match and re-checks the screenshot", async () => {
+    const { t, me, shot, settle } = await setup();
+    const albumId = await me.mutation(api.albums.create, { name: "Tickets", description: "" });
+    await settle();
+    const id = await shot("Concert ticket", { status: "processing" });
+    await me.mutation(api.albums.update, { albumId, name: "Recipes", description: "" });
+    await settle();
+    matchAlbum.mockClear();
+    const { amount: _a, ...rest } = reply;
+    await t.mutation(internal.extract.complete, { screenshotId: id, ...rest, category: "money", albums: { seen: [{ albumId, run: 1 }], matched: [albumId] } });
+    await settle();
+    expect(await titles(me, albumId)).toEqual([]);
+    expect(matchAlbum).toHaveBeenCalledTimes(1);
+    expect(matchAlbum.mock.calls[0][0].name).toBe("Recipes");
+  });
+
+  test("an album created while the vision call ran still gets the screenshot checked", async () => {
+    const { t, me, shot, settle } = await setup();
+    const id = await shot("Concert ticket", { status: "processing" });
+    const albumId = await me.mutation(api.albums.create, { name: "Tickets", description: "" });
+    await settle();
+    expect(await titles(me, albumId)).toEqual([]);
+    const { amount: _a, ...rest } = reply;
+    await t.mutation(internal.extract.complete, { screenshotId: id, ...rest, category: "money", albums: { seen: [], matched: [] } });
+    await settle();
+    expect(await titles(me, albumId)).toEqual(["Concert ticket"]);
   });
 });
 

@@ -43,7 +43,7 @@ export default function Rooms() {
           <UnsortedRow count={unsorted.count} newest={unsorted.newest} onPress={() => router.push("/room/unsorted")} />
         ) : null}
         {total !== null && total > 0 ? <AllRow count={total} onPress={() => router.push("/room/all")} /> : null}
-        {real !== null && real > 0 ? <AlbumsSection /> : null}
+        {real !== null ? <AlbumsSection libraryEmpty={real === 0} /> : null}
         {empty ? (
           <View style={{ flex: 1, justifyContent: "flex-end", gap: 12 }}>
             <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>

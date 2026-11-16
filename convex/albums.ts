@@ -55,6 +55,22 @@ export async function autoAdd(ctx: MutationCtx, userId: Id<"users">, albumId: Id
   await ctx.db.insert("albumShots", { userId, albumId, screenshotId, source: "auto", removed: false, addedAt: Date.now() });
 }
 
+// Applies the vision call's album matches for a screenshot that just became ready. An album that was created or
+// edited while the call ran was judged on an old definition or not at all, so it gets its own one-screenshot check.
+export async function sortIntoAlbums(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  screenshotId: Id<"screenshots">,
+  { seen, matched }: { seen: { albumId: Id<"albums">; run: number }[]; matched: Id<"albums">[] },
+) {
+  const albums = await ctx.db.query("albums").withIndex("by_user_createdAt", (q) => q.eq("userId", userId)).collect();
+  for (const album of albums) {
+    const current = seen.some((s) => s.albumId === album._id && s.run === album.sortRun);
+    if (!current) await ctx.scheduler.runAfter(0, internal.albums.sortShot, { albumId: album._id, run: album.sortRun, screenshotId, attempt: 0 });
+    else if (matched.includes(album._id)) await autoAdd(ctx, userId, album._id, screenshotId);
+  }
+}
+
 async function startSort(ctx: MutationCtx, album: Doc<"albums">) {
   const run = album.sortRun + 1;
   await ctx.db.patch(album._id, { sortRun: run, sortStatus: "sorting" });
@@ -227,6 +243,33 @@ export const sortPage = internalQuery({
       cursor: page.continueCursor,
       isDone: page.isDone,
     };
+  },
+});
+
+export const shotForSort = internalQuery({
+  args: { albumId: v.id("albums"), run: v.number(), screenshotId: v.id("screenshots") },
+  handler: async (ctx, { albumId, run, screenshotId }) => {
+    const album = await ctx.db.get(albumId);
+    const shot = await ctx.db.get(screenshotId);
+    if (stale(album, run) || !visible(shot) || shot.userId !== album!.userId) return null;
+    return { album: { name: album!.name, description: album!.description }, shot: { key: "s1", title: shot.title ?? "", summary: shot.summary ?? "", text: shot.text ?? "" } };
+  },
+});
+
+export const sortShot = internalAction({
+  args: { albumId: v.id("albums"), run: v.number(), screenshotId: v.id("screenshots"), attempt: v.number() },
+  handler: async (ctx, args) => {
+    const { albumId, run, screenshotId, attempt } = args;
+    const target = await ctx.runQuery(internal.albums.shotForSort, { albumId, run, screenshotId });
+    if (target === null) return;
+    let matched: string[];
+    try {
+      matched = await matchAlbum(target.album, [target.shot]);
+    } catch {
+      if (attempt + 1 < SORT_TRIES) await ctx.scheduler.runAfter(5000 * 2 ** attempt, internal.albums.sortShot, { ...args, attempt: attempt + 1 });
+      return;
+    }
+    await ctx.runMutation(internal.albums.applySort, { albumId, run, checked: [screenshotId], matched: matched.length > 0 ? [screenshotId] : [] });
   },
 });
 

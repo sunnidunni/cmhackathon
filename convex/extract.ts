@@ -10,7 +10,7 @@ import { EXTRACTION_SCHEMA, albumKey, buildPrompt, parseExtraction } from "./lib
 import type { AlbumBrief } from "./lib/albumModel";
 import { requireUserId } from "./lib/auth";
 import { insertTodos } from "./todos";
-import { autoAdd } from "./albums";
+import { sortIntoAlbums } from "./albums";
 
 export const MAX_PARALLEL = 10;
 export const MAX_ATTEMPTS = 3;
@@ -72,7 +72,7 @@ export const getForExtract = internalQuery({
     return {
       userId: row.userId,
       url: await ctx.storage.getUrl(row.storageId),
-      albums: albums.map((a) => ({ _id: a._id, name: a.name, description: a.description })),
+      albums: albums.map((a) => ({ _id: a._id, run: a.sortRun, name: a.name, description: a.description })),
     };
   },
 });
@@ -93,16 +93,16 @@ export const complete = internalMutation({
     ),
     reason: v.string(),
     todos: v.optional(v.array(v.string())),
-    albumIds: v.optional(v.array(v.id("albums"))),
+    albums: v.optional(v.object({ seen: v.array(v.object({ albumId: v.id("albums"), run: v.number() })), matched: v.array(v.id("albums")) })),
     dates: v.array(v.object({ when: v.string(), what: v.string(), confident: v.boolean() })),
     importance: v.number(),
     reactionKey: v.string(),
   },
-  handler: async (ctx, { screenshotId, todos, albumIds, ...result }) => {
+  handler: async (ctx, { screenshotId, todos, albums, ...result }) => {
     const row = await ctx.db.get(screenshotId);
     if (row === null || row.status !== "processing") return false;
     if (row.todosExtracted !== true) await insertTodos(ctx, row.userId, screenshotId, todos ?? []);
-    for (const albumId of albumIds ?? []) await autoAdd(ctx, row.userId, albumId, screenshotId);
+    await sortIntoAlbums(ctx, row.userId, screenshotId, albums ?? { seen: [], matched: [] });
     await ctx.db.patch(screenshotId, {
       ...result,
       todosExtracted: true,
@@ -230,8 +230,14 @@ export const run = internalAction({
         Date.now(),
         target.albums.map((_, i) => albumKey(i)),
       );
-      const albumIds = target.albums.filter((_, i) => albums.includes(albumKey(i))).map((a) => a._id);
-      const saved = await ctx.runMutation(internal.extract.complete, { screenshotId, ...result, albumIds });
+      const saved = await ctx.runMutation(internal.extract.complete, {
+        screenshotId,
+        ...result,
+        albums: {
+          seen: target.albums.map((a) => ({ albumId: a._id, run: a.run })),
+          matched: target.albums.filter((_, i) => albums.includes(albumKey(i))).map((a) => a._id),
+        },
+      });
       if (saved) {
         await ctx.runAction(internal.memory.store, {
           screenshotId,
