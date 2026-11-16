@@ -5,9 +5,11 @@ import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../../convex/_generated/api";
 import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult } from "@/components/ask/AnswerBlock";
+import { visibleChips } from "@/components/ask/chips";
 import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
 import { EmptyAsk } from "@/components/ask/EmptyAsk";
+import { SuggestionChips } from "@/components/ask/SuggestionChips";
 import { text, usePalette } from "@/design/psst";
 import { FIXTURES } from "@/lib/fixtures";
 
@@ -19,6 +21,7 @@ export default function Ask() {
   const history = useQuery(api.ask.history);
   const rooms = useQuery(api.rooms.all);
   const askAction = useAction(api.ask.ask);
+  const suggestions = useQuery(api.ask.suggestions, {});
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
   const [slowFor, setSlowFor] = useState<number | null>(null);
@@ -89,6 +92,7 @@ export default function Ask() {
             </View>
           ) : null}
         </ScrollView>
+        <SuggestionChips items={visibleChips(suggestions, input, shownPending !== null)} onPick={send} />
         <View style={{ paddingBottom: keyboardUp ? 0 : Math.max(insets.bottom, 83) - 8 }}>
           <Composer value={input} onChange={setInput} onSend={() => send(input)} busy={pending?.status === "looking"} />
         </View>
