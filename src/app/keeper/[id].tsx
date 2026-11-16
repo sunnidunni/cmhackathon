@@ -1,11 +1,13 @@
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Platform, ScrollView, Text, View } from "react-native";
 import { Keeper } from "@/design/keepers-v2";
 import { fonts, KEEPER_IDS, KEEPERS, text, useKeeperColors, usePalette, Wash, type KeeperId } from "@/design/psst";
 import { KEEPER_PROFILES, ROOM_NAME } from "@/components/keeper-profile/data";
 import { KeeperChips, ListCard, SpeechBubble } from "@/components/keeper-profile/parts";
+
+const body = { padding: 16, paddingTop: Platform.OS === "ios" ? 16 : 72, paddingBottom: 48, gap: 16 } as const;
 
 const isKeeperId = (v: unknown): v is KeeperId => typeof v === "string" && (KEEPER_IDS as string[]).includes(v);
 
@@ -39,7 +41,7 @@ function Profile({ id }: { id: KeeperId }) {
   const [line, setLine] = useState<{ text: string; n: number } | null>(null);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: pal.paper }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 16 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: pal.paper }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
       <Wash keeper={id} style={{ alignItems: "center", paddingTop: 24, paddingBottom: 20, gap: 12, borderRadius: 24 }}>
         <Keeper
           name={id}
@@ -102,7 +104,7 @@ function Profile({ id }: { id: KeeperId }) {
 function Missing() {
   const pal = usePalette();
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: pal.paper }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 16 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: pal.paper }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
       <Wash keeper="mote" style={{ alignItems: "center", paddingVertical: 24, gap: 12, borderRadius: 24 }}>
         <Keeper name="mote" state="sleeping" size={140} />
       </Wash>
