@@ -363,5 +363,63 @@
     "where": "Today focus card, after a reminder fired",
     "voice": "app",
     "placeholders": []
+  },
+  "tock.filed": {
+    "text": "Filed. {title} closes {weekday}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "tock.filed.on": {
+    "text": "Filed. {title} is on {weekday}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Tock",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "murmur.filed": {
+    "text": "Filed. {title} is on {weekday}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Murmur",
+    "placeholders": [
+      "title",
+      "weekday"
+    ]
+  },
+  "penny.filed": {
+    "text": "Filed. {title} is due {date}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Penny Pocket",
+    "placeholders": [
+      "title",
+      "date"
+    ]
+  },
+  "mote.filed": {
+    "text": "Filed. {title}, for a someday.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "keeper: Mote",
+    "placeholders": [
+      "title"
+    ]
+  },
+  "system.filed.room": {
+    "text": "Filed in {room}.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "app",
+    "placeholders": [
+      "room"
+    ]
+  },
+  "system.filed.unsorted": {
+    "text": "Psst couldn't place this one. You decide where it goes.",
+    "where": "Today toast when a new screenshot is filed",
+    "voice": "app",
+    "placeholders": []
   }
 }
