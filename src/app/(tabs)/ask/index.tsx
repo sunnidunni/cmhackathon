@@ -1,9 +1,9 @@
 import { useAction, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { useEffect, useRef, useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { api } from "../../../convex/_generated/api";
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { api } from "../../../../convex/_generated/api";
 import { AnswerBlock, FailedBlock, LookingBlock, QuestionBubble, type AskResult } from "@/components/ask/AnswerBlock";
 import { Composer } from "@/components/ask/Composer";
 import { demoResult, demoShots } from "@/components/ask/demo";
@@ -11,7 +11,7 @@ import { EmptyAsk } from "@/components/ask/EmptyAsk";
 import { shownQuestion, withFocus } from "@/components/ask/focus";
 import { useFocusMemory } from "@/components/today/focusMemory";
 import { buildScreen } from "@/components/today/model";
-import { text, usePalette } from "@/design/psst";
+import { usePalette } from "@/design/psst";
 import { FIXTURES } from "@/lib/fixtures";
 
 type Exchange = FunctionReturnType<typeof api.ask.history>[number];
@@ -69,13 +69,11 @@ export default function Ask() {
   const lastId = shownPending?.result ? undefined : exchanges[exchanges.length - 1]?._id;
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: p.paper }}>
-      <Text maxFontSizeMultiplier={1.67} style={[text.largeTitle, { color: p.ink, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }]} accessibilityRole="header">
-        Ask
-      </Text>
+    <View style={{ flex: 1, backgroundColor: p.paper }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
           ref={scroll}
+          contentInsetAdjustmentBehavior="automatic"
           style={{ flex: 1 }}
           contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingBottom: 16, gap: 20 }}
           onContentSizeChange={() => !empty && scroll.current?.scrollToEnd({ animated: true })}
@@ -101,6 +99,6 @@ export default function Ask() {
           <Composer value={input} onChange={setInput} onSend={() => send(input)} busy={pending?.status === "looking"} />
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
