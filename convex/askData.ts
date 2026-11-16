@@ -13,6 +13,14 @@ const brief = (r: Doc<"screenshots">) => ({
   dates: (r.dates ?? []).map((d) => `${d.what}: ${d.when}${d.confident ? "" : " (not certain)"}`),
 });
 
+const LIBRARY_SIZE = 50;
+
+// The fallback library the ask model sees: the newest ready, unhidden screenshots. Suggestions
+// choose from this same set so every chip is answerable. Rows come newest first by takenAt.
+export function askLibrary<T extends { status: string; hidden?: boolean }>(rowsNewestFirst: T[]): T[] {
+  return rowsNewestFirst.filter((r) => r.status === "ready" && r.hidden !== true).slice(0, LIBRARY_SIZE);
+}
+
 export const context = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
@@ -21,11 +29,11 @@ export const context = internalQuery({
       .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
-    const ready = rows.filter((r) => r.status === "ready" && r.hidden !== true);
+    const ready = askLibrary(rows);
     const recent = [...ready]
       .sort((a, b) => (b.readAt ?? b._creationTime) - (a.readAt ?? a._creationTime))
       .slice(0, 3);
-    return { recent: recent.map(brief), library: ready.slice(0, 50).map(brief) };
+    return { recent: recent.map(brief), library: ready.map(brief) };
   },
 });
 

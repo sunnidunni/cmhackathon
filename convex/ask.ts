@@ -2,9 +2,10 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { action, internalAction, query, type ActionCtx } from "./_generated/server";
-import { toSources, type Source } from "./askData";
+import { askLibrary, toSources, type Source } from "./askData";
 import { requireUserId } from "./lib/auth";
 import { askModel } from "./lib/llm";
+import { suggestionsFrom } from "./lib/suggestions";
 import { addMemory, searchMemory, type MemoryHit } from "./lib/memoryClient";
 
 export type { Source };
@@ -79,6 +80,19 @@ export const ask = action({
     const q = question.trim();
     if (q === "") throw new Error("Ask a question first");
     return answerQuestion(ctx, userId, q);
+  },
+});
+
+export const suggestions = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUserId(ctx);
+    const rows = await ctx.db
+      .query("screenshots")
+      .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(300);
+    return suggestionsFrom(askLibrary(rows).map((r) => ({ ...r, id: r._id })));
   },
 });
 
