@@ -245,3 +245,14 @@ export function detect(shot: DetectInput, now: Date = new Date()): ActScenario |
   const saved = savedLabel(shot.savedAt, now);
   return chatRequest(shot, saved) ?? travelDelay(shot, saved, now) ?? bill(shot, saved, now) ?? calendar(shot, saved, now);
 }
+
+export function detectFirst(inputs: DetectInput[], skip: ReadonlySet<string>, max: number, now: Date = new Date()): ActScenario[] {
+  const acts: ActScenario[] = [];
+  for (const input of inputs) {
+    const act = detect(input, now);
+    if (!act || skip.has(act.id)) continue;
+    acts.push(act);
+    if (acts.length === max) break;
+  }
+  return acts;
+}
