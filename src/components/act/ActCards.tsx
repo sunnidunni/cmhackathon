@@ -8,6 +8,7 @@ import { DEMO_ACTS } from "@/lib/act/scenarios";
 import { resetActs, setReminderMoved, useActState } from "@/lib/act/store";
 import type { ActScenario } from "@/lib/act/types";
 import { useDetectedActs } from "@/lib/act/useDetectedActs";
+import { useBigText } from "@/lib/bigText";
 import { FIXTURES } from "@/lib/fixtures";
 import { ActCard } from "./ActCard";
 import { isReminderStep, reminderCopy } from "./pages";
@@ -15,6 +16,7 @@ import { Fade } from "./Motion";
 
 function ActRow({ scenario }: { scenario: ActScenario }) {
   const p = usePalette();
+  const big = useBigText();
   return (
     <Pressable
       accessibilityRole="button"
@@ -23,7 +25,7 @@ function ActRow({ scenario }: { scenario: ActScenario }) {
       style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.hair }}
     >
       <KeeperFace id={scenario.keeper} size={32} />
-      <Text numberOfLines={2} style={[text.bodyBold, { flex: 1, color: p.ink }]}>{scenario.noticed}</Text>
+      <Text numberOfLines={big ? undefined : 2} style={[text.bodyBold, { flex: 1, color: p.ink }]}>{scenario.noticed}</Text>
       <SymbolView
         name="chevron.right"
         size={14}

@@ -4,6 +4,7 @@ import { Text, TextInput, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
 import { confirmNote } from "@/lib/act/effects";
+import { useBigText } from "@/lib/bigText";
 import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
 import { Fade } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
@@ -23,10 +24,11 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 export function WhyRow({ scenario }: { scenario: ActScenario }) {
   const p = usePalette();
+  const big = useBigText();
   return (
-    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+    <View style={{ flexDirection: big ? "column" : "row", gap: 12, alignItems: big ? "flex-start" : "center" }}>
       <SourceThumb source={scenario.source} size={44} />
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: big ? undefined : 1, gap: 2 }}>
         <Text style={[text.body, { color: p.ink }]}>{scenario.why}</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>{`From your screenshot${scenario.source.at ? `, ${scenario.source.at}` : ""}`}</Text>
       </View>
@@ -244,12 +246,13 @@ function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]>
 
 export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scenario: ActScenario; fixture: boolean; end: { title: string; body: string } | null; onClose: () => void }) {
   const p = usePalette();
+  const big = useBigText();
   const last = lastAction(scenario.steps);
   const line = doneLine(scenario, last, fixture);
   const end = effectEnd ?? realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
-      <Keeper id={scenario.keeper} size={fixture && scenario.timeline ? 88 : 120} mood="react" />
+      <Keeper id={scenario.keeper} size={big ? 72 : fixture && scenario.timeline ? 88 : 120} mood="react" />
       {fixture ? (
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
       ) : (
