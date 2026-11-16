@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { useEffect, useState, type ReactNode } from "react";
-import { Text, View } from "react-native";
+import { AccessibilityInfo, Text, View } from "react-native";
 import { PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
 import { arrivalTime, PIZZA_ORDER as O } from "@/lib/act/scenarios/pizzaOrder";
 import type { ActScenario } from "@/lib/act/types";
@@ -95,9 +95,9 @@ function Tracker({ keeper, stage, eta }: { keeper: ActScenario["keeper"]; stage:
       </View>
       <View style={{ gap: 8 }}>
         {O.stages.map((s, i) => (
-          <View key={s} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <View key={s} accessible accessibilityLabel={`${s}, ${i < stage ? "done" : i === stage ? "now" : "next"}`} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 1.5, borderColor: i <= stage ? p.kl : p.hair2, backgroundColor: i <= stage ? c.main : "transparent" }} />
-            <Text accessibilityLiveRegion={i === stage ? "polite" : "none"} style={[i === stage ? text.bodyBold : text.body, { color: i <= stage ? p.ink : p.ink3 }]}>{s}</Text>
+            <Text style={[i === stage ? text.bodyBold : text.body, { color: i <= stage ? p.ink : p.ink3 }]}>{s}</Text>
           </View>
         ))}
       </View>
@@ -122,6 +122,11 @@ export function PizzaOrderFlow({ scenario, sent, onPlaced, onClose }: { scenario
       return () => clearTimeout(t);
     }
   }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "placed") return;
+    AccessibilityInfo.announceForAccessibility(stage === 0 ? `Order placed. ${O.stages[0]}. Arrives around ${eta}.` : O.stages[stage]);
+  }, [phase, stage, eta]);
 
   useEffect(() => {
     if (phase !== "placed" || stage >= O.stages.length - 1) return;
