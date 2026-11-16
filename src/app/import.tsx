@@ -79,7 +79,7 @@ export default function BringIn() {
   const roomFor = (id: KeeperId) => rooms?.find((r) => r.category === ROOM_FOR[id]);
   const shotFor = (id: KeeperId): RowShot | null => {
     const newest = roomFor(id)?.newest;
-    if (newest) return { uri: newest.imageUrl, title: newest.title };
+    if (newest) return { uri: newest.imageUrl, title: newest.title, id: newest._id };
     return FIXTURES ? FIXTURE_SHOT[id] : null;
   };
   const unsorted = rooms?.find((r) => r.category === "unsorted")?.count ?? 0;

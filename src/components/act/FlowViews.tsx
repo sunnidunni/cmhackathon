@@ -243,7 +243,7 @@ export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scena
   const end = effectEnd ?? realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
-      <Keeper id={scenario.keeper} size={120} mood="react" />
+      <Keeper id={scenario.keeper} size={120} reaction="celebrate" reactionKey="done" />
       {fixture ? (
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
       ) : (

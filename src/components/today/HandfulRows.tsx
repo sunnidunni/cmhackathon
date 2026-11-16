@@ -49,7 +49,7 @@ export function HandfulRows({
             <ShotSticker uri={item.imageUrl} title={item.title} size={44} />
             <View style={{ flex: 1, gap: 2 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <KeeperFace id={item.keeper} size={22} muted={item.handled} />
+                <KeeperFace id={item.keeper} size={22} muted={item.handled} reaction="filed" reactionKey={item.section === "justIn" && !item.handled ? item.id : undefined} />
                 <Text numberOfLines={2} style={[text.bodyBold, { flexShrink: 1, color: item.handled ? p.ink2 : p.ink }]}>
                   {item.title}
                 </Text>

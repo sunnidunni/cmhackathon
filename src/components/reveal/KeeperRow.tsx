@@ -3,7 +3,7 @@ import { Enter } from "./Enter";
 import { KEEPERS, Keeper, KeeperLine, ShotSticker, Skeleton, Wash, psstLine, usePalette, text, type KeeperId } from "@/design/psst";
 import { ROOM_LABEL, screenshotsIn } from "./model";
 
-export type RowShot = { uri: string | null; title: string };
+export type RowShot = { uri: string | null; title: string; id?: string };
 
 export function SkeletonKeeperRow() {
   const p = usePalette();
@@ -23,7 +23,7 @@ export function KeeperRow({ id, count, done, active, shot }: { id: KeeperId; cou
   const meta = count === null ? ROOM_LABEL[id] : `${ROOM_LABEL[id]} · ${done ? count : `${count} so far`}`;
   const content = (
     <View style={[styles.row, active ? styles.rowActive : { borderBottomColor: p.hair }]}>
-      <Keeper id={id} size={56} mood={active ? "react" : "rest"} />
+      <Keeper id={id} size={56} reaction="filed" reactionKey={active ? (shot?.id ?? id) : undefined} />
       <View style={styles.body}>
         <Text style={[text.bodyBold, { color: p.ink }]}>
           {KEEPERS[id].name}
