@@ -40,5 +40,6 @@ describe("fixtureAnswerFits", () => {
     expect(fixtureAnswerFits("When is that due?", flyer, flyer, false)).toBe(false);
     expect(fixtureAnswerFits("When is that due?", "Rent", flyer, true)).toBe(false);
     expect(fixtureAnswerFits("What time is the yoga class?", flyer, flyer, true)).toBe(false);
+    expect(fixtureAnswerFits("What was that recipe?", flyer, flyer, true)).toBe(false);
   });
 });
