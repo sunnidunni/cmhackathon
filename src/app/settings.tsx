@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } 
 import { api } from "../../convex/_generated/api";
 import { ActionRow, Footer, Group, SectionLabel, SwitchRow } from "@/components/settings/rows";
 import { fonts, KEEPER_IDS, KEEPERS, KeeperFace, SoftCard, text, usePalette } from "@/design/psst";
+import { resetActs } from "@/lib/act/store";
 import { useAutoRead } from "@/lib/auto-read";
 import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
 import { DEV_TOOLS, useLibraryDiagnostics, usePhotoAccess, useReadAllPhotos } from "@/lib/photos";
@@ -230,6 +231,7 @@ export default function Settings() {
             <SectionLabel>Developer</SectionLabel>
             <Group>
               <SwitchRow first title="Read all photos" value={readAll} onValueChange={setReadAll} testID="read-all-switch" />
+              <ActionRow title="Reset demos" onPress={resetActs} />
               <ActionRow title="Replay onboarding" detail="Plays the walkthrough on demo data. Nothing of yours is changed." onPress={() => router.push("/welcome?replay=1")} />
             </Group>
             <Text style={[text.caption, { color: pal.ink2, fontFamily: fonts.ui }]} testID="diagnostics">
