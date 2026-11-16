@@ -21,7 +21,7 @@ export function EmptyAsk({ count, onPick, showSuggestions }: { count: number | u
               key={q}
               accessibilityRole="button"
               onPress={() => onPick(q)}
-              style={{ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: i === 0 ? 0 : 1, borderBottomWidth: i === MORE.length - 1 ? 1 : 0, borderColor: p.hair }}
+              style={({ pressed }) => ({ minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: i === 0 ? 0 : 1, borderBottomWidth: i === MORE.length - 1 ? 1 : 0, borderColor: p.hair, backgroundColor: pressed ? p.fill : "transparent" })}
             >
               <Text style={[text.lead, { color: p.ink }]}>{q}</Text>
               <SymbolView name="chevron.right" size={13} weight="semibold" tintColor={p.ink3} fallback={<Text style={{ color: p.ink3 }}>›</Text>} />

@@ -16,7 +16,7 @@ export function ReminderRows({ rows, now, tz, onOpen }: { rows: ReminderRow[]; n
           accessibilityRole="button"
           accessibilityLabel={`Open ${r.title}`}
           onPress={() => onOpen(r.screenshotId)}
-          style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.hair }}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, paddingVertical: 8, borderTopWidth: 1, borderTopColor: p.hair, backgroundColor: pressed ? p.fill : "transparent" })}
         >
           <ShotSticker uri={r.imageUrl} title={r.title} size={44} />
           <View style={{ flex: 1, gap: 2 }}>

@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from "expo-glass-effect";
@@ -132,6 +133,7 @@ export default function Today() {
   const open = (item: Item) => router.push(`/shot/${item.id}`);
   const remind = (item: Item) => router.push(`/remind/${item.id}` as never);
   const act = (item: Item, kind: ReturnType<typeof actionsFor>["primaryKind"] | ReturnType<typeof actionsFor>["secondaryKind"]) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     if (kind === "remind") return remind(item);
     if (kind === "see") return open(item);
     if (kind === "skip") return skip(item);

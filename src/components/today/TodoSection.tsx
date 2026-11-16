@@ -35,7 +35,7 @@ function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
         accessibilityLabel={row.screenshotId ? `Open the screenshot for ${row.text}` : row.text}
         disabled={!row.screenshotId}
         onPress={() => router.push(`/shot/${row.screenshotId}` as never)}
-        style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44, paddingVertical: 8 }}
+        style={({ pressed }) => ({ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44, paddingVertical: 8, backgroundColor: pressed ? p.fill : "transparent" })}
       >
         <KeeperFace id={row.keeper} size={22} muted={row.done} />
         <View style={{ flex: 1, gap: 2 }}>

@@ -30,7 +30,8 @@ export function Composer({ value, onChange, onSend, busy }: { value: string; onC
           accessibilityLabel="Send"
           disabled={!ready}
           onPress={onSend}
-          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: p.ink, alignItems: "center", justifyContent: "center", opacity: ready ? 1 : 0.4 }}
+          hitSlop={2}
+          style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, backgroundColor: p.ink, alignItems: "center", justifyContent: "center", opacity: ready ? (pressed ? 0.8 : 1) : 0.4 })}
         >
           <SymbolView name="arrow.up" size={18} tintColor={p.paper} fallback={<Text style={{ color: p.paper, fontWeight: "700" }}>↑</Text>} />
         </Pressable>
