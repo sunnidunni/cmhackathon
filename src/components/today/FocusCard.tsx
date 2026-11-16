@@ -14,7 +14,7 @@ export function Headline({ item, now, tz }: { item: Item; now: number; tz: numbe
       {big ? null : (
         <>
           <View style={{ transform: [{ translateY: 4 }] }}>
-            <KeeperFace id={item.keeper} size={30} />
+            <KeeperFace id={item.keeper} size={30} reaction="filed" reactionKey={item.section === "justIn" && !item.handled ? item.id : undefined} />
           </View>
           {"  "}
         </>

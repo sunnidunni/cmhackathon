@@ -12,13 +12,13 @@ const Decor = ({ children }: { children: ReactNode }) => (
 
 export type OptionRow = { key: string; title: string; sub: string; selected: boolean; available: boolean };
 
-export function Headline() {
+export function Headline({ celebrate = false }: { celebrate?: boolean }) {
   const p = usePalette();
   return (
     <Text maxFontSizeMultiplier={1.84} style={[text.headlineCard, { color: p.ink }]}>
       Choose when Tock{" "}
       <View style={{ transform: [{ translateY: 4 }] }}>
-        <Decor><KeeperFace id="tock" size={26} /></Decor>
+        <Decor><KeeperFace id="tock" size={26} reaction="celebrate" reactionKey={celebrate ? "set" : undefined} /></Decor>
       </View>{" "}
       should remind you.
     </Text>

@@ -62,7 +62,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 28, gap: 16, flexGrow: 1 }}>
-        <Headline />
+        <Headline celebrate={saved && notifOn === true} />
         {shot === undefined ? <Text style={[text.lead, { color: p.ink2 }]}>Opening your screenshot.</Text> : null}
         {shot === null ? <Text style={[text.lead, { color: p.ink2 }]}>I can&apos;t find that screenshot. It may have been deleted.</Text> : null}
         {shot && !plan ? <Text style={[text.lead, { color: p.ink2 }]}>This screenshot has no upcoming date, so there is nothing to remind you about.</Text> : null}
