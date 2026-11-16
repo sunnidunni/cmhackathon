@@ -11,6 +11,7 @@ import { KeeperFace, KeeperLine, PsstButton, ShotSticker, Skeleton, SoftCard, te
 import { RoomWash } from "@/components/rooms/RoomWash";
 import { useReminders } from "@/components/tabs/reminders";
 import { FIXTURES } from "@/lib/fixtures";
+import { shareScreenshot } from "@/lib/share";
 import { demoById, isDemoId, useDemoFallback, type DemoRow } from "@/components/rooms/demo";
 import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
 import { UndoToast } from "@/components/rooms/UndoToast";
@@ -204,6 +205,16 @@ export default function Detail() {
               </View>
             </View>
 
+            {shot.imageUrl ? (
+              <PsstButton
+                kind="text"
+                label="Share this screenshot"
+                onPress={() => {
+                  setError(null);
+                  shareScreenshot({ uri: shot.imageUrl!, title: shot.title, message: shot.summary }).catch(() => setError("That didn't work. Try again in a moment."));
+                }}
+              />
+            ) : null}
             {!finished ? <PsstButton kind="text" label="Mark as done" onPress={() => beginDone()} /> : null}
             {FIXTURES && withReminder && !isDemo ? (
               <PsstButton kind="text" label="Fire reminder now (dev)" onPress={() => reminders.fireNow(shotId).catch(() => setError("That didn't work. Try again in a moment."))} />
