@@ -1,18 +1,19 @@
 import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import { KeeperFace, PsstButton, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
+import { KeeperFace, KEEPERS, PsstButton, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
 import { dismissAct, setReminderMoved, useActState } from "@/lib/act/store";
 import type { ActScenario } from "@/lib/act/types";
+import { isReminderStep, reminderCopy } from "./pages";
 import { SourceThumb } from "./SourceThumb";
 
 export function ActCard({ scenario }: { scenario: ActScenario }) {
   const p = usePalette();
   const c = useKeeperColors(scenario.keeper);
   const { undone } = useActState();
-  const move = scenario.steps.find((s) => s.kind === "move-reminder");
+  const reminder = scenario.steps.find(isReminderStep);
+  const copy = reminder ? reminderCopy(reminder, KEEPERS[scenario.keeper].name) : null;
   const reverted = undone.has(scenario.id);
-  const didLine = move && reverted ? `Your airport reminder is back at ${move.from}.` : scenario.didOnOwn;
-  const undoLabel = move ? (reverted ? `Move it to ${move.to}` : `Undo · back to ${move.from}`) : null;
+  const didLine = copy ? (reverted ? copy.reverted : (scenario.didOnOwn ?? copy.done)) : scenario.didOnOwn;
 
   return (
     <Wash keeper={scenario.keeper} style={{ gap: 12 }}>
@@ -24,14 +25,14 @@ export function ActCard({ scenario }: { scenario: ActScenario }) {
       {didLine ? (
         <View style={{ gap: 0 }}>
           <Text style={[text.body, { color: c.deep }]}>{didLine}</Text>
-          {undoLabel && move ? (
+          {copy ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={reverted ? `Move the reminder to ${move.to}` : `Undo. Put the reminder back to ${move.from}`}
+              accessibilityLabel={reverted ? copy.redo : copy.undoHint}
               onPress={() => setReminderMoved(scenario.id, reverted)}
               style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}
             >
-              <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>{undoLabel}</Text>
+              <Text style={[text.bodyBold, { color: p.ink, textDecorationLine: "underline" }]}>{reverted ? copy.redo : copy.undo}</Text>
             </Pressable>
           ) : null}
         </View>
