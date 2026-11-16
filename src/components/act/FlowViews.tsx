@@ -1,9 +1,12 @@
+import * as Haptics from "expo-haptics";
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
-import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, useKeeperColors, usePalette } from "@/design/psst";
+import { useReducedMotion } from "react-native-reanimated";
+import { fonts, Keeper, KEEPERS, KeeperFace, PsstButton, SoftCard, text, usePalette } from "@/design/psst";
 import { confirmNote } from "@/lib/act/effects";
-import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, stepDone, type ReminderStep } from "./pages";
-import { Fade, TypingDots } from "./Motion";
+import { useBigText } from "@/lib/bigText";
+import { confirmFor, doneLine, lastAction, realEnd, realLine, reminderCopy, type ReminderStep } from "./pages";
+import { Fade } from "./Motion";
 import { SourceThumb } from "./SourceThumb";
 import type { ActScenario, ActStep } from "@/lib/act/types";
 
@@ -19,22 +22,13 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Bubble({ mine, children, keeper }: { mine?: boolean; children: ReactNode; keeper: ActScenario["keeper"] }) {
-  const p = usePalette();
-  const c = useKeeperColors(keeper);
-  return (
-    <View style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "88%", backgroundColor: mine ? c.main : p.fill2, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 }}>
-      {children}
-    </View>
-  );
-}
-
 export function WhyRow({ scenario }: { scenario: ActScenario }) {
   const p = usePalette();
+  const big = useBigText();
   return (
-    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+    <View style={{ flexDirection: big ? "column" : "row", gap: 12, alignItems: big ? "flex-start" : "center" }}>
       <SourceThumb source={scenario.source} size={44} />
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: big ? undefined : 1, gap: 2 }}>
         <Text style={[text.body, { color: p.ink }]}>{scenario.why}</Text>
         <Text style={[text.caption, { color: p.ink2 }]}>{`From your screenshot${scenario.source.at ? `, ${scenario.source.at}` : ""}`}</Text>
       </View>
@@ -181,12 +175,18 @@ export function EditPage({ scenario, step, edit, fixture, onChange, onNext }: { 
   );
 }
 
-export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; openLabel: string | null; onConfirm: () => void; onEdit: () => void }) {
+export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, reply, onConfirm, onEdit }: { scenario: ActScenario; step: ActStep; final: boolean; edit: Edit; fixture: boolean; openLabel: string | null; reply?: { to: string; text: string }; onConfirm: () => void; onEdit?: () => void }) {
   const p = usePalette();
   const [tapped, setTapped] = useState(false);
   const c = confirmFor(scenario, step, final);
   return (
     <View style={{ gap: 16 }}>
+      {reply ? (
+        <Text accessibilityLiveRegion="polite" style={[text.bodyBold, { color: p.ink }]}>
+          {fixture ? `${reply.to.split(" (")[0]} answered. ` : `Demo: pretend ${reply.to} answered. `}
+          <Text style={text.body}>{reply.text}</Text>
+        </Text>
+      ) : null}
       <WhyRow scenario={scenario} />
       <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{c.title}</Text>
       <Receipt step={step} edit={edit} fixture={fixture} />
@@ -205,45 +205,54 @@ export function ConfirmPage({ scenario, step, final, edit, fixture, openLabel, o
           onConfirm();
         }}
       />
-      <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} />
+      {onEdit ? <PsstButton kind="text" label={fixture ? "Edit" : "Back"} onPress={onEdit} /> : null}
     </View>
   );
 }
 
-export function ReplyPage({ scenario, step, edit, fixture, nextLabel, onNext }: { scenario: ActScenario; step: Extract<ActStep, { kind: "draft-message" }>; edit: Edit; fixture: boolean; nextLabel: string; onNext: () => void }) {
+function Timeline({ timeline }: { timeline: NonNullable<ActScenario["timeline"]> }) {
   const p = usePalette();
-  const [shown, setShown] = useState(false);
+  const reduce = useReducedMotion();
+  const total = timeline.rows.length;
+  const [shown, setShown] = useState(reduce ? total : 0);
   useEffect(() => {
-    const t = setTimeout(() => setShown(true), 1200);
+    if (shown >= total) return;
+    const t = setTimeout(() => setShown((n) => n + 1), shown === 0 ? 400 : 900);
     return () => clearTimeout(t);
-  }, []);
+  }, [shown, total]);
+  useEffect(() => {
+    if (shown === total) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+  }, [shown, total]);
   return (
-    <View style={{ gap: 16 }}>
-      <Text accessibilityRole="header" style={[text.headlineCard, { color: p.ink }]}>{fixture ? stepDone(step) : realEnd(step).title}</Text>
-      <View style={{ gap: 8 }}>
-        <Bubble mine keeper={scenario.keeper}>
-          <Text style={[text.lead, { color: p.kl }]}>{edit.body}</Text>
-        </Bubble>
-        <Fade key={shown ? "reply" : "typing"}>
-          <Bubble keeper={scenario.keeper}>
-            {shown ? <Text accessibilityLiveRegion="polite" style={[text.lead, { color: p.ink }]}>{step.reply}</Text> : <TypingDots />}
-          </Bubble>
-        </Fade>
-        {shown ? <Text style={[text.caption, { color: p.ink2 }]}>{fixture ? `${step.to.split(" (")[0]} answered.` : `Demo: pretend ${step.to} answered.`}</Text> : null}
-      </View>
-      {shown ? <PsstButton kind="filled" keeper={scenario.keeper} label={nextLabel} onPress={onNext} /> : null}
+    <View style={{ alignSelf: "stretch", gap: 8 }}>
+      <Text style={[text.caption, { color: p.ink2 }]}>{timeline.caption}</Text>
+      <SoftCard style={{ gap: 12 }}>
+        {timeline.rows.map((row, i) =>
+          i < shown ? (
+            <Fade key={row.label}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+                <Text style={[i === total - 1 ? text.bodyBold : text.body, { color: p.ink, flex: 1 }]}>{row.label}</Text>
+                <Text style={[text.body, { color: p.ink2 }]}>{row.when}</Text>
+              </View>
+            </Fade>
+          ) : (
+            <View key={row.label} style={{ height: 24 }} />
+          ),
+        )}
+      </SoftCard>
     </View>
   );
 }
 
 export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scenario: ActScenario; fixture: boolean; end: { title: string; body: string } | null; onClose: () => void }) {
   const p = usePalette();
+  const big = useBigText();
   const last = lastAction(scenario.steps);
   const line = doneLine(scenario, last, fixture);
   const end = effectEnd ?? realEnd(last);
   return (
     <View style={{ gap: 16, alignItems: "center" }}>
-      <Keeper id={scenario.keeper} size={120} reaction="celebrate" reactionKey="done" />
+      <Keeper id={scenario.keeper} size={big ? 72 : fixture && scenario.timeline ? 88 : 120} reaction="celebrate" reactionKey="done" />
       {fixture ? (
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[text.headlineCard, { color: p.ink, textAlign: "center" }]}>{line}</Text>
       ) : (
@@ -252,6 +261,7 @@ export function DonePage({ scenario, fixture, end: effectEnd, onClose }: { scena
           <Text accessibilityLiveRegion="polite" style={[text.body, { color: p.ink2, textAlign: "center" }]}>{end.body}</Text>
         </>
       )}
+      {fixture && scenario.timeline ? <Timeline timeline={scenario.timeline} /> : null}
       <PsstButton kind="filled" keeper={scenario.keeper} label="Done" onPress={onClose} />
     </View>
   );

@@ -37,7 +37,6 @@ export type ActPage =
   | { kind: "move"; step: number }
   | { kind: "edit"; step: number }
   | { kind: "confirm"; step: number; final: boolean }
-  | { kind: "reply"; step: number }
   | { kind: "done" };
 
 export function buildPages(steps: ActStep[]): ActPage[] {
@@ -45,8 +44,8 @@ export function buildPages(steps: ActStep[]): ActPage[] {
   const pages: ActPage[] = [];
   steps.forEach((s, i) => {
     if (isReminderStep(s)) return void pages.push({ kind: "move", step: i });
-    pages.push({ kind: "edit", step: i }, { kind: "confirm", step: i, final: i === last });
-    if (s.kind === "draft-message" && s.reply && i !== last) pages.push({ kind: "reply", step: i });
+    if (s.kind !== "order") pages.push({ kind: "edit", step: i });
+    pages.push({ kind: "confirm", step: i, final: i === last });
   });
   pages.push({ kind: "done" });
   return pages;

@@ -1,5 +1,5 @@
 import { useQuery } from "convex/react";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Platform, ScrollView, Text, View } from "react-native";
 import { api } from "../../../convex/_generated/api";
@@ -20,11 +20,6 @@ const EMPTY: Record<RoomKey, { body: string; line: string }> = {
   money: { body: "Receipts, bills, tickets and things to buy land here. New screenshots are read each time you open Psst.", line: "An empty pouch. Very tidy." },
   ideas: { body: "Recipes, places, quotes and saved answers land here. New screenshots are read each time you open Psst.", line: "The jar is open. Take your time." },
 };
-
-// The glass back chevron is the native stack header's own back button, left over a transparent bar.
-function HeaderOptions() {
-  return <Stack.Screen options={{ headerShown: true, headerTransparent: true, title: "", headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }} />;
-}
 
 const body = { padding: 16, paddingTop: Platform.OS === "ios" ? 8 : 64, paddingBottom: 32, gap: 16, flexGrow: 1 } as const;
 const open = (id: string) => router.push(`/shot/${id}`);
@@ -52,7 +47,6 @@ function AllScreen() {
   );
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      <HeaderOptions />
       {all && all.items.length > 0 ? (
         <PhotoGrid
           keeper="mote"
@@ -99,14 +93,13 @@ function SingleRoom({ category }: { category: Category }) {
         </Text>
         {rows ? <KeeperLine id={keeper}>{roomLine(category, rows)}</KeeperLine> : <Skeleton w={160} h={14} />}
       </View>
-      <Keeper id={keeper} size={88} />
+      <Keeper id={keeper} size={88} boop />
     </RoomWash>
   );
 
   if (items !== null && items.length > 0)
     return (
       <View style={{ flex: 1, backgroundColor: p.paper }}>
-        <HeaderOptions />
         <PhotoGrid
           keeper={keeper}
           onOpen={open}
@@ -123,11 +116,10 @@ function SingleRoom({ category }: { category: Category }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: p.paper }}>
-      <HeaderOptions />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={body}>
         {isEmpty && isRoom ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 8 }}>
-            <Keeper id={keeper} size={128} />
+            <Keeper id={keeper} size={128} boop />
             <Text maxFontSizeMultiplier={1.84} accessibilityRole="header" style={[text.headlineCard, { color: p.ink, textAlign: "center", marginTop: 12 }]}>
               Nothing in {ROOM_LABEL[category]} yet.
             </Text>

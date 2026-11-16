@@ -63,7 +63,7 @@ export function DoneView({ children }: { children?: React.ReactNode }) {
   const p = usePalette();
   return (
     <View style={{ alignItems: "center", gap: 12 }}>
-      <Keeper id="tock" size={128} sticker />
+      <Keeper id="tock" size={128} sticker boop />
       <Text accessibilityRole="header" style={[text.headline, { color: p.ink, textAlign: "center" }]}>
         {"That's today's handful."}
       </Text>
@@ -77,7 +77,7 @@ export function EmptyView() {
   const p = usePalette();
   return (
     <View style={{ alignItems: "center", gap: 12, paddingTop: 48 }}>
-      <Keeper id="murmur" size={128} sticker />
+      <Keeper id="murmur" size={128} sticker boop />
       <Text accessibilityRole="header" style={[text.headline, { color: p.ink, textAlign: "center" }]}>
         No screenshots to keep yet.
       </Text>

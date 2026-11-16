@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { KeeperFace, KEEPERS, PsstButton, text, useKeeperColors, usePalette, Wash } from "@/design/psst";
+import { useBigText } from "@/lib/bigText";
 import { dismissAct, setReminderMoved, useActState } from "@/lib/act/store";
 import type { ActScenario } from "@/lib/act/types";
 import { isReminderStep, reminderCopy } from "./pages";
@@ -8,6 +9,7 @@ import { SourceThumb } from "./SourceThumb";
 
 export function ActCard({ scenario }: { scenario: ActScenario }) {
   const p = usePalette();
+  const big = useBigText();
   const c = useKeeperColors(scenario.keeper);
   const { undone } = useActState();
   const reminder = scenario.steps.find(isReminderStep);
@@ -18,7 +20,7 @@ export function ActCard({ scenario }: { scenario: ActScenario }) {
   return (
     <Wash keeper={scenario.keeper} style={{ gap: 12 }}>
       <View accessible accessibilityRole="header" style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <KeeperFace id={scenario.keeper} size={40} />
+        {big ? null : <KeeperFace id={scenario.keeper} size={40} />}
         <Text style={[text.bodyBold, { flex: 1, fontSize: 18, lineHeight: 23, color: p.ink }]}>{scenario.noticed}</Text>
       </View>
       <Text style={[text.caption, { color: p.ink2 }]}>{scenario.why}</Text>
@@ -37,9 +39,9 @@ export function ActCard({ scenario }: { scenario: ActScenario }) {
           ) : null}
         </View>
       ) : null}
-      <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+      <View style={{ flexDirection: big ? "column" : "row", gap: big ? 8 : 16, alignItems: big ? "flex-start" : "center" }}>
         <SourceThumb source={scenario.source} size={64} />
-        <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flex: big ? undefined : 1, gap: 4 }}>
           <Text style={[text.body, { color: p.ink }]}>{scenario.ready}</Text>
           <Text style={[text.caption, { color: p.ink2 }]}>{`From your screenshot${scenario.source.at ? `, ${scenario.source.at}` : ""}`}</Text>
         </View>
