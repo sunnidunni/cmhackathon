@@ -11,6 +11,7 @@ import type { AlbumBrief } from "./lib/albumModel";
 import { requireUserId } from "./lib/auth";
 import { isRateLimit, respond, visionModel } from "./lib/openai";
 import { fairOrder } from "./lib/queue";
+import { writeText } from "./lib/shotText";
 import { dayInZone } from "./lib/time";
 import { insertTodos } from "./todos";
 import { sortIntoAlbums } from "./albums";
@@ -123,13 +124,16 @@ export const complete = internalMutation({
     importance: v.number(),
     reactionKey: v.string(),
   },
-  handler: async (ctx, { screenshotId, todos, albums, ...result }) => {
+  handler: async (ctx, { screenshotId, todos, albums, text, ...result }) => {
     const row = await ctx.db.get(screenshotId);
     if (row === null || row.status !== "processing") return false;
+    await writeText(ctx, row, text);
     if (row.todosExtracted !== true) await insertTodos(ctx, row.userId, screenshotId, todos ?? []);
     await sortIntoAlbums(ctx, row.userId, screenshotId, albums ?? { seen: [], matched: [] });
     await ctx.db.patch(screenshotId, {
       ...result,
+      // The text was stored beside the screenshot just above, not on it.
+      text: undefined,
       todosExtracted: true,
       // The user's own move wins over the model's category.
       ...(row.userMoved ? { category: row.category } : {}),

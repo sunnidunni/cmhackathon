@@ -2,11 +2,12 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useSyncExternalStore } from "react";
 import { api } from "../../convex/_generated/api";
 import { convex } from "./convex";
-import { getReadAllPhotos, listCandidates, prepareForUpload } from "./photos";
-import { chunk, planUploads, scanSize } from "./sync-plan";
+import { getPhotoAccess, getReadAllPhotos, listCandidates, prepareForUpload } from "./photos";
+import { File } from "expo-file-system";
+import { syncLibrary, type SyncResult } from "./sync-plan";
 
 export type SyncStatus = "idle" | "syncing" | "error";
-export type SyncResult = { uploaded: number; failed: number; skipped: number };
+export type { SyncResult };
 type SyncState = { status: SyncStatus; error: string | null; last: SyncResult | null };
 
 let state: SyncState = { status: "idle", error: null, last: null };
@@ -23,63 +24,70 @@ function subscribe(l: () => void) {
 // Uploads one screenshot. Resolves false when the server did not take it.
 async function uploadOne(asset: Awaited<ReturnType<typeof listCandidates>>[number]): Promise<boolean> {
   const { uri, takenAt } = await prepareForUpload(asset);
-  const body = await (await fetch(uri)).blob();
-  const uploadUrl = await convex.mutation(api.screenshots.generateUploadUrl, {});
-  const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "image/jpeg" }, body });
-  if (!res.ok) throw new Error(`Upload failed (${res.status})`);
-  const { storageId } = await res.json();
-  // null: the server refused it, because the person removed this screenshot from Shots.
-  return (await convex.mutation(api.screenshots.create, { deviceAssetId: asset.id, storageId, takenAt })) !== null;
+  try {
+    const body = await (await fetch(uri)).blob();
+    const uploadUrl = await convex.mutation(api.screenshots.generateUploadUrl, {});
+    const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "image/jpeg" }, body });
+    if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+    const { storageId } = await res.json();
+    // null: the server refused it, because the person removed this screenshot from Shots.
+    return (await convex.mutation(api.screenshots.create, { deviceAssetId: asset.id, storageId, takenAt })) !== null;
+  } finally {
+    discardResized(uri);
+  }
 }
 
-const PARALLEL_UPLOADS = 3;
-let running: Promise<SyncResult> | null = null;
-let again = false;
+// prepareForUpload writes a resized JPEG to the cache for each screenshot. Delete it once the upload is over,
+// or a large import leaves hundreds of megabytes behind. This is the copy, never the photo in the library.
+function discardResized(uri: string) {
+  try {
+    new File(uri).delete();
+  } catch {
+    // The system clears the cache directory by itself when space runs low.
+  }
+}
 
-async function syncOnce(): Promise<SyncResult> {
-  const { limit } = await convex.query(api.sync.importInfo, {});
-  const assets = await listCandidates(getReadAllPhotos(), scanSize(limit));
-  const ids = assets.map((a) => a.id);
-  const unknown: string[] = [];
-  for (const part of chunk(ids, 100)) {
-    unknown.push(...(await convex.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds: part })));
-  }
-  const plan = new Set(planUploads(ids, unknown, limit));
-  const queue = assets.filter((a) => plan.has(a.id));
-  let uploaded = 0;
-  let failed = 0;
-  let lastError: unknown = null;
-  async function worker() {
-    for (let asset = queue.shift(); asset; asset = queue.shift()) {
-      try {
-        if (await uploadOne(asset)) uploaded++;
-      } catch (e) {
-        failed++;
-        lastError = e;
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: PARALLEL_UPLOADS }, worker));
-  const result = { uploaded, failed, skipped: ids.length - plan.size };
-  if (failed > 0 && uploaded === 0) throw lastError instanceof Error ? lastError : new Error(String(lastError));
-  return result;
+let running: Promise<SyncResult> | null = null;
+let again: { quick: boolean } | null = null;
+
+// See syncLibrary for what the checkpoint means.
+const CHECKPOINT_KEY = "psst.fullSyncFor";
+
+async function syncOnce(wantQuick: boolean): Promise<SyncResult> {
+  const [{ limit }, access] = await Promise.all([convex.query(api.sync.importInfo, {}), getPhotoAccess()]);
+  return syncLibrary(
+    {
+      limit,
+      access,
+      list: (count) => listCandidates(getReadAllPhotos(), count),
+      askUnknown: (deviceAssetIds) => convex.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds }),
+      upload: uploadOne,
+      getCheckpoint: () => SecureStore.getItemAsync(CHECKPOINT_KEY).catch(() => null),
+      setCheckpoint: async (key) => {
+        await (key === null ? SecureStore.deleteItemAsync(CHECKPOINT_KEY) : SecureStore.setItemAsync(CHECKPOINT_KEY, key)).catch(() => undefined);
+      },
+    },
+    wantQuick,
+  );
 }
 
 // Runs one sync at a time. A call while a sync runs queues exactly one more pass, so a screenshot
-// taken mid-sync is still picked up.
-export function runSync(): Promise<SyncResult> {
+// taken mid-sync is still picked up. The queued pass is a full one if any caller asked for a full one.
+export function runSync(opts?: { quick?: boolean }): Promise<SyncResult> {
+  const quick = opts?.quick === true;
   if (running) {
-    again = true;
+    again = { quick: quick && (again?.quick ?? true) };
     return running;
   }
   setState({ status: "syncing", error: null });
   running = (async () => {
     try {
-      let result = await syncOnce();
+      let result = await syncOnce(quick);
       while (again) {
-        again = false;
-        const next = await syncOnce();
-        result = { uploaded: result.uploaded + next.uploaded, failed: result.failed + next.failed, skipped: next.skipped };
+        const next = again;
+        again = null;
+        const more = await syncOnce(next.quick);
+        result = { uploaded: result.uploaded + more.uploaded, failed: result.failed + more.failed, skipped: more.skipped };
       }
       setState({ status: "idle", last: result });
       return result;
@@ -88,7 +96,7 @@ export function runSync(): Promise<SyncResult> {
       throw e;
     } finally {
       running = null;
-      again = false;
+      again = null;
     }
   })();
   return running;

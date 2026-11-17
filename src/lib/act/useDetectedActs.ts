@@ -5,6 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 import { detect, detectFirst, type DetectInput } from "./detect";
+import { RECENT_SHOTS } from "@/components/rooms/useRoomPage";
 import { useOffline } from "@/lib/offline";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 import { useActState } from "./store";
@@ -51,13 +52,13 @@ export function getDetectedAct(id: string): ActScenario | null {
 
 export function useDetectedActs(): ActScenario[] {
   const offline = useOffline();
-  const rooms = useSafeQuery(api.rooms.all, {}, undefined);
+  const newest = useSafeQuery(api.rooms.recent, { limit: RECENT_SHOTS }, undefined);
   const recent = useMemo(
     () =>
-      (rooms?.items ?? [])
+      (newest ?? [])
         .filter((item) => item.category !== "ideas" && item.category !== "unsorted")
         .slice(0, LOOKBACK),
-    [rooms],
+    [newest],
   );
   const requests = useMemo(
     () => Object.fromEntries(recent.map((item) => [item._id, { query: api.shots.detail, args: { id: item._id as Id<"screenshots"> } }])),
@@ -65,7 +66,7 @@ export function useDetectedActs(): ActScenario[] {
   );
   const details = useQueries(requests);
   const { dismissed, completed } = useActState();
-  const useDemo = (FIXTURES || offline) && (rooms === undefined || rooms.count === 0);
+  const useDemo = (FIXTURES || offline) && (newest === undefined || newest.length === 0);
 
   return useMemo(() => {
     const skip = new Set([...dismissed, ...completed]);

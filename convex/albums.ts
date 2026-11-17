@@ -5,6 +5,7 @@ import { internalAction, internalMutation, internalQuery, mutation, query } from
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 import { matchAlbum } from "./lib/albumModel";
+import { readText } from "./lib/shotText";
 
 export const MAX_ALBUMS = 20;
 export const NAME_MAX = 40;
@@ -245,7 +246,7 @@ export const sortPage = internalQuery({
       .paginate({ cursor, numItems: SORT_BATCH });
     return {
       album: { name: album!.name, description: album!.description },
-      shots: page.page.filter(visible).map((s) => ({ id: s._id, title: s.title ?? "", summary: s.summary ?? "", text: s.text ?? "" })),
+      shots: await Promise.all(page.page.filter(visible).map(async (s) => ({ id: s._id, title: s.title ?? "", summary: s.summary ?? "", text: await readText(ctx, s) }))),
       cursor: page.continueCursor,
       isDone: page.isDone,
     };
@@ -258,7 +259,7 @@ export const shotForSort = internalQuery({
     const album = await ctx.db.get(albumId);
     const shot = await ctx.db.get(screenshotId);
     if (stale(album, run) || !visible(shot) || shot.userId !== album!.userId) return null;
-    return { album: { name: album!.name, description: album!.description }, shot: { key: "s1", title: shot.title ?? "", summary: shot.summary ?? "", text: shot.text ?? "" } };
+    return { album: { name: album!.name, description: album!.description }, shot: { key: "s1", title: shot.title ?? "", summary: shot.summary ?? "", text: await readText(ctx, shot) } };
   },
 });
 

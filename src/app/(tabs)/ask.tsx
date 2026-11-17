@@ -28,7 +28,8 @@ type Pending = { question: string; sent: string; status: "looking" | "failed" | 
 export default function Ask() {
   const p = usePalette();
   const history = useSafeQuery(api.ask.history, {}, []);
-  const rooms = useSafeQuery(api.rooms.all, {}, { count: DEMO_COUNTS.read, items: [] });
+  // How many screenshots have been read. The import progress has that number, and it is a far smaller answer than the library.
+  const progress = useSafeQuery(api.sync.progress, {}, { total: DEMO_COUNTS.read, read: DEMO_COUNTS.read, failed: 0, pending: 0, uploaded: DEMO_COUNTS.read });
   const today = useSafeQuery(api.today.get, { tzOffsetMinutes: new Date().getTimezoneOffset() }, undefined);
   const [focusMemory] = useFocusMemory();
   const { screen } = buildScreen(focusMemory === undefined ? undefined : today, new Set(), undefined, focusMemory ?? null);
@@ -137,7 +138,7 @@ export default function Ask() {
           onContentSizeChange={() => !empty && scroll.current?.scrollToEnd({ animated: true })}
           keyboardShouldPersistTaps="handled"
         >
-          {empty ? <EmptyAsk count={rooms?.count} starters={starters} onPick={send} showSuggestions={input.length === 0} /> : null}
+          {empty ? <EmptyAsk count={progress?.read} starters={starters} onPick={send} showSuggestions={input.length === 0} /> : null}
           {exchanges.map((ex) => (
             <View key={ex._id} style={{ gap: 14 }}>
               <QuestionBubble question={shownQuestion(ex.question)} />
@@ -147,7 +148,7 @@ export default function Ask() {
           {shownPending ? (
             <View style={{ gap: 14 }}>
               <QuestionBubble question={shownPending.question} />
-              {shownPending.status === "looking" && slowFor === shownPending.sentAt ? <LookingBlock count={rooms?.count} /> : null}
+              {shownPending.status === "looking" && slowFor === shownPending.sentAt ? <LookingBlock count={progress?.read} /> : null}
               {shownPending.status === "failed" ? <FailedBlock onRetry={() => send(shownPending.question, shownPending.about)} /> : null}
               {shownPending.status === "done" && shownPending.result ? <AnswerBlock result={shownPending.result} latest demo={shownPending.demo} shots={shownPending.demo ? shownPending.shots : undefined} onAsk={send} /> : null}
             </View>

@@ -146,8 +146,8 @@ describe("rooms, detail and mutations", () => {
     expect(money.count).toBe(2);
     expect(money.newest?.title).toBe("y");
     expect(rooms[0]).toMatchObject({ count: 0, newest: null });
-    const room = await me.query(api.rooms.get, { category: "money" });
-    expect(room.items.map((i) => i.title)).toEqual(["y", "x"]);
+    const room = await me.query(api.rooms.page, { category: "money", paginationOpts: { numItems: 10, cursor: null } });
+    expect(room.page.map((i) => i.title)).toEqual(["y", "x"]);
   });
 
   test("rooms.all lists every ready screenshot across rooms, newest first, with category", async () => {
@@ -191,9 +191,8 @@ describe("rooms, detail and mutations", () => {
     await me.mutation(api.shots.move, { id, category: "ideas" });
     const d = await me.query(api.shots.detail, { id });
     expect(PLAYFUL_KEYS.ideas).toContain(d?.lineKey);
-    const room = await me.query(api.rooms.get, { category: "ideas" });
-    expect(PLAYFUL_KEYS.ideas).toContain(room.items[0].lineKey);
-    expect(PLAYFUL_KEYS.ideas).toContain(room.newestLineKey);
+    const room = await me.query(api.rooms.page, { category: "ideas", paginationOpts: { numItems: 10, cursor: null } });
+    expect(PLAYFUL_KEYS.ideas).toContain(room.page[0].lineKey);
     await me.mutation(api.shots.move, { id, category: "money" });
     expect(PLAYFUL_KEYS.money).toContain((await me.query(api.shots.detail, { id }))?.lineKey);
   });

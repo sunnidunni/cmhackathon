@@ -50,6 +50,7 @@ export default defineSchema({
     takenAt: v.number(),
     status: screenshotStatus,
     title: v.optional(v.string()),
+    // Only on screenshots read before the text moved to screenshotTexts. See lib/shotText.ts.
     text: v.optional(v.string()),
     summary: v.optional(v.string()),
     category: v.optional(category),
@@ -83,10 +84,19 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_status_todosExtracted", ["status", "todosExtracted"])
     .index("by_user_category", ["userId", "category"])
+    .index("by_user_category_takenAt", ["userId", "category", "takenAt"])
     .index("by_user_deviceAssetId", ["userId", "deviceAssetId"])
     .index("by_user_importance", ["userId", "importance"])
     .index("by_user_takenAt", ["userId", "takenAt"])
     .index("by_storageId", ["storageId"]),
+
+  // Everything readable in a screenshot, one row per screenshot. Kept apart from screenshots so that listing
+  // screenshots does not read their full text. See lib/shotText.ts.
+  screenshotTexts: defineTable({
+    screenshotId: v.id("screenshots"),
+    userId: v.id("users"),
+    text: v.string(),
+  }).index("by_screenshot", ["screenshotId"]),
 
   // Screenshots the person removed from Shots. The photo is still on the phone, so without this row
   // the next sync would see it as new and import it again. "Delete everything" clears these too.

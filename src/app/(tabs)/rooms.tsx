@@ -13,6 +13,7 @@ import type { Category } from "@/components/rooms/format";
 import { previewToday } from "@/components/today/preview";
 import { usePhotoAccess } from "@/lib/photos";
 import { runSync } from "@/lib/sync";
+import { RECENT_SHOTS } from "@/components/rooms/useRoomPage";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 import { AlbumsSection } from "@/components/albums/AlbumsSection";
 
@@ -21,7 +22,7 @@ export default function Rooms() {
   const insets = useSafeAreaInsets();
   const list = useSafeQuery(api.rooms.list, {}, []);
   const tz = new Date().getTimezoneOffset();
-  const all = useSafeQuery(api.rooms.all, {}, undefined);
+  const recent = useSafeQuery(api.rooms.recent, { limit: RECENT_SHOTS }, undefined);
   const today = useSafeQuery(api.today.get, { tzOffsetMinutes: tz }, undefined);
   const { access, openLimitedPicker } = usePhotoAccess();
   const windUp = useWindUp(runSync);
@@ -37,7 +38,7 @@ export default function Rooms() {
   const [now] = useState(() => Date.now());
   const filed: FiledItem[] = demo
     ? DEMO_ROWS.map((r) => ({ id: r.id, title: r.title, category: r.category, takenAt: r.takenAt, imageUrl: r.imageUrl }))
-    : (all?.items ?? []).map((r) => ({ id: r._id, title: r.title, category: r.category as Category, takenAt: r.takenAt, imageUrl: r.imageUrl }));
+    : (recent ?? []).map((r) => ({ id: r._id, title: r.title, category: r.category as Category, takenAt: r.takenAt, imageUrl: r.imageUrl }));
   const handful = ((demo ? previewToday("td-2", tz).data?.handful : today?.handful) ?? []).map((c) => (c.category ?? "unsorted") as Category);
   const chips = roomChips(filed, handful, now, tz);
 

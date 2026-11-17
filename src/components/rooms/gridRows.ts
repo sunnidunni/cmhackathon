@@ -1,8 +1,9 @@
-import { stepLevel, type GridLevel } from "./grid";
+import { stepLevel, type GridLevel } from "../tabs/grid";
 
+// first: the first row of items under its date line.
 export type Row<T> =
   | { type: "header"; key: string; label: string }
-  | { type: "row"; key: string; items: T[] };
+  | { type: "row"; key: string; items: T[]; first: boolean };
 
 // Flattens date groups into list rows (a date line, then rows of up to cols items) for a virtualized list.
 export function buildRows<T>(groups: { key: string; label: string; items: T[] }[], cols: number): Row<T>[] {
@@ -10,7 +11,7 @@ export function buildRows<T>(groups: { key: string; label: string; items: T[] }[
   for (const g of groups) {
     rows.push({ type: "header", key: `h:${g.key}`, label: g.label });
     for (let i = 0; i < g.items.length; i += cols) {
-      rows.push({ type: "row", key: `r:${g.key}:${i / cols}`, items: g.items.slice(i, i + cols) });
+      rows.push({ type: "row", key: `r:${g.key}:${i / cols}`, items: g.items.slice(i, i + cols), first: i === 0 });
     }
   }
   return rows;
