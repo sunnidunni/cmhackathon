@@ -44,7 +44,7 @@ export default function Notes() {
         ) : (
           <View style={{ flex: 1, justifyContent: "center", gap: 12 }}>
             <Text style={[text.headline, { color: p.ink }]}>Your notes write themselves.</Text>
-            <Text style={[text.body, { color: p.ink2 }]}>Each screenshot Psst reads becomes a note with its title, a short summary, and any dates or amounts it found.</Text>
+            <Text style={[text.body, { color: p.ink2 }]}>Each screenshot Shots reads becomes a note with its title, a short summary, and any dates or amounts it found.</Text>
             <PsstButton kind="filled" label="Bring in my screenshots" onPress={() => router.push("/bring")} />
           </View>
         )}

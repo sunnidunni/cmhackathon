@@ -82,7 +82,7 @@ export function DevPanel({ onClose, openRoute }: { onClose: () => void; openRout
       <View style={{ gap: 8 }}>
         <SectionLabel>{"This phone's user"}</SectionLabel>
         <Group>
-          <Line label="Psst user id" value={me?._id ?? "unavailable"} />
+          <Line label="User id" value={me?._id ?? "unavailable"} />
           <View style={rule}>
             <Line label="Plan" value={planLine(info)} />
           </View>

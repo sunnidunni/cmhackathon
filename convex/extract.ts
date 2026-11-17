@@ -11,6 +11,7 @@ import type { AlbumBrief } from "./lib/albumModel";
 import { requireUserId } from "./lib/auth";
 import { isRateLimit, respond, visionModel } from "./lib/openai";
 import { fairOrder } from "./lib/queue";
+import { category } from "./schema";
 import { writeText } from "./lib/shotText";
 import { dayInZone } from "./lib/time";
 import { insertTodos } from "./todos";
@@ -110,13 +111,7 @@ export const complete = internalMutation({
     amount: v.optional(v.string()),
     text: v.string(),
     summary: v.string(),
-    category: v.union(
-      v.literal("deadlines"),
-      v.literal("chats"),
-      v.literal("money"),
-      v.literal("ideas"),
-      v.literal("unsorted"),
-    ),
+    category,
     reason: v.string(),
     todos: v.optional(v.array(v.string())),
     albums: v.optional(v.object({ seen: v.array(v.object({ albumId: v.id("albums"), run: v.number() })), matched: v.array(v.id("albums")) })),

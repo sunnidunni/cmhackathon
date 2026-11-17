@@ -31,7 +31,7 @@ export const createCheckout = action({
         account_id: accountId,
         metadata: { convexUserId: userId },
         redirect_url: redirectUrl ?? `${process.env.CONVEX_SITE_URL}/whop/done`,
-        variant: { billing_type: "one_time", initial_price: PRICE_USD, currency: "usd", title: "Rooms Full Library" },
+        variant: { billing_type: "one_time", initial_price: PRICE_USD, currency: "usd", title: "Shots Full Library" },
       }),
     });
     if (!res.ok) throw new Error(`Checkout failed (${res.status})`);
@@ -42,7 +42,7 @@ export const createCheckout = action({
 });
 
 export const done = httpAction(async () => {
-  const html = `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Psst</title><body style="font-family:-apple-system,sans-serif;background:#FAF6EE;color:#2B1D14;text-align:center;padding:72px 24px"><h1>Payment received</h1><p>Close this window to go back to Psst.</p></body>`;
+  const html = `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shots</title><body style="font-family:-apple-system,sans-serif;background:#FAF6EE;color:#2B1D14;text-align:center;padding:72px 24px"><h1>Payment received</h1><p>Close this window to go back to Shots.</p></body>`;
   return new Response(html, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } });
 });
 

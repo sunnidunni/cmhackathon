@@ -96,21 +96,3 @@ export const create = mutation({
     return id;
   },
 });
-
-export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await requireUserId(ctx);
-    const rows = await ctx.db
-      .query("screenshots")
-      .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
-      .order("desc")
-      .take(100);
-    return await Promise.all(
-      rows.map(async (row) => ({
-        ...row,
-        url: await ctx.storage.getUrl(row.storageId),
-      })),
-    );
-  },
-});
