@@ -242,13 +242,7 @@ export default function Settings() {
           <Group>
             <ActionRow first title="About Shots" onPress={() => router.push("/about")} />
             <ActionRow title="What happens to your screenshots" onPress={() => router.push("/privacy")} />
-            {FIXTURES ? (
-              <>
-                <ActionRow title="Activity" onPress={() => router.push("/activity")} />
-                <ActionRow title="Let Shots prepare actions" onPress={() => router.push("/settings/actions")} />
-                <ActionRow title="Your week with Shots" onPress={() => router.push("/recap")} />
-              </>
-            ) : null}
+            {FIXTURES ? <ActionRow title="Activity" onPress={() => router.push("/activity")} /> : null}
           </Group>
         </View>
 
