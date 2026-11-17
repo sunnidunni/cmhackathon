@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { syncReminderNotifications } from "./notifications";
+import { cancelAllReminderNotifications, cancelReminderNotification, syncReminderNotifications } from "./notifications";
 
 const native = vi.hoisted(() => ({
   setNotificationHandler: vi.fn(),
   getPermissionsAsync: vi.fn(),
   getAllScheduledNotificationsAsync: vi.fn(),
+  cancelAllScheduledNotificationsAsync: vi.fn(),
   cancelScheduledNotificationAsync: vi.fn(),
   scheduleNotificationAsync: vi.fn(),
   SchedulableTriggerInputTypes: { DATE: "date" },
@@ -51,5 +52,33 @@ describe("syncReminderNotifications", () => {
     expect(scheduled[0].trigger.date).toBeGreaterThan(Date.now());
     // "stale" is cancelled by the sync; "missing" is cancelled once just before it is scheduled, which is how a notification is replaced.
     expect(native.cancelScheduledNotificationAsync.mock.calls.map(([id]) => id)).toEqual(["stale", "missing"]);
+  });
+
+  test("a reminder the person turns off while a sync is scheduling is not put back by that sync", async () => {
+    native.cancelAllScheduledNotificationsAsync.mockResolvedValue(undefined);
+    // The first schedule call is where the person turns off the third reminder.
+    native.scheduleNotificationAsync.mockImplementationOnce(async () => {
+      await cancelReminderNotification("third");
+      return "id";
+    });
+    await syncReminderNotifications(async () => [soon("first", 60_000), soon("second", 120_000), soon("third", 180_000)]);
+    const scheduled = native.scheduleNotificationAsync.mock.calls.map(([request]) => request.identifier);
+    // The sync stops at once: its picture of the server is out of date. The next sync schedules "second".
+    expect(scheduled).toEqual(["first"]);
+  });
+
+  test("delete everything during a sync stops it before it schedules anything", async () => {
+    native.cancelAllScheduledNotificationsAsync.mockResolvedValue(undefined);
+    await syncReminderNotifications(async () => {
+      await cancelAllReminderNotifications();
+      return [soon("first", 60_000)];
+    });
+    expect(native.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  test("the sync's own cancelling of stale notifications does not stop it", async () => {
+    native.getAllScheduledNotificationsAsync.mockResolvedValue([{ identifier: "stale" }]);
+    await syncReminderNotifications(async () => [soon("missing", 60_000)]);
+    expect(native.scheduleNotificationAsync).toHaveBeenCalledTimes(1);
   });
 });

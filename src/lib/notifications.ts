@@ -50,16 +50,26 @@ export async function scheduleReminderNotification(n: ReminderNotification): Pro
   }
 }
 
+// Counts every cancellation the person causes (turning a reminder off, marking done, removing, deleting everything).
+// A sync that is part-way through scheduling from an older picture of the server checks it and stops, so it cannot
+// put back a notification that was cancelled while it ran.
+let cancellations = 0;
+
+const cancelPending = (reminderId: string) => Notifications.cancelScheduledNotificationAsync(reminderId).catch(() => undefined);
+
 export async function cancelReminderNotification(reminderId: string): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(reminderId).catch(() => undefined);
+  cancellations++;
+  await cancelPending(reminderId);
 }
 
 export async function cancelReminderNotifications(reminderIds: readonly string[]): Promise<void> {
-  await Promise.all(reminderIds.map(cancelReminderNotification));
+  if (reminderIds.length > 0) cancellations++;
+  await Promise.all(reminderIds.map(cancelPending));
 }
 
 // Every notification Shots schedules is a reminder, so this clears them all. For "Delete everything".
 export async function cancelAllReminderNotifications(): Promise<void> {
+  cancellations++;
   await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
 }
 
@@ -73,8 +83,15 @@ export async function showReminderNow(n: Omit<ReminderNotification, "dueAt">): P
 // ended somewhere else. Does nothing without notification permission, and never asks for it.
 export async function syncReminderNotifications(fetchUpcoming: () => Promise<ReminderNotification[]>): Promise<void> {
   if (!(await hasNotificationPermission())) return;
+  const startedAt = cancellations;
   const pending = await Notifications.getAllScheduledNotificationsAsync();
   const plan = planNotificationSync(await fetchUpcoming(), pending.map((n) => n.identifier), Date.now());
-  await cancelReminderNotifications(plan.cancel);
-  for (const n of plan.schedule) await scheduleReminderNotification(n);
+  // The person cancelled something since this sync took its picture of the server, so the picture is out of date.
+  // Stop here; the next sync starts from a fresh one.
+  if (cancellations !== startedAt) return;
+  await Promise.all(plan.cancel.map(cancelPending));
+  for (const n of plan.schedule) {
+    if (cancellations !== startedAt) return;
+    await scheduleReminderNotification(n);
+  }
 }

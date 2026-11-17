@@ -60,15 +60,16 @@ export const webhook = httpAction(async (ctx, request) => {
   if (!valid) return new Response("Invalid signature", { status: 401 });
 
   // payment.succeeded carries a payment (id pay_..., with our metadata from the checkout).
-  // refund.created and refund.updated carry a refund (payment_id, status). Only a refund that went through counts.
-  let event: { type?: string; data?: { id?: unknown; payment_id?: unknown; status?: unknown; metadata?: { convexUserId?: unknown } | null } };
+  // refund.created and refund.updated carry a refund: its status, and the payment it reverses as payment.id.
+  // (Whop's newer refund object names it payment_id; both are read.) Only a refund that went through counts.
+  let event: { type?: string; data?: { id?: unknown; payment?: { id?: unknown } | null; payment_id?: unknown; status?: unknown; metadata?: { convexUserId?: unknown } | null } };
   try {
     event = JSON.parse(rawBody);
   } catch {
     return new Response("Bad body", { status: 400 });
   }
   if (event.type === "refund.created" || event.type === "refund.updated") {
-    const whopPaymentId = event.data?.payment_id;
+    const whopPaymentId = event.data?.payment?.id ?? event.data?.payment_id;
     if (event.data?.status !== "succeeded" || typeof whopPaymentId !== "string") return new Response("Ignored", { status: 200 });
     return new Response(await ctx.runMutation(internal.plan.markRefunded, { whopPaymentId }), { status: 200 });
   }
