@@ -4,7 +4,7 @@ import { mutation, query } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 import { toCard } from "./lib/cards";
 import { computePick, pickIsStale } from "./lib/handful";
-import { localDay } from "./lib/time";
+import { isTimeZone, localDay } from "./lib/time";
 
 function dayHash(s: string) {
   let h = 2166136261;
@@ -115,12 +115,14 @@ export const get = query({
   },
 });
 
+// timeZone is the phone's time zone name. It is kept on the user so work done while the app is closed
+// (reading a screenshot, answering a question) knows the person's day.
 export const appOpened = mutation({
-  args: { tzOffsetMinutes: v.number() },
-  handler: async (ctx, { tzOffsetMinutes: tz }) => {
+  args: { tzOffsetMinutes: v.number(), timeZone: v.optional(v.string()) },
+  handler: async (ctx, { tzOffsetMinutes: tz, timeZone }) => {
     const userId = await requireUserId(ctx);
     const now = Date.now();
-    await ctx.db.patch(userId, { lastOpenedAt: now });
+    await ctx.db.patch(userId, { lastOpenedAt: now, ...(timeZone && isTimeZone(timeZone) ? { timeZone } : {}) });
     const day = localDay(now, tz);
     const existing = await ctx.db
       .query("dailyPicks")

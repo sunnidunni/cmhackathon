@@ -28,7 +28,7 @@ export function useReminderActions() {
   return useMemo(
     () => ({
       async remind(screenshotId: Id<"screenshots">, when?: string) {
-        const r = await set({ screenshotId, tzOffsetMinutes: tzOffsetMinutes(), when });
+        const r = await set({ screenshotId, tzOffsetMinutes: tzOffsetMinutes(), when, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
         // The new reminder replaced the old one on the server; without this the phone would buzz for both.
         await cancelReminderNotifications(r.replacedReminderIds ?? []);
         const notified = await scheduleReminderNotification({

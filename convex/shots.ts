@@ -41,7 +41,6 @@ export const detail = query({
       imageUrl: await ctx.storage.getUrl(row.storageId),
       importance: row.importance ?? 1,
       takenAt: row.takenAt,
-      error: row.error ?? null,
       dates: (row.dates ?? []).map((d) => ({
         ...d,
         reminder: d.confident ? reminderFor(reminders, id, d.when) : null,

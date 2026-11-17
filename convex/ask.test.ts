@@ -129,6 +129,90 @@ describe("ask", () => {
   });
 });
 
+describe("what the answering model is given", () => {
+  test("the library is always listed; with search results it is listed without each screenshot's full text", async () => {
+    const { me, userId, shot, t } = await setup();
+    const bill = await shot(userId, "Power bill", 5);
+    const flyer = await shot(userId, "Pottery flyer", 6);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(bill, { text: "FULL BILL TEXT" });
+      await ctx.db.patch(flyer, { text: "FULL FLYER TEXT" });
+    });
+    // Four screenshots read later, so neither of the two above is among the three most recent.
+    for (let i = 0; i < 4; i++) await shot(userId, `later ${i}`, 10 + i);
+    search.mockResolvedValue([{ text: "Power bill due Nov 16", screenshotId: bill, kind: "screenshot" }]);
+    model.mockResolvedValue({ found: true, answer: "ok", sourceIds: [flyer] });
+    const res = await me.action(api.ask.ask, { question: "when is pottery?" });
+
+    const prompt: string = model.mock.calls[0][1];
+    const library = prompt.slice(prompt.indexOf("All the user's screenshots"));
+    expect(prompt).toContain("Memory search results:\n[id " + bill + "] Power bill due Nov 16");
+    // The search missed the flyer, but it is still in front of the model and can be cited.
+    expect(library).toContain("[id " + flyer + "] Pottery flyer.");
+    expect(library).not.toContain("FULL FLYER TEXT");
+    expect(res.sources.map((s) => s.screenshotId)).toEqual([flyer]);
+  });
+
+  test("with no search results the library carries the full text", async () => {
+    const { me, userId, shot, t } = await setup();
+    const bill = await shot(userId, "Power bill", 5);
+    await t.run((ctx) => ctx.db.patch(bill, { text: "FULL BILL TEXT" }));
+    model.mockResolvedValue({ found: false, answer: "", sourceIds: [] });
+    await me.action(api.ask.ask, { question: "q" });
+    const prompt: string = model.mock.calls[0][1];
+    expect(prompt.slice(prompt.indexOf("All the user's screenshots"))).toContain("FULL BILL TEXT");
+  });
+
+  test("a search result for a screenshot that no longer exists is left out", async () => {
+    const { me, userId, shot, t } = await setup();
+    const gone = await shot(userId, "Removed", 5);
+    const kept = await shot(userId, "Kept", 6);
+    await t.run((ctx) => ctx.db.delete(gone));
+    search.mockResolvedValue([
+      { text: "SECRET FROM A REMOVED SCREENSHOT", screenshotId: gone, kind: "screenshot" },
+      { text: "kept text", screenshotId: kept, kind: "screenshot" },
+    ]);
+    model.mockResolvedValue({ found: false, answer: "", sourceIds: [] });
+    await me.action(api.ask.ask, { question: "q" });
+    const prompt: string = model.mock.calls[0][1];
+    expect(prompt).not.toContain("SECRET FROM A REMOVED SCREENSHOT");
+    expect(prompt).toContain("kept text");
+  });
+
+  test("earlier chat turns are marked as background, apart from screenshot results", async () => {
+    const { me, userId, shot } = await setup();
+    await shot(userId, "Power bill", 5);
+    search.mockResolvedValue([{ text: "Assistant answered: It is due Nov 16.", screenshotId: null, kind: "chat" }]);
+    model.mockResolvedValue({ found: false, answer: "", sourceIds: [] });
+    await me.action(api.ask.ask, { question: "q" });
+    const prompt: string = model.mock.calls[0][1];
+    expect(prompt).toContain("Earlier questions and answers, for background only. Take facts from the screenshots, not from these:\nAssistant answered: It is due Nov 16.");
+    expect(prompt).not.toContain("Memory search results");
+  });
+
+  test("the model is told today's date in the person's time zone", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.UTC(2026, 10, 16, 3, 0));
+    try {
+      const { me, userId, t } = await setup();
+      await t.run((ctx) => ctx.db.patch(userId, { timeZone: "America/Los_Angeles" }));
+      model.mockResolvedValue({ found: false, answer: "", sourceIds: [] });
+      await me.action(api.ask.ask, { question: "what is due this week?" });
+      expect(model.mock.calls[0][0]).toContain("Today is Sunday, 2026-11-15.");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("a very long question is cut before it reaches the model or memory", async () => {
+    const { me } = await setup();
+    model.mockResolvedValue({ found: false, answer: "", sourceIds: [] });
+    await me.action(api.ask.ask, { question: "x".repeat(5000) });
+    expect(search.mock.calls[0][1]).toHaveLength(1000);
+    expect((model.mock.calls[0][1] as string).length).toBeLessThan(1400);
+  });
+});
+
 describe("the Expo app", () => {
   test("no file under src/ imports supermemory", () => {
     const files = import.meta.glob("../src/**/*.{ts,tsx}", { query: "?raw", import: "default", eager: true });

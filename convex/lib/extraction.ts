@@ -21,18 +21,22 @@ export type Extraction = {
 const FULL_DATE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/;
 
 // albums are the person's own albums, keyed album1, album2, ... in the order given.
-export function buildPrompt(todayIso: string, albums: AlbumBrief[] = []) {
+// takenIso is the day the screenshot was taken. A screenshot can be read long after it was taken, and a word like
+// "tomorrow" in it means the day after it was taken, not the day after today.
+export function buildPrompt(todayIso: string, albums: AlbumBrief[] = [], takenIso?: string) {
   const keys = (Object.keys(PLAYFUL_KEYS) as Category[])
     .map((c) => `${c}: ${PLAYFUL_KEYS[c].join(", ")}`)
     .join("\n");
-  return `You read one phone screenshot and file it. Today's date is ${todayIso}. Return JSON only, matching the schema.
+  const taken = takenIso ? ` The screenshot was taken on ${takenIso}.` : "";
+  const relative = takenIso ? ` A date given only in words, such as "tomorrow" or "this Friday", is counted from the day the screenshot was taken, and always has confident set to false.` : "";
+  return `You read one phone screenshot and file it. Today's date is ${todayIso}.${taken} Return JSON only, matching the schema.
 - title: a name for the thing, five words or fewer, such as "Brightside Power bill" or "Harvest Lantern Night". No price, no date, no time, and never the word "due".
 - amount: the one main amount of money shown (for example "$142.37", the amount due or the price), exactly as written, or an empty string when there is none.
 - text: all readable text in the image, in reading order.
 - summary: one or two plain sentences.
 - category: deadlines (flyers, invitations, events, appointments, sign-ups, anything with a due date that is not a payment), chats (any screenshot of a messaging conversation, even when it mentions a plan, a date or a time), money (bills, prices, payments, receipts, tickets, flights), ideas (recipes, quotes, articles, AI answers, things to try or remember), or unsorted.
 - reason: one short sentence on why you chose that category.
-- dates: every date or time visibly shown. when is ISO 8601 (YYYY-MM-DD, or YYYY-MM-DDTHH:MM when a time is shown). what is a short label for the date, such as "RSVP deadline", "payment due", "event starts", "appointment", "flight departs", or "deal ends". Never guess a date, time, or price: only return what is visibly in the image. If the year or any other part is missing, write only what is visible (for example 11-21) and set confident to false. Use an empty array when there are no dates. Only return dates the user might need to act on or attend: skip publication dates, billing periods, order dates and other dates already in the past. The phone's own status bar (clock such as 9:41, battery, signal, carrier) is never a date; ignore it. A bare time with no day is not a date either.
+- dates: every date or time visibly shown. when is ISO 8601 (YYYY-MM-DD, or YYYY-MM-DDTHH:MM when a time is shown). what is a short label for the date, such as "RSVP deadline", "payment due", "event starts", "appointment", "flight departs", or "deal ends". Never guess a date, time, or price: only return what is visibly in the image. If the year or any other part is missing, write only what is visible (for example 11-21) and set confident to false.${relative} Use an empty array when there are no dates. Only return dates the user might need to act on or attend: skip publication dates, billing periods, order dates and other dates already in the past. The phone's own status bar (clock such as 9:41, battery, signal, carrier) is never a date; ignore it. A bare time with no day is not a date either.
 - importance: 1 to 5. Use 4 or 5 only for deadlines, payments due, codes or passwords the user will need, and anything with a date within 14 days of today. A booking, ticket or flight more than 14 days away is 3. A product, price or sale deal is 3 (a payment actually due is 4 or 5). A conversation is 1 or 2. Saved ideas, recipes, quotes and articles are 1.
 - If the image is not readable or does not fit a room, set category to unsorted and importance to 1.
 - todos: zero, one or two short instructions to this person, each starting with a verb and under 60 characters, such as "Pay the Brightside Power bill" or "Reply to Maya about Friday". Only when the screenshot clearly asks this person to do something (pay, reply, book, go, buy, send, sign up, renew). Most screenshots have none: memes, recipes saved for later, quotes, articles, AI answers and plain chat return an empty list (a chat only gets a to-do when a message directly asks this person to do something specific, not for plans that are simply being discussed). A sale price or product listing has none. Never include a date, time or price unless it is printed in the screenshot.

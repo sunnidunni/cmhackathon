@@ -1,3 +1,5 @@
+import { askModelName, respond } from "./openai";
+
 export type AlbumBrief = { name: string; description: string };
 export type ShotBrief = { key: string; title: string; summary: string; text: string };
 
@@ -19,32 +21,14 @@ export function parseMatches(raw: string, keys: string[]): string[] {
 }
 
 export async function matchAlbum(album: AlbumBrief, shots: ShotBrief[]): Promise<string[]> {
-  const res = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model: process.env.OPENAI_ASK_MODEL ?? "gpt-6.1-terra",
-      input: [
-        { role: "system", content: albumSortPrompt(album) },
-        { role: "user", content: shotList(shots) },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "album_matches",
-          strict: true,
-          schema: { type: "object", additionalProperties: false, required: ["matches"], properties: { matches: { type: "array", items: { type: "string" } } } },
-        },
-      },
-    }),
+  const text = await respond({
+    model: askModelName(),
+    input: [
+      { role: "system", content: albumSortPrompt(album) },
+      { role: "user", content: shotList(shots) },
+    ],
+    schemaName: "album_matches",
+    schema: { type: "object", additionalProperties: false, required: ["matches"], properties: { matches: { type: "array", items: { type: "string" } } } },
   });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const body = await res.json();
-  const text: string | undefined =
-    body.output_text ??
-    body.output
-      ?.flatMap((o: { content?: { type: string; text?: string }[] }) => o.content ?? [])
-      .find((c: { type: string }) => c.type === "output_text")?.text;
-  if (!text) throw new Error("OpenAI returned no text");
   return parseMatches(text, shots.map((s) => s.key));
 }

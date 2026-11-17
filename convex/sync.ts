@@ -1,5 +1,5 @@
 import { query } from "./_generated/server";
-import { FREE_IMPORT_LIMIT } from "./lib/importPlan";
+import { FREE_IMPORT_LIMIT, importsUnlimited } from "./lib/importPlan";
 import { requireUserId } from "./lib/auth";
 import { getPlan } from "./lib/plan";
 
@@ -9,8 +9,7 @@ export const importInfo = query({
   handler: async (ctx) => {
     const userId = await requireUserId(ctx);
     const plan = await getPlan(ctx, userId);
-    const unlimited = plan === "paid" || process.env.DEV_UNLIMITED_IMPORT === "1";
-    return { plan, limit: unlimited ? null : FREE_IMPORT_LIMIT };
+    return { plan, limit: importsUnlimited(plan) ? null : FREE_IMPORT_LIMIT };
   },
 });
 

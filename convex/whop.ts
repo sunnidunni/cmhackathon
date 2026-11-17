@@ -5,10 +5,14 @@ import { verifyWhopSignature } from "./lib/whop_signature";
 
 const PRICE_USD = 9;
 
+// WHOP_ENVIRONMENT must say which Whop this deployment talks to: "production" (real money) or "sandbox" (test cards).
+// Unset or anything else means payments are off. It used to mean sandbox, so a production deployment that
+// forgot the variable would have sold upgrades for test cards.
 function whopApiBase() {
-  return process.env.WHOP_ENVIRONMENT === "production"
-    ? "https://api.whop.com/api/v1"
-    : "https://sandbox-api.whop.com/api/v1";
+  const env = process.env.WHOP_ENVIRONMENT;
+  if (env === "production") return "https://api.whop.com/api/v1";
+  if (env === "sandbox") return "https://sandbox-api.whop.com/api/v1";
+  return null;
 }
 
 export const createCheckout = action({
@@ -18,8 +22,9 @@ export const createCheckout = action({
     if (plan === "paid") throw new Error("Already upgraded");
     const apiKey = process.env.WHOP_API_KEY;
     const accountId = process.env.WHOP_ACCOUNT_ID;
-    if (!apiKey || !accountId) throw new Error("Payments are not set up yet");
-    const res = await fetch(`${whopApiBase()}/checkout_configurations`, {
+    const base = whopApiBase();
+    if (!apiKey || !accountId || !base) throw new Error("Payments are not set up yet");
+    const res = await fetch(`${base}/checkout_configurations`, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -54,15 +59,23 @@ export const webhook = httpAction(async (ctx, request) => {
   );
   if (!valid) return new Response("Invalid signature", { status: 401 });
 
-  let event: { type?: string; data?: { metadata?: { convexUserId?: unknown } | null } };
+  // payment.succeeded carries a payment (id pay_..., with our metadata from the checkout).
+  // refund.created and refund.updated carry a refund (payment_id, status). Only a refund that went through counts.
+  let event: { type?: string; data?: { id?: unknown; payment_id?: unknown; status?: unknown; metadata?: { convexUserId?: unknown } | null } };
   try {
     event = JSON.parse(rawBody);
   } catch {
     return new Response("Bad body", { status: 400 });
   }
+  if (event.type === "refund.created" || event.type === "refund.updated") {
+    const whopPaymentId = event.data?.payment_id;
+    if (event.data?.status !== "succeeded" || typeof whopPaymentId !== "string") return new Response("Ignored", { status: 200 });
+    return new Response(await ctx.runMutation(internal.plan.markRefunded, { whopPaymentId }), { status: 200 });
+  }
   if (event.type !== "payment.succeeded") return new Response("Ignored", { status: 200 });
   const userId = event.data?.metadata?.convexUserId;
-  if (typeof userId !== "string") return new Response("No user", { status: 200 });
-  const result = await ctx.runMutation(internal.plan.markPaid, { userId });
+  const whopPaymentId = event.data?.id;
+  if (typeof userId !== "string" || typeof whopPaymentId !== "string") return new Response("No user", { status: 200 });
+  const result = await ctx.runMutation(internal.plan.markPaid, { userId, whopPaymentId });
   return new Response(result, { status: 200 });
 });

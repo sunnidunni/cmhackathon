@@ -22,15 +22,44 @@ export const currentUser = internalQuery({
   },
 });
 
+// A Whop payment succeeded. The payment is recorded so a later refund can find its user,
+// and so a payment that was already refunded can never upgrade anyone again.
 export const markPaid = internalMutation({
-  args: { userId: v.string() },
-  handler: async (ctx, { userId }) => {
+  args: { userId: v.string(), whopPaymentId: v.string() },
+  handler: async (ctx, { userId, whopPaymentId }) => {
     const id = ctx.db.normalizeId("users", userId);
     if (id === null) return "unknown_user" as const;
     const user = await ctx.db.get(id);
     if (user === null) return "unknown_user" as const;
+    const known = await ctx.db
+      .query("payments")
+      .withIndex("by_whopPaymentId", (q) => q.eq("whopPaymentId", whopPaymentId))
+      .first();
+    if (known?.refundedAt !== undefined) return "refunded" as const;
+    if (known === null) await ctx.db.insert("payments", { userId: id, whopPaymentId, paidAt: Date.now() });
     if (user.plan === "paid") return "already_paid" as const;
     await ctx.db.patch(id, { plan: "paid" });
     return "paid" as const;
+  },
+});
+
+// A Whop payment was refunded. The user goes back to free unless another payment of theirs still stands.
+export const markRefunded = internalMutation({
+  args: { whopPaymentId: v.string() },
+  handler: async (ctx, { whopPaymentId }) => {
+    const payment = await ctx.db
+      .query("payments")
+      .withIndex("by_whopPaymentId", (q) => q.eq("whopPaymentId", whopPaymentId))
+      .first();
+    if (payment === null) return "unknown_payment" as const;
+    if (payment.refundedAt !== undefined) return "already_refunded" as const;
+    await ctx.db.patch(payment._id, { refundedAt: Date.now() });
+    const others = await ctx.db
+      .query("payments")
+      .withIndex("by_user", (q) => q.eq("userId", payment.userId))
+      .collect();
+    if (others.some((p) => p._id !== payment._id && p.refundedAt === undefined)) return "still_paid" as const;
+    await ctx.db.patch(payment.userId, { plan: "free" });
+    return "refunded" as const;
   },
 });

@@ -34,6 +34,11 @@ export default defineSchema({
     pushToken: v.optional(v.string()),
     createdAt: v.optional(v.number()),
     lastOpenedAt: v.optional(v.number()),
+    // The phone's time zone name, such as "America/Los_Angeles", from the last time the app opened.
+    timeZone: v.optional(v.string()),
+    // Imports counted against the free plan's daily allowance: when the current day's count began, and the count.
+    importWindowStart: v.optional(v.number()),
+    importCount: v.optional(v.number()),
   })
     .index("email", ["email"])
     .index("phone", ["phone"]),
@@ -63,6 +68,8 @@ export default defineSchema({
     userMoved: v.optional(v.boolean()),
     hidden: v.optional(v.boolean()),
     attempts: v.optional(v.number()),
+    // How many times OpenAI has said "slow down" for this screenshot since it was last started fresh.
+    rateLimits: v.optional(v.number()),
     startedAt: v.optional(v.number()),
     retryAt: v.optional(v.number()),
     error: v.optional(v.string()),
@@ -120,6 +127,16 @@ export default defineSchema({
     ids: v.array(v.id("screenshots")),
     thin: v.boolean(),
   }).index("by_user_day", ["userId", "day"]),
+
+  // One row per Whop payment that upgraded a user, so a refund can find the user it belongs to.
+  payments: defineTable({
+    userId: v.id("users"),
+    whopPaymentId: v.string(),
+    paidAt: v.number(),
+    refundedAt: v.optional(v.number()),
+  })
+    .index("by_whopPaymentId", ["whopPaymentId"])
+    .index("by_user", ["userId"]),
 
   siriKeys: defineTable({
     keyHash: v.string(),

@@ -113,7 +113,7 @@ describe("timeout recovery", () => {
 });
 
 describe("rate limits", () => {
-  test("an OpenAI 429 retries without using up attempts, so it never fails for good", async () => {
+  test("an OpenAI 429 retries without using up attempts", async () => {
     const { t, ids } = await setup();
     for (let i = 0; i < 6; i++) {
       await t.run((ctx) => ctx.db.patch(ids[0], { status: "processing", startedAt: Date.now(), retryAt: undefined }));

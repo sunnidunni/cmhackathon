@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { notificationText } from "./notificationText";
-import { computeDueAt, dayPhrase, isFutureWhen, localDay } from "./time";
+import { computeDueAt, dayInZone, dayPhrase, isFutureWhen, isTimeZone, localDay, offsetInZone, parseWhen, todayPhrase, wallToInstant } from "./time";
 
 const PST = 480;
 // Sun Nov 15 2026, 10:00 PST
@@ -105,5 +105,55 @@ describe("notification verbs by what the date is", () => {
   test("an event with no time shown has no time, and unknown labels fall back to due", () => {
     expect(n("Pottery class", "deadlines", "2026-11-16", "Event starts")).toBe("Psst: Pottery class is tomorrow. Want to see it?");
     expect(n("Thing", "ideas", "2026-11-16", "something odd")).toBe("Psst: your Thing is due tomorrow. Want to see it?");
+  });
+});
+
+const LA = "America/Los_Angeles";
+
+describe("time zones by name", () => {
+  test("knows a real zone from a made-up one", () => {
+    expect(isTimeZone(LA)).toBe(true);
+    expect(isTimeZone("Asia/Tokyo")).toBe(true);
+    expect(isTimeZone("Mars/Olympus")).toBe(false);
+    expect(isTimeZone("")).toBe(false);
+  });
+  test("the offset follows the clock change", () => {
+    expect(offsetInZone(Date.UTC(2027, 0, 15, 12, 0), LA)).toBe(480);
+    expect(offsetInZone(Date.UTC(2027, 6, 15, 12, 0), LA)).toBe(420);
+    expect(offsetInZone(Date.UTC(2027, 0, 15, 12, 0), "Asia/Kolkata")).toBe(-330);
+  });
+  test("the day is the day in that zone", () => {
+    const instant = Date.UTC(2026, 10, 16, 3, 0);
+    expect(dayInZone(instant, LA)).toBe("2026-11-15");
+    expect(dayInZone(instant, "Asia/Tokyo")).toBe("2026-11-16");
+    expect(todayPhrase(instant, LA)).toBe("Sunday, 2026-11-15");
+    expect(todayPhrase(instant, "Asia/Tokyo")).toBe("Monday, 2026-11-16");
+  });
+  test("a wall-clock time becomes the right instant on both sides of a clock change", () => {
+    // In 2027 Los Angeles moves its clocks forward on March 14 and back on November 7.
+    expect(wallToInstant(2027, 3, 13, 9, 0, LA)).toBe(Date.UTC(2027, 2, 13, 17, 0));
+    expect(wallToInstant(2027, 3, 14, 9, 0, LA)).toBe(Date.UTC(2027, 2, 14, 16, 0));
+    expect(wallToInstant(2027, 11, 7, 9, 0, LA)).toBe(Date.UTC(2027, 10, 7, 17, 0));
+  });
+  test("a reminder set before a clock change still lands at 9:00 local the day before", () => {
+    // Set on March 1 (offset 480) for an event on March 20, after the clocks moved (offset 420).
+    const march1 = Date.UTC(2027, 2, 1, 20, 0);
+    expect(computeDueAt("2027-03-20T19:00", march1, PST, LA)).toBe(Date.UTC(2027, 2, 19, 16, 0));
+    // Without the zone name, today's offset is all there is, and the reminder is an hour late.
+    expect(computeDueAt("2027-03-20T19:00", march1, PST)).toBe(Date.UTC(2027, 2, 19, 17, 0));
+  });
+  test("with a zone, today with a time is still one hour before", () => {
+    expect(computeDueAt("2026-11-15T18:30", now, PST, LA)).toBe(at("2026-11-16T01:30"));
+  });
+});
+
+describe("parseWhen", () => {
+  test("rejects dates and times that do not exist", () => {
+    expect(parseWhen("2026-13-01", PST)).toBeNull();
+    expect(parseWhen("2026-02-31", PST)).toBeNull();
+    expect(parseWhen("2026-11-20T24:00", PST)).toBeNull();
+    expect(parseWhen("2026-11-20T10:61", PST)).toBeNull();
+    expect(parseWhen("2028-02-29", PST)).not.toBeNull();
+    expect(parseWhen("2026-11-20T23:59", PST)).toMatchObject({ y: 2026, mo: 11, d: 20, hh: 23, mm: 59, hasTime: true });
   });
 });
