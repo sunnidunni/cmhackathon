@@ -2,12 +2,12 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useSyncExternalStore } from "react";
 import { api } from "../../convex/_generated/api";
 import { convex } from "./convex";
-import { getReadAllPhotos, listCandidates, prepareForUpload } from "./photos";
+import { getPhotoAccess, getReadAllPhotos, listCandidates, prepareForUpload } from "./photos";
 import { File } from "expo-file-system";
-import { findUnknown, limitKey, planUploads, QUICK_SCAN, scanSize } from "./sync-plan";
+import { syncLibrary, type SyncResult } from "./sync-plan";
 
 export type SyncStatus = "idle" | "syncing" | "error";
-export type SyncResult = { uploaded: number; failed: number; skipped: number };
+export type { SyncResult };
 type SyncState = { status: SyncStatus; error: string | null; last: SyncResult | null };
 
 let state: SyncState = { status: "idle", error: null, last: null };
@@ -47,53 +47,28 @@ function discardResized(uri: string) {
   }
 }
 
-const PARALLEL_UPLOADS = 3;
 let running: Promise<SyncResult> | null = null;
 let again: { quick: boolean } | null = null;
 
-// The limit that the last complete, failure-free full sync ran under ("50", "all"), or null when there has been none.
-// A quick sync is only trusted after a full one under the same limit: an import that was cut short, or an upgrade
-// that lifts the limit, needs the whole library walked again.
-const FULL_SYNC_KEY = "psst.fullSyncFor";
-const getFullSyncFor = () => SecureStore.getItemAsync(FULL_SYNC_KEY).catch(() => null);
-const setFullSyncFor = (key: string) => SecureStore.setItemAsync(FULL_SYNC_KEY, key).catch(() => undefined);
+// See syncLibrary for what the checkpoint means.
+const CHECKPOINT_KEY = "psst.fullSyncFor";
 
-const askUnknown = (deviceAssetIds: string[]) => convex.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds });
-
-// quick: the automatic sync when the app opens or the photo library changes. It first asks about only the newest
-// few screenshots, and when none of those is new it stops there, which is the usual case and costs one small query.
-// A full sync (first import, "Check now", pull to refresh) walks everything the plan allows.
 async function syncOnce(wantQuick: boolean): Promise<SyncResult> {
-  const { limit } = await convex.query(api.sync.importInfo, {});
-  const scan = scanSize(limit);
-  const quick = wantQuick && (await getFullSyncFor()) === limitKey(limit);
-  if (quick) {
-    const newest = await listCandidates(getReadAllPhotos(), Math.min(QUICK_SCAN, scan));
-    if ((await askUnknown(newest.map((a) => a.id))).length === 0) return { uploaded: 0, failed: 0, skipped: newest.length };
-  }
-  const assets = await listCandidates(getReadAllPhotos(), scan);
-  const ids = assets.map((a) => a.id);
-  const unknown = await findUnknown(ids, askUnknown, quick);
-  const plan = new Set(planUploads(ids, unknown, limit));
-  const queue = assets.filter((a) => plan.has(a.id));
-  let uploaded = 0;
-  let failed = 0;
-  let lastError: unknown = null;
-  async function worker() {
-    for (let asset = queue.shift(); asset; asset = queue.shift()) {
-      try {
-        if (await uploadOne(asset)) uploaded++;
-      } catch (e) {
-        failed++;
-        lastError = e;
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: PARALLEL_UPLOADS }, worker));
-  const result = { uploaded, failed, skipped: ids.length - plan.size };
-  if (failed > 0 && uploaded === 0) throw lastError instanceof Error ? lastError : new Error(String(lastError));
-  if (!quick && failed === 0) await setFullSyncFor(limitKey(limit));
-  return result;
+  const [{ limit }, access] = await Promise.all([convex.query(api.sync.importInfo, {}), getPhotoAccess()]);
+  return syncLibrary(
+    {
+      limit,
+      access,
+      list: (count) => listCandidates(getReadAllPhotos(), count),
+      askUnknown: (deviceAssetIds) => convex.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds }),
+      upload: uploadOne,
+      getCheckpoint: () => SecureStore.getItemAsync(CHECKPOINT_KEY).catch(() => null),
+      setCheckpoint: async (key) => {
+        await (key === null ? SecureStore.deleteItemAsync(CHECKPOINT_KEY) : SecureStore.setItemAsync(CHECKPOINT_KEY, key)).catch(() => undefined);
+      },
+    },
+    wantQuick,
+  );
 }
 
 // Runs one sync at a time. A call while a sync runs queues exactly one more pass, so a screenshot
