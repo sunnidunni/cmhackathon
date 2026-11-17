@@ -31,3 +31,22 @@ export function chunk<T>(items: readonly T[], size: number): T[][] {
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out;
 }
+
+// How many of the newest library assets a quick sync looks at first.
+export const QUICK_SCAN = 100;
+
+// Asks the server, a chunk at a time and newest first, which of these ids it does not have.
+// A quick walk stops at the first chunk with nothing new in it. Screenshots are brought in newest first,
+// so once a whole chunk is already known, the older ones behind it are too. A full walk asks about every chunk.
+export async function findUnknown(ids: readonly string[], ask: (ids: string[]) => Promise<string[]>, quick: boolean, size = 100): Promise<string[]> {
+  const unknown: string[] = [];
+  for (const part of chunk(ids, size)) {
+    const found = await ask(part);
+    unknown.push(...found);
+    if (quick && found.length === 0) break;
+  }
+  return unknown;
+}
+
+// The import limit as a stored value: the number, or "all" when there is none.
+export const limitKey = (limit: number | null) => (limit === null ? "all" : String(limit));

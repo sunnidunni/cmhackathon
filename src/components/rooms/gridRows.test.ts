@@ -19,6 +19,11 @@ describe("buildRows", () => {
     ]);
   });
 
+  test("marks the first row under each date line, so the grid knows where a group starts", () => {
+    const rows = buildRows(groups, 2);
+    expect(rows.map((r) => (r.type === "row" ? r.first : null))).toEqual([null, true, false, false, null, true]);
+  });
+
   test("keys are stable and unique", () => {
     const keys = buildRows(groups, 4).map((r) => r.key);
     expect(new Set(keys).size).toBe(keys.length);

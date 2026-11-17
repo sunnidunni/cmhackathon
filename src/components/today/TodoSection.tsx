@@ -53,12 +53,15 @@ function Row({ row, onToggle }: { row: TodoRow; onToggle: () => void }) {
 export function TodoSection({ day, shown, demo }: { day: string | undefined; shown: string[]; demo?: { todos: TodoItem[]; shots: [string, ShotInfo][] } | null }) {
   const p = usePalette();
   const live = useSafeQuery(api.todos.list, demo ? "skip" : {}, []);
-  const library = useSafeQuery(api.rooms.all, demo ? "skip" : {}, undefined);
   const toggle = useSafeMutation(api.todos.toggle);
   const [expanded, setExpanded] = useState(false);
   const [failed, setFailed] = useState(false);
   const todos = demo?.todos ?? live;
-  const shots = useMemo(() => new Map<string, ShotInfo>(demo ? demo.shots : (library?.items ?? []).map((i) => [i._id, { category: i.category, date: i.date }])), [demo, library]);
+  // Each to-do carries its screenshot's room and date, so nothing else needs loading to show it.
+  const shots = useMemo(
+    () => new Map<string, ShotInfo>(demo ? demo.shots : (live ?? []).flatMap((t): [string, ShotInfo][] => (t.screenshotId && t.shot ? [[t.screenshotId, t.shot]] : []))),
+    [demo, live],
+  );
   if (!todos || todos.length === 0) return null;
   const rows = buildTodoRows(todos, shots, day, new Set(shown));
   const visible = visibleTodos(rows.open, rows.done, expanded);

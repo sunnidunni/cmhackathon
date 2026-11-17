@@ -10,6 +10,7 @@ import { RoomWash } from "@/components/rooms/RoomWash";
 import { PhotoGrid, ShotGridSkeleton } from "@/components/rooms/PhotoGrid";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 import { DEMO_ROWS, demoRoom, useDemoFallback } from "@/components/rooms/demo";
+import { useRoomPage } from "@/components/rooms/useRoomPage";
 import { useSafeQuery } from "@/lib/useSafeQuery";
 import { runSync } from "@/lib/sync";
 
@@ -32,18 +33,22 @@ export default function RoomScreen() {
 
 function AllScreen() {
   const p = usePalette();
-  const realAll = useSafeQuery(api.rooms.all, {}, { count: 0, items: [] });
+  const page = useRoomPage();
+  // The count comes from the import progress, which every tab already watches: the grid itself only holds the pages loaded so far.
+  const progress = useSafeQuery(api.sync.progress, {}, undefined);
   const demoOn = useDemoFallback();
-  const all =
-    realAll && realAll.count === 0 && demoOn
-      ? { count: DEMO_ROWS.length, items: DEMO_ROWS.map((r) => ({ _id: r.id, title: r.title, imageUrl: r.imageUrl, takenAt: r.takenAt, category: r.category })) }
-      : realAll;
+  const demo = page.items !== undefined && page.items.length === 0 && demoOn;
+  const all: { count: number | undefined; items: { _id: string; title: string; imageUrl: string | null; takenAt: number; category: string }[] } | undefined = demo
+    ? { count: DEMO_ROWS.length, items: DEMO_ROWS.map((r) => ({ _id: r.id, title: r.title, imageUrl: r.imageUrl, takenAt: r.takenAt, category: r.category })) }
+    : page.items
+      ? { count: progress?.read, items: page.items }
+      : undefined;
   const header = (
     <View style={{ gap: 4 }}>
       <Text maxFontSizeMultiplier={1.67} accessibilityRole="header" style={[text.headline, { color: p.ink }]}>
         All screenshots
       </Text>
-      {all ? <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(all.count)}</Text> : <Skeleton w={96} h={14} />}
+      {all?.count !== undefined ? <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(all.count)}</Text> : <Skeleton w={96} h={14} />}
     </View>
   );
   return (
@@ -53,6 +58,8 @@ function AllScreen() {
           keeper="mote"
           header={header}
           onOpen={open}
+          onEndReached={page.loadMore}
+          loadingMore={page.loadingMore}
           items={all.items.map((i) => ({ id: i._id, title: i.title, imageUrl: i.imageUrl, takenAt: i.takenAt, sub: ROOM_LABEL[i.category as RoomKey] ?? "Unsorted" }))}
         />
       ) : (
@@ -67,23 +74,28 @@ function AllScreen() {
 
 function SingleRoom({ category }: { category: Category }) {
   const p = usePalette();
-  const realData = useSafeQuery(api.rooms.get, { category }, { category, count: 0, newestLineKey: null, items: [] });
+  const page = useRoomPage(category);
   const list = useSafeQuery(api.rooms.list, {}, []);
   const libraryEmpty = list !== undefined && list.every((r) => r.count === 0);
   const demoOn = useDemoFallback();
   const demoItems = demoRoom(category);
   type Data = { items: { _id: string; title: string; date: string | null; imageUrl: string | null; takenAt: number; sub?: string | null }[] };
-  const data: Data | undefined =
-    realData && realData.items.length === 0 && libraryEmpty && demoOn && demoItems.length > 0
-      ? { items: demoItems.map((r) => ({ _id: r.id, title: r.title, date: r.date, imageUrl: r.imageUrl, takenAt: r.takenAt, sub: r.sub })) }
-      : realData;
+  const demo = page.items !== undefined && page.items.length === 0 && libraryEmpty && demoOn && demoItems.length > 0;
+  const data: Data | undefined = demo
+    ? { items: demoItems.map((r) => ({ _id: r.id, title: r.title, date: r.date, imageUrl: r.imageUrl, takenAt: r.takenAt, sub: r.sub })) }
+    : page.items
+      ? { items: page.items }
+      : undefined;
   const [checking, setChecking] = useState(false);
   const isRoom = category !== "unsorted";
   const keeper: KeeperId = isRoom ? keeperForRoom(category) : "mote";
 
   const items = data?.items ?? null;
+  // The room's full count comes from the rooms list. The grid holds only the pages loaded so far.
+  const count = items === null ? null : demo ? items.length : (list?.find((r) => r.category === category)?.count ?? items.length);
+  // The keeper's line is worked out from the newest page, which is where upcoming dates are.
   const rows = items?.map((i) => ({ date: i.date, takenAt: i.takenAt }));
-  const headline = !isRoom && items ? `${countLabel(items.length)} couldn't be read.` : roomHeadline(category);
+  const headline = !isRoom && count !== null ? `${countLabel(count)} couldn't be read.` : roomHeadline(category);
   const isEmpty = items !== null && items.length === 0;
 
   const wash = (
@@ -104,10 +116,12 @@ function SingleRoom({ category }: { category: Category }) {
         <PhotoGrid
           keeper={keeper}
           onOpen={open}
+          onEndReached={page.loadMore}
+          loadingMore={page.loadingMore}
           header={
             <>
               {wash}
-              <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(items.length)}</Text>
+              <Text style={[text.caption, { color: p.ink2 }]}>{countLabel(count ?? items.length)}</Text>
             </>
           }
           items={items.map((i) => ({ id: i._id, title: i.title, imageUrl: i.imageUrl, takenAt: i.takenAt, sub: i.sub !== undefined ? i.sub : i.date ? dateLabel(i.date) : null }))}

@@ -27,14 +27,19 @@ export const list = query({
       .withIndex("by_user_createdAt", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
-    const shape = (r: (typeof rows)[number]) => ({
-      _id: r._id,
-      text: r.text,
-      done: r.done,
-      screenshotId: r.screenshotId ?? null,
-      createdAt: r.createdAt,
-    });
-    return [...rows.filter((r) => !r.done), ...rows.filter((r) => r.done)].map(shape);
+    // shot: the room and date a to-do borrows from its screenshot, so the app does not need the whole library to show it.
+    const shape = async (r: (typeof rows)[number]) => {
+      const from = r.screenshotId ? await ctx.db.get(r.screenshotId) : null;
+      return {
+        _id: r._id,
+        text: r.text,
+        done: r.done,
+        screenshotId: r.screenshotId ?? null,
+        createdAt: r.createdAt,
+        shot: from ? { category: from.category ?? ("unsorted" as const), date: (from.dates ?? []).find((d) => d.confident)?.when ?? null } : null,
+      };
+    };
+    return await Promise.all([...rows.filter((r) => !r.done), ...rows.filter((r) => r.done)].map(shape));
   },
 });
 

@@ -29,7 +29,7 @@ export function AppLifecycle() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const syncIfStarted = async () => {
-      if ((await getImportStarted()) && (await getAutoRead())) await runSync().catch(() => undefined);
+      if ((await getImportStarted()) && (await getAutoRead())) await runSync({ quick: true }).catch(() => undefined);
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
     let library: { remove(): void } | undefined;

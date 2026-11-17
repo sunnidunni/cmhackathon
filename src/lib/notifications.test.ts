@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { syncReminderNotifications } from "./notifications";
 
 const native = vi.hoisted(() => ({
   setNotificationHandler: vi.fn(),
@@ -9,8 +10,6 @@ const native = vi.hoisted(() => ({
   SchedulableTriggerInputTypes: { DATE: "date" },
 }));
 vi.mock("expo-notifications", () => native);
-
-import { syncReminderNotifications } from "./notifications";
 
 const soon = (id: string, inMs: number) => ({ reminderId: id, screenshotId: `shot-${id}`, dueAt: Date.now() + inMs, text: `text ${id}` });
 const order: string[] = [];
