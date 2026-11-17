@@ -24,16 +24,18 @@ export const forgetDocs = internalAction({
   },
 });
 
-// Removes the user's whole namespace, for "Delete everything". Never throws.
+// Removes the user's whole namespace, at the start of "Delete everything". Never throws.
+// One try only, on purpose. The namespace is shared with whatever the person brings in next, so a retry
+// minutes or hours later would wipe the memory of their new screenshots. "Delete everything" also forgets
+// each deleted screenshot and answer by id (forgetDocs, which does retry), so this sweep is only needed for
+// documents the database no longer knows about.
 export const forgetAll = internalAction({
-  args: { userId: v.id("users"), attempt: v.optional(v.number()) },
-  handler: async (ctx, { userId, attempt = 0 }) => {
+  args: { userId: v.id("users") },
+  handler: async (_ctx, { userId }) => {
     try {
       await removeNamespace(userId);
     } catch (e) {
-      failed("forget all", e, attempt);
-      const wait = FORGET_RETRY_MS[attempt];
-      if (wait !== undefined) await ctx.scheduler.runAfter(wait, internal.memory.forgetAll, { userId, attempt: attempt + 1 });
+      console.error("Supermemory forget all failed (not retried; documents are also forgotten by id)", e instanceof Error ? e.message : String(e));
     }
   },
 });

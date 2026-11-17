@@ -178,8 +178,9 @@ describe("delete everything", () => {
     for (let i = 0; i < total; i++) ids.push(await shot(`asset-${i}`));
     const firstFile = (await t.run((ctx) => ctx.db.get(ids[0])))!.storageId;
     await me.mutation(api.reminders.set, { screenshotId: ids[0], tzOffsetMinutes: TZ });
+    let questionId: Id<"questions"> | undefined;
     await t.run(async (ctx) => {
-      await ctx.db.insert("questions", { userId, question: "q", answer: "a", sourceScreenshotIds: [ids[0]], createdAt: 1 });
+      questionId = await ctx.db.insert("questions", { userId, question: "q", answer: "a", sourceScreenshotIds: [ids[0]], createdAt: 1 });
       await ctx.db.insert("todos", { userId, text: "do", done: false, createdAt: 1 });
       const albumId = await ctx.db.insert("albums", { userId, name: "Trips", description: "", createdAt: 1, sortStatus: "done", sortRun: 0 });
       await ctx.db.insert("albumShots", { userId, albumId, screenshotId: ids[1], source: "manual", removed: false, addedAt: 1 });
@@ -199,10 +200,10 @@ describe("delete everything", () => {
     }
     expect(await t.run((ctx) => ctx.storage.getUrl(firstFile))).toBeNull();
     expect(removeNamespace).toHaveBeenCalledExactlyOnceWith(userId);
-    // Screenshots deleted in the later passes may have been stored in memory after the wipe, so each is forgotten again.
-    const forgottenAgain = new Set(removeDocuments.mock.calls.flatMap(([owner, docIds]) => (owner === userId ? (docIds as string[]) : [])));
-    expect(forgottenAgain.size).toBe(total - DELETE_BATCH);
-    expect(ids.filter((id) => forgottenAgain.has(id))).toHaveLength(total - DELETE_BATCH);
+    // Every deleted screenshot and answer is also forgotten by id, so the delete does not depend on the one sweep above.
+    const forgotten = new Set(removeDocuments.mock.calls.flatMap(([owner, docIds]) => (owner === userId ? (docIds as string[]) : [])));
+    expect(ids.filter((id) => forgotten.has(id))).toHaveLength(total);
+    expect([...forgotten].filter((id) => id.startsWith("chat_"))).toEqual([`chat_${questionId}_user`, `chat_${questionId}_assistant`]);
 
     expect(await t.run((ctx) => ctx.db.get(theirs))).not.toBeNull();
     expect(await count("todos", otherId)).toBe(1);
@@ -218,6 +219,23 @@ describe("delete everything", () => {
     await settle();
     expect(await count("screenshots")).toBe(1);
     expect(await t.run((ctx) => ctx.db.get(fresh))).not.toBeNull();
+  });
+
+  test("to-dos written for an old screenshot after the delete began go with it; the person's own new to-do stays", async () => {
+    const { me, shot, count, settle, t, userId } = await setup();
+    const ids: Id<"screenshots">[] = [];
+    for (let i = 0; i < DELETE_BATCH + 5; i++) ids.push(await shot(`asset-${i}`));
+    await me.mutation(api.shots.removeAll, {});
+    // Screenshots still waiting for the second pass. One of them is read now, which writes a to-do newer than the cutoff.
+    const waiting = await t.run(async (ctx) => (await ctx.db.query("screenshots").collect()).map((r) => r._id));
+    expect(waiting).toHaveLength(5);
+    vi.advanceTimersByTime(50);
+    const late = await t.run((ctx) => ctx.db.insert("todos", { userId, text: "From the old library", done: false, screenshotId: waiting[0], createdAt: Date.now() }));
+    const own = await t.run((ctx) => ctx.db.insert("todos", { userId, text: "Typed by the person just now", done: false, createdAt: Date.now() }));
+    await settle();
+    expect(await count("screenshots")).toBe(0);
+    expect(await t.run((ctx) => ctx.db.get(late))).toBeNull();
+    expect(await t.run((ctx) => ctx.db.get(own))).not.toBeNull();
   });
 
   test("after a delete, a removed screenshot can be imported again", async () => {
@@ -239,12 +257,24 @@ describe("delete everything", () => {
 
 describe("memory", () => {
   test("a failed forget is tried again until it works", async () => {
-    const { me, settle, userId } = await setup();
-    removeNamespace.mockRejectedValueOnce(new Error("network")).mockRejectedValueOnce(new Error("network")).mockResolvedValue(undefined);
+    const { me, shot, settle, userId } = await setup();
+    const id = await shot("asset-1");
+    removeDocuments.mockRejectedValueOnce(new Error("network")).mockRejectedValueOnce(new Error("network")).mockResolvedValue(undefined);
+    await me.mutation(api.shots.remove, { id });
+    await settle();
+    expect(removeDocuments).toHaveBeenCalledTimes(3);
+    expect(removeDocuments).toHaveBeenLastCalledWith(userId, [id]);
+  });
+
+  test("delete everything sweeps the whole memory once and never again, so a late retry cannot wipe what is brought in next", async () => {
+    const { me, shot, settle, userId } = await setup();
+    const id = await shot("asset-1");
+    removeNamespace.mockRejectedValue(new Error("network"));
     await me.mutation(api.shots.removeAll, {});
     await settle();
-    expect(removeNamespace).toHaveBeenCalledTimes(3);
-    expect(removeNamespace).toHaveBeenLastCalledWith(userId);
+    expect(removeNamespace).toHaveBeenCalledTimes(1);
+    // The screenshot is still forgotten, by id.
+    expect(removeDocuments).toHaveBeenCalledWith(userId, [id]);
   });
 
   test("a forget that never works stops after the last retry", async () => {

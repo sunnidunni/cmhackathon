@@ -114,9 +114,9 @@ export const remove = mutation({
     if (known === null) await ctx.db.insert("removedAssets", { userId: row.userId, deviceAssetId: row.deviceAssetId, removedAt: Date.now() });
     const todos = await ctx.db
       .query("todos")
-      .withIndex("by_user_createdAt", (q) => q.eq("userId", row.userId))
+      .withIndex("by_screenshot", (q) => q.eq("screenshotId", id))
       .collect();
-    for (const todo of todos.filter((x) => x.screenshotId === id)) await ctx.db.patch(todo._id, { screenshotId: undefined });
+    for (const todo of todos) await ctx.db.patch(todo._id, { screenshotId: undefined });
     const questions = await ctx.db
       .query("questions")
       .withIndex("by_user_createdAt", (q) => q.eq("userId", row.userId))
@@ -137,10 +137,12 @@ export const DELETE_BATCH = 200;
 
 // One pass. Deletes up to DELETE_BATCH of the user's rows created at or before `before`. done is true when none are left.
 // Rows created after `before` stay, so a library the person starts again while an old one is still being deleted survives.
-async function deleteSome(ctx: MutationCtx, userId: Id<"users">, before: number): Promise<{ done: boolean; shotIds: Id<"screenshots">[] }> {
+// docIds are the memory documents of what this pass deleted: each screenshot's reading and each answer's chat turns.
+async function deleteSome(ctx: MutationCtx, userId: Id<"users">, before: number): Promise<{ done: boolean; docIds: string[] }> {
   const shotIds = await deleteSomeShots(ctx, userId, before);
-  if (shotIds.length === DELETE_BATCH) return { done: false, shotIds };
-  return { done: await deleteSomeOthers(ctx, userId, before, DELETE_BATCH - shotIds.length), shotIds };
+  if (shotIds.length === DELETE_BATCH) return { done: false, docIds: shotIds };
+  const others = await deleteSomeOthers(ctx, userId, before, DELETE_BATCH - shotIds.length);
+  return { done: others.done, docIds: [...shotIds, ...others.docIds] };
 }
 
 async function deleteSomeShots(ctx: MutationCtx, userId: Id<"users">, before: number) {
@@ -149,25 +151,45 @@ async function deleteSomeShots(ctx: MutationCtx, userId: Id<"users">, before: nu
     .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
     .filter((q) => q.lte(q.field("_creationTime"), before))
     .take(DELETE_BATCH);
-  for (const row of shots) await deleteRow(ctx, row);
+  for (const row of shots) {
+    await deleteRow(ctx, row);
+    // A screenshot still waiting its turn can be read in the meantime, which writes to-dos newer than `before`.
+    // They belong to the old library, so they go with their screenshot whatever their age.
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_screenshot", (q) => q.eq("screenshotId", row._id))
+      .collect();
+    for (const todo of todos) await ctx.db.delete(todo._id);
+  }
   return shots.map((row) => row._id);
 }
 
-// Everything that is not a screenshot, once the screenshots are gone. True when none of it is left.
-async function deleteSomeOthers(ctx: MutationCtx, userId: Id<"users">, before: number, left: number): Promise<boolean> {
+// Everything that is not a screenshot, once the screenshots are gone.
+async function deleteSomeOthers(ctx: MutationCtx, userId: Id<"users">, before: number, left: number): Promise<{ done: boolean; docIds: string[] }> {
+  const docIds: string[] = [];
   left -= await deleteAlbumsBefore(ctx, userId, before, left);
-  if (left <= 0) return false;
+  if (left <= 0) return { done: false, docIds };
 
-  for (const table of ["questions", "todos"] as const) {
-    const rows = await ctx.db
-      .query(table)
-      .withIndex("by_user_createdAt", (q) => q.eq("userId", userId))
-      .filter((q) => q.lte(q.field("_creationTime"), before))
-      .take(left);
-    for (const r of rows) await ctx.db.delete(r._id);
-    left -= rows.length;
-    if (left <= 0) return false;
+  const questions = await ctx.db
+    .query("questions")
+    .withIndex("by_user_createdAt", (q) => q.eq("userId", userId))
+    .filter((q) => q.lte(q.field("_creationTime"), before))
+    .take(left);
+  for (const q of questions) {
+    await ctx.db.delete(q._id);
+    docIds.push(...chatDocIds(q._id));
   }
+  left -= questions.length;
+  if (left <= 0) return { done: false, docIds };
+
+  const todos = await ctx.db
+    .query("todos")
+    .withIndex("by_user_createdAt", (q) => q.eq("userId", userId))
+    .filter((q) => q.lte(q.field("_creationTime"), before))
+    .take(left);
+  for (const todo of todos) await ctx.db.delete(todo._id);
+  left -= todos.length;
+  if (left <= 0) return { done: false, docIds };
 
   const picks = await ctx.db
     .query("dailyPicks")
@@ -176,7 +198,7 @@ async function deleteSomeOthers(ctx: MutationCtx, userId: Id<"users">, before: n
     .take(left);
   for (const p of picks) await ctx.db.delete(p._id);
   left -= picks.length;
-  if (left <= 0) return false;
+  if (left <= 0) return { done: false, docIds };
 
   const removed = await ctx.db
     .query("removedAssets")
@@ -184,13 +206,16 @@ async function deleteSomeOthers(ctx: MutationCtx, userId: Id<"users">, before: n
     .filter((q) => q.lte(q.field("_creationTime"), before))
     .take(left);
   for (const r of removed) await ctx.db.delete(r._id);
-  return removed.length < left;
+  return { done: removed.length < left, docIds };
 }
 
+// Runs one pass, forgets what it deleted, and queues the next pass when there is more.
+// Forgetting by id (with retries) is what makes the delete reliable: a screenshot may be read and stored in
+// memory while it waits for its pass, and a retry scoped to these ids cannot touch anything brought in later.
 async function deleteAndContinue(ctx: MutationCtx, userId: Id<"users">, before: number) {
-  const { done, shotIds } = await deleteSome(ctx, userId, before);
+  const { done, docIds } = await deleteSome(ctx, userId, before);
+  if (docIds.length > 0) await ctx.scheduler.runAfter(0, internal.memory.forgetDocs, { userId, docIds });
   if (!done) await ctx.scheduler.runAfter(0, internal.shots.removeAllRest, { userId, before });
-  return shotIds;
 }
 
 // "Delete everything": every screenshot, reminder, answer, to-do and album, and the user's memory.
@@ -210,10 +235,5 @@ export const removeAll = mutation({
 
 export const removeAllRest = internalMutation({
   args: { userId: v.id("users"), before: v.number() },
-  handler: async (ctx, { userId, before }) => {
-    const shotIds = await deleteAndContinue(ctx, userId, before);
-    // The memory was wiped when the delete began. A screenshot still waiting its turn may have been read and stored
-    // since then, so forget this pass's screenshots again.
-    if (shotIds.length > 0) await ctx.scheduler.runAfter(0, internal.memory.forgetDocs, { userId, docIds: shotIds });
-  },
+  handler: async (ctx, { userId, before }) => deleteAndContinue(ctx, userId, before),
 });
