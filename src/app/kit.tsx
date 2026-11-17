@@ -15,12 +15,12 @@ import {
   text,
   usePalette,
 } from "@/design/psst";
+import { onlyWhen } from "@/components/dev/onlyWhen";
 import { DEMO_FLYER, DEMO_SHOTS, FIXTURES } from "@/lib/fixtures";
 
-export default function KitSheet() {
+function KitSheet() {
   const pal = usePalette();
   const insets = useSafeAreaInsets();
-  if (!FIXTURES) return null;
   const label = { ...text.caption, color: pal.ink2, marginTop: 8 };
   return (
     <ScrollView style={{ backgroundColor: pal.paper }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: 48, gap: 16 }}>
@@ -81,3 +81,5 @@ export default function KitSheet() {
     </ScrollView>
   );
 }
+
+export default onlyWhen(FIXTURES, KitSheet);

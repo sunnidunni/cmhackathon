@@ -4,8 +4,10 @@ import { ScrollView, View } from "react-native";
 import { ACTIVITY, DAY_LABELS, DAYS, type ActivityFilter } from "@/components/activity/data";
 import { DaySection, EmptyActivity, FilterPills } from "@/components/activity/ActivityViews";
 import { fonts, usePalette } from "@/design/psst";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { FIXTURES } from "@/lib/fixtures";
 
-export default function Activity() {
+function Activity() {
   const pal = usePalette();
   const [filter, setFilter] = useState<ActivityFilter>("all");
   const groups = useMemo(() => {
@@ -47,3 +49,5 @@ export default function Activity() {
     </>
   );
 }
+
+export default onlyWhen(FIXTURES, Activity);

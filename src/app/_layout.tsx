@@ -5,48 +5,60 @@ import { Pressable, Text } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useConvexAuth } from "convex/react";
-import { useEffect, useMemo, type ComponentProps } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { OfflineBoundary } from "@/components/OfflineBoundary";
 import { DevHotspot } from "@/components/dev/DevHotspot";
-import { LoadingView } from "@/components/state-views";
+import { LoadingView, MessageView } from "@/components/state-views";
 import { useStickerFonts } from "@/design";
 import { fonts, usePalette, usePsstFonts } from "@/design/psst";
 import { convex } from "@/lib/convex";
 import { setConnectionError } from "@/lib/connection-error";
 import { AppLifecycle } from "@/lib/lifecycle";
-import { setOffline, useOffline } from "@/lib/offline";
+import { SAMPLE_DATA_WHEN_OFFLINE, setOffline, useOffline } from "@/lib/offline";
 import { preloadSfx } from "@/lib/sfx";
 import { secureStorage } from "@/lib/secure-storage";
 
-const SIGN_IN_TIMEOUT_MS = 4000;
+// How long sign-in may take before the app stops waiting. A demo build then switches to sample data;
+// every other build shows a retry screen, and carries on by itself if sign-in finishes late.
+const SIGN_IN_TIMEOUT_MS = SAMPLE_DATA_WHEN_OFFLINE ? 4000 : 12000;
 
 // No sign-up: the first launch silently creates an anonymous Convex Auth user and the
 // session token is kept in the keychain, so every later launch is the same user.
-// When sign-in fails or has not settled in time, the app goes offline and shows sample data instead of waiting.
 function AnonymousSession({ children }: { children: React.ReactNode }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { signIn } = useAuthActions();
   const offline = useOffline();
+  const [failed, setFailed] = useState(false);
+  const signingIn = useRef(false);
+
+  const giveUp = useCallback((message: string) => {
+    setConnectionError(message);
+    if (SAMPLE_DATA_WHEN_OFFLINE) setOffline(message);
+    else setFailed(true);
+  }, []);
+
+  // One sign-in at a time: a second anonymous sign-in while the first is still on its way would create a second, empty user.
+  useEffect(() => {
+    if (isLoading || isAuthenticated || offline || failed || signingIn.current) return;
+    signingIn.current = true;
+    signIn("anonymous")
+      .catch((e: unknown) => giveUp(e instanceof Error ? e.message : String(e)))
+      .finally(() => {
+        signingIn.current = false;
+      });
+  }, [isLoading, isAuthenticated, offline, failed, signIn, giveUp]);
 
   useEffect(() => {
-    if (isLoading || isAuthenticated || offline) return;
-    signIn("anonymous").catch((e: unknown) => {
-      const message = e instanceof Error ? e.message : String(e);
-      setConnectionError(message);
-      setOffline(message);
-    });
-  }, [isLoading, isAuthenticated, offline, signIn]);
-
-  useEffect(() => {
-    if (isAuthenticated || offline) return;
-    const timer = setTimeout(() => {
-      setConnectionError("Timed out while signing in");
-      setOffline("Timed out while signing in");
-    }, SIGN_IN_TIMEOUT_MS);
+    if (isAuthenticated || offline || failed) return;
+    const timer = setTimeout(() => giveUp("Timed out while signing in"), SIGN_IN_TIMEOUT_MS);
     return () => clearTimeout(timer);
-  }, [isAuthenticated, offline]);
+  }, [isAuthenticated, offline, failed, giveUp]);
+
+  // Signed in after all (a slow sign-in that finished late): forget the failure, so losing the session later starts a fresh sign-in.
+  if (isAuthenticated && failed) setFailed(false);
 
   if (isAuthenticated || offline) return <>{children}</>;
+  if (failed) return <MessageView title="Can't reach Shots." body="Check your connection, then try again." actionLabel="Try again" onAction={() => setFailed(false)} />;
   return <LoadingView label="Getting things ready…" />;
 }
 

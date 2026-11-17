@@ -188,7 +188,6 @@ export default function Today() {
         <View style={{ gap: 16 }}>
           <Header />
           {windUp.banner}
-          {offline && !FIXTURES ? <Text style={[text.caption, { color: p.ink2 }]}>Showing sample screenshots.</Text> : null}
           {screen.kind === "loading" ? <LoadingView /> : null}
           {screen.kind === "reading" ? (
             <Pressable accessibilityRole="button" accessibilityHint="Shows reading progress" onPress={() => router.push("/import")}>

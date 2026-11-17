@@ -2,8 +2,10 @@ import { Stack } from "expo-router";
 import { ScrollView } from "react-native";
 import { KeepersFeed } from "@/components/keepers-home/KeepersFeed";
 import { fonts, usePalette } from "@/design/psst";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { FIXTURES } from "@/lib/fixtures";
 
-export default function KeepersHome() {
+function KeepersHome() {
   const pal = usePalette();
   return (
     <>
@@ -30,3 +32,5 @@ export default function KeepersHome() {
     </>
   );
 }
+
+export default onlyWhen(FIXTURES, KeepersHome);

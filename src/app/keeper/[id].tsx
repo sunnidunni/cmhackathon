@@ -6,12 +6,14 @@ import { Keeper } from "@/design/keepers-v2";
 import { fonts, KEEPER_IDS, KEEPERS, text, useKeeperColors, usePalette, Wash, type KeeperId } from "@/design/psst";
 import { KEEPER_PROFILES, ROOM_NAME } from "@/components/keeper-profile/data";
 import { KeeperChips, ListCard, SpeechBubble } from "@/components/keeper-profile/parts";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { FIXTURES } from "@/lib/fixtures";
 
 const body = { padding: 16, paddingTop: Platform.OS === "ios" ? 16 : 72, paddingBottom: 48, gap: 16 } as const;
 
 const isKeeperId = (v: unknown): v is KeeperId => typeof v === "string" && (KEEPER_IDS as string[]).includes(v);
 
-export default function KeeperProfileScreen() {
+function KeeperProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const pal = usePalette();
   const known = isKeeperId(id);
@@ -118,3 +120,5 @@ function Missing() {
     </ScrollView>
   );
 }
+
+export default onlyWhen(FIXTURES, KeeperProfileScreen);

@@ -10,8 +10,10 @@ import { PsstButton, fonts, usePalette, useKeeperColors } from "@/design/psst";
 import { ClosingCard, KeeperOfWeekCard, RoomsCard, TotalCard, recapSummary } from "@/components/recap/RecapCards";
 import { RecapProgress } from "@/components/recap/RecapProgress";
 import { KEEPER_OF_WEEK, RECAP_CARD_COUNT } from "@/components/recap/data";
+import { onlyWhen } from "@/components/dev/onlyWhen";
+import { FIXTURES } from "@/lib/fixtures";
 
-export default function Recap() {
+function Recap() {
   const p = usePalette();
   const star = useKeeperColors(KEEPER_OF_WEEK);
   const reduce = useReducedMotion();
@@ -124,3 +126,5 @@ const styles = StyleSheet.create({
   shareLink: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, minHeight: 44 },
   shareText: { fontFamily: fonts.uiBold, fontSize: 15 },
 });
+
+export default onlyWhen(FIXTURES, Recap);

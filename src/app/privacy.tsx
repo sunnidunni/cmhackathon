@@ -1,13 +1,14 @@
 import * as Haptics from "expo-haptics";
 import { Stack } from "expo-router";
 import { useCallback, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
-import { DemoDeleteSheet } from "@/components/privacy/DemoDeleteSheet";
+import { DeleteSheet } from "@/components/privacy/DeleteSheet";
 import { FlowStep } from "@/components/privacy/FlowStep";
 import { Toast } from "@/components/privacy/Toast";
 import { KEEPER_IDS, KEEPERS, PsstButton, SoftCard, fonts, text, usePalette } from "@/design/psst";
 import { KeeperAvatar } from "@/design/keepers-v2";
+import { AUTO_READ_NOT_SAVED, useDeleteEverything } from "@/lib/delete-everything";
 
 const STEPS = [
   { symbol: "photo.on.rectangle", title: "Your Screenshots album", caption: "We only read your Screenshots album." },
@@ -22,6 +23,7 @@ export default function Privacy() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const hideToast = useCallback(() => setToast(null), []);
+  const deleteEverything = useDeleteEverything();
 
   function openSheet() {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -33,10 +35,12 @@ export default function Privacy() {
     setSheetOpen(false);
   }
 
-  function confirm() {
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  async function confirm() {
     setSheetOpen(false);
-    setToast("Demo build: nothing was deleted.");
+    const { deleted, autoReadOffSaved } = await deleteEverything();
+    void Haptics.notificationAsync(deleted ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error);
+    if (deleted && !autoReadOffSaved) return Alert.alert("Couldn't save this", AUTO_READ_NOT_SAVED);
+    setToast(deleted ? "Everything was deleted." : "Couldn't delete. Check your connection and try again.");
   }
 
   return (
@@ -97,7 +101,7 @@ export default function Privacy() {
         </Animated.View>
       </ScrollView>
 
-      <DemoDeleteSheet visible={sheetOpen} onCancel={cancel} onConfirm={confirm} />
+      <DeleteSheet visible={sheetOpen} onCancel={cancel} onConfirm={confirm} />
       {toast && <Toast message={toast} onHide={hideToast} />}
     </>
   );
