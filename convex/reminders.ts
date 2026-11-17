@@ -6,7 +6,7 @@ import type { MutationCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 import { nextConfidentDate } from "./lib/handful";
 import { notificationText } from "./lib/notificationText";
-import { computeDueAt } from "./lib/time";
+import { computeDueAt, isFutureWhen, isTimeZone } from "./lib/time";
 
 async function ownedScreenshot(ctx: MutationCtx, id: Id<"screenshots">) {
   const userId = await requireUserId(ctx);
@@ -41,16 +41,18 @@ const text = (row: Doc<"screenshots">, when: string | null, at: number, tz: numb
     what: (row.dates ?? []).find((d) => d.when === when)?.what,
   });
 
+// timeZone is the phone's time zone name. With it the reminder keeps its wall-clock time across a clock change.
 export const set = mutation({
-  args: { screenshotId: v.id("screenshots"), tzOffsetMinutes: v.number(), when: v.optional(v.string()) },
-  handler: async (ctx, { screenshotId, tzOffsetMinutes: tz, when }) => {
+  args: { screenshotId: v.id("screenshots"), tzOffsetMinutes: v.number(), when: v.optional(v.string()), timeZone: v.optional(v.string()) },
+  handler: async (ctx, { screenshotId, tzOffsetMinutes: tz, when, timeZone }) => {
     const { userId, row } = await ownedScreenshot(ctx, screenshotId);
     const now = Date.now();
     const date = when
       ? (row.dates ?? []).find((d) => d.when === when && d.confident)
       : nextConfidentDate(row, now, tz);
     if (!date) throw new Error("No confident date");
-    const dueAt = computeDueAt(date.when, now, tz);
+    if (!isFutureWhen(date.when, now, tz)) throw new Error("That date has passed");
+    const dueAt = computeDueAt(date.when, now, tz, timeZone && isTimeZone(timeZone) ? timeZone : undefined);
     const replacedReminderIds = await dismissActive(ctx, screenshotId);
     const message = text(row, date.when, dueAt, tz);
     const reminderId = await ctx.db.insert("reminders", {

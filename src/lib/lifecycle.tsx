@@ -46,7 +46,7 @@ export function AppLifecycle() {
       }
     };
     const onActive = () => {
-      appOpened({ tzOffsetMinutes: new Date().getTimezoneOffset() }).catch(() => undefined);
+      appOpened({ tzOffsetMinutes: new Date().getTimezoneOffset(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }).catch(() => undefined);
       void syncIfStarted();
       void listenToLibrary();
     };

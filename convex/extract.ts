@@ -9,16 +9,26 @@ import {
 import { EXTRACTION_SCHEMA, albumKey, buildPrompt, parseExtraction } from "./lib/extraction";
 import type { AlbumBrief } from "./lib/albumModel";
 import { requireUserId } from "./lib/auth";
+import { isRateLimit, respond, visionModel } from "./lib/openai";
+import { fairOrder } from "./lib/queue";
+import { dayInZone } from "./lib/time";
 import { insertTodos } from "./todos";
 import { sortIntoAlbums } from "./albums";
 
 export const MAX_PARALLEL = 10;
 export const MAX_ATTEMPTS = 3;
+// How many "slow down" replies one screenshot may get before it is marked failed. At 8 to 12 seconds apart
+// that is about five minutes of OpenAI being busy; the person can then retry it.
+export const MAX_RATE_LIMITS = 30;
+// How far back and forward kick looks in the waiting line.
+const OLDEST_WINDOW = 200;
+const NEWEST_WINDOW = 50;
 const STALE_MS = 3 * 60 * 1000;
 const backoffMs = (attempts: number) => 5000 * 2 ** (attempts - 1);
 
 // Starts extraction for waiting screenshots, at most MAX_PARALLEL at a time across the deployment.
-// Oldest creation first, which is the newest photo first because import creates rows newest first.
+// Each user's own screenshots go oldest creation first, which is the newest photo first because import creates
+// rows newest first. Between users the slots are shared out in turns (see fairOrder).
 export const kick = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -41,11 +51,23 @@ export const kick = internalMutation({
           : { status: "uploaded", attempts, retryAt: now + backoffMs(attempts) },
       );
     }
-    const waiting = await ctx.db
+    const oldest = await ctx.db
       .query("screenshots")
       .withIndex("by_status", (q) => q.eq("status", "uploaded"))
-      .take(200);
-    const due = waiting.filter((r) => (r.retryAt ?? 0) <= now);
+      .take(OLDEST_WINDOW);
+    // A long line from one user can fill the whole oldest window. The newest rows are looked at too,
+    // so someone who has just brought in a few screenshots is seen and gets a turn.
+    const newest =
+      oldest.length < OLDEST_WINDOW
+        ? []
+        : await ctx.db
+            .query("screenshots")
+            .withIndex("by_status", (q) => q.eq("status", "uploaded"))
+            .order("desc")
+            .take(NEWEST_WINDOW);
+    const seen = new Set(oldest.map((r) => r._id));
+    const waiting = [...oldest, ...newest.reverse().filter((r) => !seen.has(r._id))];
+    const due = fairOrder(waiting.filter((r) => (r.retryAt ?? 0) <= now));
     for (const row of due.slice(0, Math.max(0, MAX_PARALLEL - active))) {
       await ctx.db.patch(row._id, { status: "processing", startedAt: now });
       await ctx.scheduler.runAfter(0, internal.extract.run, { screenshotId: row._id });
@@ -69,8 +91,11 @@ export const getForExtract = internalQuery({
       .query("albums")
       .withIndex("by_user_createdAt", (q) => q.eq("userId", row.userId))
       .collect();
+    const user = await ctx.db.get(row.userId);
     return {
       userId: row.userId,
+      takenAt: row.takenAt,
+      timeZone: user?.timeZone ?? null,
       url: await ctx.storage.getUrl(row.storageId),
       albums: albums.map((a) => ({ _id: a._id, run: a.sortRun, name: a.name, description: a.description })),
     };
@@ -121,9 +146,16 @@ export const fail = internalMutation({
   handler: async (ctx, { screenshotId, error, rateLimited }) => {
     const row = await ctx.db.get(screenshotId);
     if (row === null || row.status !== "processing") return;
+    // "Slow down" is not the screenshot's fault, so it waits and tries again without using up an attempt.
+    // It still has its own limit: without one, a screenshot would go round forever if OpenAI never recovered.
     if (rateLimited) {
+      const rateLimits = (row.rateLimits ?? 0) + 1;
+      if (rateLimits >= MAX_RATE_LIMITS) {
+        await ctx.db.patch(screenshotId, { status: "failed", rateLimits, error });
+        return;
+      }
       const wait = 8000 + Math.floor(Math.random() * 4000);
-      await ctx.db.patch(screenshotId, { status: "uploaded", error, retryAt: Date.now() + wait });
+      await ctx.db.patch(screenshotId, { status: "uploaded", rateLimits, error, retryAt: Date.now() + wait });
       await ctx.scheduler.runAfter(wait + 100, internal.extract.kick, {});
       return;
     }
@@ -162,6 +194,7 @@ export const retry = mutation({
     await ctx.db.patch(screenshotId, {
       status: "uploaded",
       attempts: 0,
+      rateLimits: 0,
       retryAt: undefined,
       error: undefined,
     });
@@ -179,45 +212,28 @@ export const retryAllFailed = mutation({
       .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
       .collect();
     for (const row of failed.filter((r) => r.status === "failed"))
-      await ctx.db.patch(row._id, { status: "uploaded", attempts: 0, retryAt: undefined, error: undefined });
+      await ctx.db.patch(row._id, { status: "uploaded", attempts: 0, rateLimits: 0, retryAt: undefined, error: undefined });
     await ctx.scheduler.runAfter(0, internal.extract.kick, {});
     return null;
   },
 });
 
-async function callVision(imageUrl: string, albums: AlbumBrief[]) {
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
-  const res = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_VISION_MODEL ?? "gpt-6.1-terra",
-      input: [
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: buildPrompt(today, albums) },
-            { type: "input_image", image_url: imageUrl, detail: "auto" },
-          ],
-        },
-      ],
-      text: {
-        format: { type: "json_schema", name: "screenshot", strict: true, schema: EXTRACTION_SCHEMA },
+// zone is the person's time zone: "today" and the day the screenshot was taken are their calendar days, not the server's.
+async function callVision(imageUrl: string, albums: AlbumBrief[], takenAt: number, zone: string) {
+  return respond({
+    model: visionModel(),
+    input: [
+      {
+        role: "user",
+        content: [
+          { type: "input_text", text: buildPrompt(dayInZone(Date.now(), zone), albums, dayInZone(takenAt, zone)) },
+          { type: "input_image", image_url: imageUrl, detail: "auto" },
+        ],
       },
-    }),
+    ],
+    schemaName: "screenshot",
+    schema: EXTRACTION_SCHEMA,
   });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const body = await res.json();
-  const text: string | undefined =
-    body.output_text ??
-    body.output
-      ?.flatMap((o: { content?: { type: string; text?: string }[] }) => o.content ?? [])
-      .find((c: { type: string }) => c.type === "output_text")?.text;
-  if (!text) throw new Error("OpenAI returned no text");
-  return text;
 }
 
 export const run = internalAction({
@@ -228,7 +244,7 @@ export const run = internalAction({
       if (target === null) return;
       if (target.url === null) throw new Error("Image missing from storage");
       const { albums, ...result } = parseExtraction(
-        await callVision(target.url, target.albums),
+        await callVision(target.url, target.albums, target.takenAt, target.timeZone ?? "UTC"),
         screenshotId,
         Date.now(),
         target.albums.map((_, i) => albumKey(i)),
@@ -257,7 +273,7 @@ export const run = internalAction({
       await ctx.runMutation(internal.extract.fail, {
         screenshotId,
         error,
-        rateLimited: /^OpenAI 429/.test(error),
+        rateLimited: isRateLimit(error),
       });
     } finally {
       await ctx.runMutation(internal.extract.kick, {});

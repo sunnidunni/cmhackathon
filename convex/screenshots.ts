@@ -4,6 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
+import { countImport, importsUnlimited } from "./lib/importPlan";
 
 export const generateUploadUrl = mutation({
   args: {},
@@ -73,6 +74,16 @@ export const create = mutation({
     if (await wasRemoved(ctx, userId, deviceAssetId)) {
       await discardUpload(ctx, storageId);
       return null;
+    }
+    // Over today's free allowance: same answer as above, nothing is imported.
+    const user = await ctx.db.get(userId);
+    if (!importsUnlimited(user?.plan === "paid" ? "paid" : "free")) {
+      const { allowed, ...counter } = countImport(user ?? {}, Date.now());
+      await ctx.db.patch(userId, counter);
+      if (!allowed) {
+        await discardUpload(ctx, storageId);
+        return null;
+      }
     }
     const id = await ctx.db.insert("screenshots", {
       userId,

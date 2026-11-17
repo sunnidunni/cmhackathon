@@ -21,9 +21,11 @@ export function askLibrary<T extends { status: string; hidden?: boolean }>(rowsN
   return rowsNewestFirst.filter((r) => r.status === "ready" && r.hidden !== true).slice(0, LIBRARY_SIZE);
 }
 
+// hitIds are screenshot ids that a memory search returned. liveHitIds are the ones that are still this user's
+// readable screenshots: memory can lag behind a delete, and its results must not bring a removed screenshot back.
 export const context = internalQuery({
-  args: { userId: v.id("users") },
-  handler: async (ctx, { userId }) => {
+  args: { userId: v.id("users"), hitIds: v.optional(v.array(v.string())) },
+  handler: async (ctx, { userId, hitIds }) => {
     const rows = await ctx.db
       .query("screenshots")
       .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
@@ -33,7 +35,14 @@ export const context = internalQuery({
     const recent = [...ready]
       .sort((a, b) => (b.readAt ?? b._creationTime) - (a.readAt ?? a._creationTime))
       .slice(0, 3);
-    return { recent: recent.map(brief), library: ready.map(brief) };
+    const liveHitIds: string[] = [];
+    for (const raw of new Set(hitIds ?? [])) {
+      const id = ctx.db.normalizeId("screenshots", raw);
+      const row = id === null ? null : await ctx.db.get(id);
+      if (row !== null && row.userId === userId && row.status === "ready" && row.hidden !== true) liveHitIds.push(raw);
+    }
+    const user = await ctx.db.get(userId);
+    return { recent: recent.map(brief), library: ready.map(brief), liveHitIds, timeZone: user?.timeZone ?? null };
   },
 });
 

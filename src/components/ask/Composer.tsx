@@ -20,6 +20,7 @@ export function Composer({ value, onChange, onSend, busy }: { value: string; onC
         placeholder="Ask about a screenshot"
         placeholderTextColor={p.ink2}
         accessibilityLabel="Ask about a screenshot"
+        maxLength={500}
         returnKeyType="send"
         onSubmitEditing={onSend}
         submitBehavior="submit"
