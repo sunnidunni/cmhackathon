@@ -131,10 +131,12 @@ export default defineSchema({
   }).index("by_user_day", ["userId", "day"]),
 
   // One row per Whop payment that upgraded a user, so a refund can find the user it belongs to.
+  // Whop does not promise the order its events arrive in. A refund that arrives before its payment is kept as a
+  // row with refundedAt and no userId or paidAt, so the payment cannot upgrade anyone when it does arrive.
   payments: defineTable({
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
     whopPaymentId: v.string(),
-    paidAt: v.number(),
+    paidAt: v.optional(v.number()),
     refundedAt: v.optional(v.number()),
   })
     .index("by_whopPaymentId", ["whopPaymentId"])

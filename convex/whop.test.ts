@@ -113,7 +113,8 @@ describe("the signature format", () => {
 });
 
 describe("refunds", () => {
-  const refund = (status: string, paymentId = "pay_1") => ({ type: "refund.created", data: { id: "rf_1", payment_id: paymentId, status } });
+  // The shape Whop sends for refund.created and refund.updated: the payment is an object, with its id inside.
+  const refund = (status: string, paymentId = "pay_1") => ({ type: "refund.created", data: { id: "rf_1", status, amount: 9, payment: { id: paymentId, billing_reason: "one_time" } } });
 
   test("a refund that went through puts the user back on the free plan", async () => {
     const { t, userId } = await setup();
@@ -130,7 +131,7 @@ describe("refunds", () => {
     await deliver(t, userId, refund("pending"));
     await deliver(t, userId, refund("failed"));
     expect(await planOf(t, userId)).toBe("paid");
-    expect(await (await deliver(t, userId, refund("succeeded", "pay_unknown"))).text()).toBe("unknown_payment");
+    expect(await (await deliver(t, userId, refund("succeeded", "pay_unknown"))).text()).toBe("refund_recorded");
     expect(await planOf(t, userId)).toBe("paid");
   });
 
@@ -148,6 +149,25 @@ describe("refunds", () => {
     await deliver(t, userId, { data: { id: "pay_2", metadata: { convexUserId: userId } } });
     expect(await (await deliver(t, userId, refund("succeeded"))).text()).toBe("still_paid");
     expect(await planOf(t, userId)).toBe("paid");
+  });
+
+  test("a refund that arrives before its payment is remembered, so the late payment upgrades no one", async () => {
+    const { t, userId } = await setup();
+    expect(await (await deliver(t, userId, refund("succeeded"))).text()).toBe("refund_recorded");
+    expect(await (await deliver(t, userId)).text()).toBe("refunded");
+    expect(await planOf(t, userId)).toBe("free");
+    // The same refund delivered again changes nothing.
+    expect(await (await deliver(t, userId, refund("succeeded"))).text()).toBe("already_refunded");
+    expect(await planOf(t, userId)).toBe("free");
+  });
+
+  test("the newer refund shape, with payment_id, is understood too; a refund naming no payment is ignored", async () => {
+    const { t, userId } = await setup();
+    await deliver(t, userId);
+    expect(await (await deliver(t, userId, { type: "refund.updated", data: { id: "rf_1", status: "succeeded", payment: null } })).text()).toBe("Ignored");
+    expect(await planOf(t, userId)).toBe("paid");
+    expect(await (await deliver(t, userId, { type: "refund.updated", data: { id: "rf_1", status: "succeeded", payment_id: "pay_1" } })).text()).toBe("refunded");
+    expect(await planOf(t, userId)).toBe("free");
   });
 
   test("a refund with a bad signature is rejected", async () => {
