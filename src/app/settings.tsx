@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } 
 import { ActionRow, Footer, Group, SectionLabel, SwitchRow } from "@/components/settings/rows";
 import { fonts, KEEPER_IDS, KEEPERS, KeeperFace, SoftCard, text, usePalette } from "@/design/psst";
 import { resetActs } from "@/lib/act/store";
-import { useDeleteEverything } from "@/lib/delete-everything";
+import { AUTO_READ_NOT_SAVED, useDeleteEverything } from "@/lib/delete-everything";
 import { DEV_BUILD } from "@/lib/dev-flags";
 import { FIXTURES } from "@/lib/fixtures";
 import { useAutoRead } from "@/lib/auto-read";
@@ -104,8 +104,9 @@ export default function Settings() {
           text: "Delete everything",
           style: "destructive",
           onPress: async () => {
-            if (await deleteEverything()) return;
-            Alert.alert("Couldn't delete", "Nothing was deleted. Check your connection and try again.");
+            const { deleted, autoReadOffSaved } = await deleteEverything();
+            if (!deleted) Alert.alert("Couldn't delete", "Nothing was deleted. Check your connection and try again.");
+            else if (!autoReadOffSaved) Alert.alert("Couldn't save this", AUTO_READ_NOT_SAVED);
           },
         },
       ],
