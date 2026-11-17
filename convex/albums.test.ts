@@ -13,7 +13,7 @@ vi.mock("./lib/albumModel", async (original) => ({
   ...(await original<typeof import("./lib/albumModel")>()),
   matchAlbum: (album: AlbumBrief, shots: ShotBrief[]) => matchAlbum(album, shots),
 }));
-vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: vi.fn(), removeMemory: vi.fn() }));
+vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: vi.fn(), removeDocuments: vi.fn(), removeNamespace: vi.fn() }));
 
 const modules = import.meta.glob("./**/*.ts");
 

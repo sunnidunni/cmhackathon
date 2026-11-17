@@ -6,12 +6,7 @@ import type { Id } from "./_generated/dataModel";
 import { PLAYFUL_KEYS, SERIOUS_KEYS } from "./lib/lines";
 import schema from "./schema";
 
-const removeMemory = vi.fn();
-vi.mock("./lib/memoryClient", () => ({
-  addMemory: vi.fn(),
-  searchMemory: vi.fn(),
-  removeMemory: (...a: unknown[]) => removeMemory(...a),
-}));
+vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: vi.fn(), removeDocuments: vi.fn(), removeNamespace: vi.fn() }));
 
 const modules = import.meta.glob("./**/*.ts");
 const TZ = 480;
@@ -49,7 +44,6 @@ async function setup() {
     );
   return { t, userId, otherId, seed, me: t.withIdentity({ subject: `${userId}|s` }), other: t.withIdentity({ subject: `${otherId}|s` }) };
 }
-beforeEach(() => removeMemory.mockReset());
 
 describe("today", () => {
   test("handful: one per room, soonest date first, at most three, stable after done", async () => {

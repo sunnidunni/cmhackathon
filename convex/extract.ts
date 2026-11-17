@@ -144,8 +144,11 @@ export const fail = internalMutation({
 
 export const markMemoryStored = internalMutation({
   args: { screenshotId: v.id("screenshots") },
+  // Returns false when the screenshot was deleted in the meantime.
   handler: async (ctx, { screenshotId }) => {
+    if ((await ctx.db.get(screenshotId)) === null) return false;
     await ctx.db.patch(screenshotId, { memoryStored: true });
+    return true;
   },
 });
 

@@ -2,7 +2,6 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useSyncExternalStore } from "react";
 import { api } from "../../convex/_generated/api";
 import { convex } from "./convex";
-import { getRemovedAssets } from "./auto-read";
 import { getReadAllPhotos, listCandidates, prepareForUpload } from "./photos";
 import { chunk, planUploads, scanSize } from "./sync-plan";
 
@@ -21,14 +20,16 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l);
 }
 
-async function uploadOne(asset: Awaited<ReturnType<typeof listCandidates>>[number]) {
+// Uploads one screenshot. Resolves false when the server did not take it.
+async function uploadOne(asset: Awaited<ReturnType<typeof listCandidates>>[number]): Promise<boolean> {
   const { uri, takenAt } = await prepareForUpload(asset);
   const body = await (await fetch(uri)).blob();
   const uploadUrl = await convex.mutation(api.screenshots.generateUploadUrl, {});
   const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "image/jpeg" }, body });
   if (!res.ok) throw new Error(`Upload failed (${res.status})`);
   const { storageId } = await res.json();
-  await convex.mutation(api.screenshots.create, { deviceAssetId: asset.id, storageId, takenAt });
+  // null: the server refused it, because the person removed this screenshot from Shots.
+  return (await convex.mutation(api.screenshots.create, { deviceAssetId: asset.id, storageId, takenAt })) !== null;
 }
 
 const PARALLEL_UPLOADS = 3;
@@ -43,14 +44,7 @@ async function syncOnce(): Promise<SyncResult> {
   for (const part of chunk(ids, 100)) {
     unknown.push(...(await convex.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds: part })));
   }
-  const removed = new Set(await getRemovedAssets());
-  const plan = new Set(
-    planUploads(
-      ids,
-      unknown.filter((id) => !removed.has(id)),
-      limit,
-    ),
-  );
+  const plan = new Set(planUploads(ids, unknown, limit));
   const queue = assets.filter((a) => plan.has(a.id));
   let uploaded = 0;
   let failed = 0;
@@ -58,8 +52,7 @@ async function syncOnce(): Promise<SyncResult> {
   async function worker() {
     for (let asset = queue.shift(); asset; asset = queue.shift()) {
       try {
-        await uploadOne(asset);
-        uploaded++;
+        if (await uploadOne(asset)) uploaded++;
       } catch (e) {
         failed++;
         lastError = e;

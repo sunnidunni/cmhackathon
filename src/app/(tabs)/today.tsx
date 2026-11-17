@@ -24,6 +24,7 @@ import { sameMemory, withSkipped } from "@/components/today/focus";
 import { useFocusMemory } from "@/components/today/focusMemory";
 import { useWindUp } from "@/components/tabs/WindUp";
 import { useOffline } from "@/lib/offline";
+import { cancelDismissed } from "@/lib/reminders";
 import { runSync } from "@/lib/sync";
 import { useSafeMutation, useSafeQuery } from "@/lib/useSafeQuery";
 
@@ -142,8 +143,8 @@ export default function Today() {
     if (kind === "remind") return remind(item);
     if (kind === "see") return open(item);
     if (kind === "skip") return skip(item);
-    if (kind === "keep") return run(() => keep({ id: asId(item.id) }));
-    return run(() => done({ id: asId(item.id) }));
+    if (kind === "keep") return run(() => keep({ id: asId(item.id) }).then(cancelDismissed));
+    return run(() => done({ id: asId(item.id) }).then(cancelDismissed));
   };
   const confirmRemove = (item: Item, title: string) =>
     Alert.alert(title, "This takes it out of Rooms, Ask and reminders. Your original screenshot stays in Photos.", [
@@ -153,7 +154,7 @@ export default function Today() {
         style: "destructive",
         onPress: () =>
           run(async () => {
-            await remove({ id: asId(item.id) });
+            await cancelDismissed(await remove({ id: asId(item.id) }));
             setRemoved(true);
           }),
       },

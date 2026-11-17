@@ -78,7 +78,16 @@ export default defineSchema({
     .index("by_user_category", ["userId", "category"])
     .index("by_user_deviceAssetId", ["userId", "deviceAssetId"])
     .index("by_user_importance", ["userId", "importance"])
-    .index("by_user_takenAt", ["userId", "takenAt"]),
+    .index("by_user_takenAt", ["userId", "takenAt"])
+    .index("by_storageId", ["storageId"]),
+
+  // Screenshots the person removed from Shots. The photo is still on the phone, so without this row
+  // the next sync would see it as new and import it again. "Delete everything" clears these too.
+  removedAssets: defineTable({
+    userId: v.id("users"),
+    deviceAssetId: v.string(),
+    removedAt: v.number(),
+  }).index("by_user_deviceAssetId", ["userId", "deviceAssetId"]),
 
   reminders: defineTable({
     userId: v.id("users"),

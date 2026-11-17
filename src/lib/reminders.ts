@@ -4,9 +4,17 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import {
   cancelReminderNotification,
+  cancelReminderNotifications,
   scheduleReminderNotification,
   showReminderNow,
 } from "./notifications";
+
+// The server ends a screenshot's reminders when it is marked done or removed. Each reminder is also a
+// local notification on this phone, which only the phone can cancel: pass the mutation's result here.
+// A null result (demo mode, or a server older than this app) cancels nothing.
+export async function cancelDismissed(result: { dismissedReminderIds?: readonly string[] } | null | undefined): Promise<void> {
+  await cancelReminderNotifications(result?.dismissedReminderIds ?? []);
+}
 
 const tzOffsetMinutes = () => new Date().getTimezoneOffset();
 
@@ -21,6 +29,8 @@ export function useReminderActions() {
     () => ({
       async remind(screenshotId: Id<"screenshots">, when?: string) {
         const r = await set({ screenshotId, tzOffsetMinutes: tzOffsetMinutes(), when });
+        // The new reminder replaced the old one on the server; without this the phone would buzz for both.
+        await cancelReminderNotifications(r.replacedReminderIds ?? []);
         const notified = await scheduleReminderNotification({
           reminderId: r.reminderId,
           screenshotId,

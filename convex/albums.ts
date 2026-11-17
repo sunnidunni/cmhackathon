@@ -77,9 +77,15 @@ async function startSort(ctx: MutationCtx, album: Doc<"albums">) {
   await ctx.scheduler.runAfter(0, internal.albums.sort, { albumId: album._id, run, cursor: null, page: 0, attempt: 0 });
 }
 
-export async function deleteAlbumsFor(ctx: MutationCtx, userId: Id<"users">) {
-  const albums = await ctx.db.query("albums").withIndex("by_user_createdAt", (q) => q.eq("userId", userId)).collect();
+// Deletes up to `limit` of the user's albums created at or before `before`. Returns how many it deleted.
+export async function deleteAlbumsBefore(ctx: MutationCtx, userId: Id<"users">, before: number, limit: number) {
+  const albums = await ctx.db
+    .query("albums")
+    .withIndex("by_user_createdAt", (q) => q.eq("userId", userId))
+    .filter((q) => q.lte(q.field("_creationTime"), before))
+    .take(limit);
   for (const album of albums) await deleteAlbum(ctx, album._id);
+  return albums.length;
 }
 
 async function deleteAlbum(ctx: MutationCtx, albumId: Id<"albums">) {

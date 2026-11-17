@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 
 export const generateUploadUrl = mutation({
@@ -11,6 +13,26 @@ export const generateUploadUrl = mutation({
   },
 });
 
+// True when the person removed this screenshot from Shots. It must not be imported again.
+async function wasRemoved(ctx: QueryCtx, userId: Id<"users">, deviceAssetId: string) {
+  const row = await ctx.db
+    .query("removedAssets")
+    .withIndex("by_user_deviceAssetId", (q) => q.eq("userId", userId).eq("deviceAssetId", deviceAssetId))
+    .first();
+  return row !== null;
+}
+
+// Deletes an upload that no screenshot uses. The id comes from the client, so check that nobody's
+// screenshot points at it first: otherwise a caller could delete a file by naming it.
+async function discardUpload(ctx: MutationCtx, storageId: Id<"_storage">) {
+  const used = await ctx.db
+    .query("screenshots")
+    .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+    .first();
+  if (used === null) await ctx.storage.delete(storageId).catch(() => undefined);
+}
+
+// The ids the phone should upload: not already in Shots, and not removed from it by the person.
 export const unknownDeviceAssetIds = query({
   args: { deviceAssetIds: v.array(v.string()) },
   handler: async (ctx, { deviceAssetIds }) => {
@@ -23,7 +45,7 @@ export const unknownDeviceAssetIds = query({
           q.eq("userId", userId).eq("deviceAssetId", deviceAssetId),
         )
         .first();
-      if (existing === null) unknown.push(deviceAssetId);
+      if (existing === null && !(await wasRemoved(ctx, userId, deviceAssetId))) unknown.push(deviceAssetId);
     }
     return unknown;
   },
@@ -44,14 +66,13 @@ export const create = mutation({
       )
       .first();
     if (existing !== null) {
-      if (existing.storageId !== storageId) {
-        const mine = await ctx.db
-          .query("screenshots")
-          .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
-          .collect();
-        if (!mine.some((row) => row.storageId === storageId)) await ctx.storage.delete(storageId);
-      }
+      if (existing.storageId !== storageId) await discardUpload(ctx, storageId);
       return existing._id;
+    }
+    // Removed by the person: drop the upload and create nothing. null tells the caller it was not imported.
+    if (await wasRemoved(ctx, userId, deviceAssetId)) {
+      await discardUpload(ctx, storageId);
+      return null;
     }
     const id = await ctx.db.insert("screenshots", {
       userId,

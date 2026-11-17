@@ -18,6 +18,7 @@ import { UndoToast } from "@/components/rooms/UndoToast";
 import { MoveSheet } from "@/components/rooms/MoveSheet";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 import { AlbumPickSheet } from "@/components/albums/AlbumPickSheet";
+import { cancelDismissed } from "@/lib/reminders";
 
 const UNDO_MS = 5000;
 
@@ -83,7 +84,7 @@ export default function Detail() {
     phaseRef.current = "done";
     setPhase("done");
     if (isDemo) return;
-    await markDone({ id: shotId }).catch(() => {
+    await markDone({ id: shotId }).then(cancelDismissed, () => {
       phaseRef.current = "idle";
       setPhase("idle");
       setError("That didn't save. Try again in a moment.");
@@ -93,7 +94,7 @@ export default function Detail() {
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
-      if (phaseRef.current === "pending" && !isDemo) markDone({ id: shotId }).catch(() => undefined);
+      if (phaseRef.current === "pending" && !isDemo) markDone({ id: shotId }).then(cancelDismissed, () => undefined);
     },
     [markDone, isDemo, shotId],
   );

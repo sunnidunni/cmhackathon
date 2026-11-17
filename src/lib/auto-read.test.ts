@@ -22,34 +22,6 @@ describe("parseAutoRead", () => {
   });
 });
 
-describe("removed assets", () => {
-  test("starts empty and ignores unreadable stored values", async () => {
-    const { parseRemovedAssets } = await import("./auto-read");
-    expect(parseRemovedAssets(null)).toEqual([]);
-    expect(parseRemovedAssets("not json")).toEqual([]);
-    expect(parseRemovedAssets('{"a":1}')).toEqual([]);
-    expect(parseRemovedAssets('["a",2,"b"]')).toEqual(["a", "b"]);
-  });
-  test("remembers a removed asset once and persists the list", async () => {
-    store.get.mockResolvedValue('["a"]');
-    const { getRemovedAssets, markRemovedAsset } = await import("./auto-read");
-    await markRemovedAsset("b");
-    await markRemovedAsset("b");
-    expect(await getRemovedAssets()).toEqual(["a", "b"]);
-    expect(store.set).toHaveBeenCalledTimes(1);
-    expect(store.set).toHaveBeenCalledWith("psst.removedAssets", '["a","b"]');
-  });
-  test("keeps only the newest 200", async () => {
-    store.get.mockResolvedValue(JSON.stringify(Array.from({ length: 200 }, (_, i) => `id${i}`)));
-    const { getRemovedAssets, markRemovedAsset } = await import("./auto-read");
-    await markRemovedAsset("new");
-    const ids = await getRemovedAssets();
-    expect(ids).toHaveLength(200);
-    expect(ids[0]).toBe("id1");
-    expect(ids.at(-1)).toBe("new");
-  });
-});
-
 describe("getAutoRead", () => {
   test("defaults to on when the device has no value", async () => {
     store.get.mockResolvedValue(null);

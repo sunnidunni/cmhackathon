@@ -24,6 +24,7 @@ import type * as lib_importPlan from "../lib/importPlan.js";
 import type * as lib_lines from "../lib/lines.js";
 import type * as lib_llm from "../lib/llm.js";
 import type * as lib_memoryClient from "../lib/memoryClient.js";
+import type * as lib_memoryDocs from "../lib/memoryDocs.js";
 import type * as lib_notificationText from "../lib/notificationText.js";
 import type * as lib_plan from "../lib/plan.js";
 import type * as lib_suggestions from "../lib/suggestions.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "lib/lines": typeof lib_lines;
   "lib/llm": typeof lib_llm;
   "lib/memoryClient": typeof lib_memoryClient;
+  "lib/memoryDocs": typeof lib_memoryDocs;
   "lib/notificationText": typeof lib_notificationText;
   "lib/plan": typeof lib_plan;
   "lib/suggestions": typeof lib_suggestions;
