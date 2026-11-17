@@ -28,3 +28,10 @@ jobs:
         run: npm test
       - name: Dependency and config checks
         run: npx expo-doctor
+        env:
+          # Expo publishes new patch versions most weeks. That check compares against a live list, so it would turn
+          # main red with no change on our side. It runs below instead, as a report that does not fail the build.
+          EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK: "1"
+      - name: Expo package versions (report only)
+        run: npx expo install --check
+        continue-on-error: true
