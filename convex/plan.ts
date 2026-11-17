@@ -51,15 +51,22 @@ export const markRefunded = internalMutation({
       .query("payments")
       .withIndex("by_whopPaymentId", (q) => q.eq("whopPaymentId", whopPaymentId))
       .first();
-    if (payment === null) return "unknown_payment" as const;
+    // The payment's own event has not arrived yet (Whop does not promise an order). Remember the refund,
+    // so that payment upgrades nobody when it does.
+    if (payment === null) {
+      await ctx.db.insert("payments", { whopPaymentId, refundedAt: Date.now() });
+      return "refund_recorded" as const;
+    }
     if (payment.refundedAt !== undefined) return "already_refunded" as const;
     await ctx.db.patch(payment._id, { refundedAt: Date.now() });
+    const userId = payment.userId;
+    if (userId === undefined) return "refund_recorded" as const;
     const others = await ctx.db
       .query("payments")
-      .withIndex("by_user", (q) => q.eq("userId", payment.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     if (others.some((p) => p._id !== payment._id && p.refundedAt === undefined)) return "still_paid" as const;
-    await ctx.db.patch(payment.userId, { plan: "free" });
+    await ctx.db.patch(userId, { plan: "free" });
     return "refunded" as const;
   },
 });
