@@ -12,9 +12,23 @@ export async function addMemory(
   await client().add(userId, { ...doc, dreaming: "instant" });
 }
 
-export async function removeMemory(userId: string, screenshotId?: string) {
-  if (screenshotId) await client().documents.delete(userId, { ids: [screenshotId] });
-  else await client().namespaces.delete(userId);
+// Already gone counts as removed.
+const unlessMissing = (e: unknown) => {
+  if ((e as { statusCode?: number } | null)?.statusCode !== 404) throw e;
+};
+
+// The API's limit on ids per call is not documented, so send them in modest groups.
+const DELETE_GROUP = 100;
+
+export async function removeDocuments(userId: string, ids: string[]) {
+  for (let i = 0; i < ids.length; i += DELETE_GROUP) {
+    await client().documents.delete(userId, { ids: ids.slice(i, i + DELETE_GROUP) }).catch(unlessMissing);
+  }
+}
+
+// Everything Shots stored for this user: every screenshot's reading and every chat turn.
+export async function removeNamespace(userId: string) {
+  await client().namespaces.delete(userId).catch(unlessMissing);
 }
 
 export async function searchMemory(userId: string, query: string): Promise<MemoryHit[]> {

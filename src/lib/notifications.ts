@@ -54,6 +54,15 @@ export async function cancelReminderNotification(reminderId: string): Promise<vo
   await Notifications.cancelScheduledNotificationAsync(reminderId).catch(() => undefined);
 }
 
+export async function cancelReminderNotifications(reminderIds: readonly string[]): Promise<void> {
+  await Promise.all(reminderIds.map(cancelReminderNotification));
+}
+
+// Every notification Shots schedules is a reminder, so this clears them all. For "Delete everything".
+export async function cancelAllReminderNotifications(): Promise<void> {
+  await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
+}
+
 export async function showReminderNow(n: Omit<ReminderNotification, "dueAt">): Promise<boolean> {
   return scheduleReminderNotification({ ...n, dueAt: 0 });
 }

@@ -1,22 +1,47 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
-import { addMemory, removeMemory } from "./lib/memoryClient";
+import { addMemory, removeDocuments, removeNamespace } from "./lib/memoryClient";
 
-// Stores what we read in the user's namespace (the bare Convex user id), the same one the
-// chat turns use. Never throws: the screenshot is already ready, and a memory failure must not change that.
-// Removes one screenshot's memory, or the whole namespace when no screenshot is given. Never throws.
-export const forget = internalAction({
-  args: { userId: v.id("users"), screenshotId: v.optional(v.id("screenshots")) },
-  handler: async (_ctx, { userId, screenshotId }) => {
+// A failed delete is tried again after each of these waits, then given up on and logged.
+// Deleting is a promise to the user, so one bad network moment must not leave their text in memory.
+export const FORGET_RETRY_MS = [60_000, 10 * 60_000, 60 * 60_000, 6 * 60 * 60_000];
+
+const failed = (what: string, e: unknown, attempt: number) =>
+  console.error(`Supermemory ${what} failed (attempt ${attempt + 1} of ${FORGET_RETRY_MS.length + 1})`, e instanceof Error ? e.message : String(e));
+
+// Removes documents from the user's namespace (the bare Convex user id): a screenshot's reading, or chat turns. Never throws.
+export const forgetDocs = internalAction({
+  args: { userId: v.id("users"), docIds: v.array(v.string()), attempt: v.optional(v.number()) },
+  handler: async (ctx, { userId, docIds, attempt = 0 }) => {
     try {
-      await removeMemory(userId, screenshotId);
+      await removeDocuments(userId, docIds);
     } catch (e) {
-      console.error("Supermemory forget failed", e instanceof Error ? e.message : String(e));
+      failed("forget", e, attempt);
+      const wait = FORGET_RETRY_MS[attempt];
+      if (wait !== undefined) await ctx.scheduler.runAfter(wait, internal.memory.forgetDocs, { userId, docIds, attempt: attempt + 1 });
     }
   },
 });
 
+// Removes the user's whole namespace, at the start of "Delete everything". Never throws.
+// One try only, on purpose. The namespace is shared with whatever the person brings in next, so a retry
+// minutes or hours later would wipe the memory of their new screenshots. "Delete everything" also forgets
+// each deleted screenshot and answer by id (forgetDocs, which does retry), so this sweep is only needed for
+// documents the database no longer knows about.
+export const forgetAll = internalAction({
+  args: { userId: v.id("users") },
+  handler: async (_ctx, { userId }) => {
+    try {
+      await removeNamespace(userId);
+    } catch (e) {
+      console.error("Supermemory forget all failed (not retried; documents are also forgotten by id)", e instanceof Error ? e.message : String(e));
+    }
+  },
+});
+
+// Stores what we read in the user's namespace, the same one the chat turns use.
+// Never throws: the screenshot is already ready, and a memory failure must not change that.
 export const store = internalAction({
   args: {
     screenshotId: v.id("screenshots"),
@@ -43,7 +68,9 @@ export const store = internalAction({
           .join("\n"),
         metadata: { screenshotId: args.screenshotId, kind: "screenshot", category: args.category },
       });
-      await ctx.runMutation(internal.extract.markMemoryStored, { screenshotId: args.screenshotId });
+      const stillThere = await ctx.runMutation(internal.extract.markMemoryStored, { screenshotId: args.screenshotId });
+      // The screenshot was removed while this was storing it: take the reading back out.
+      if (!stillThere) await ctx.scheduler.runAfter(0, internal.memory.forgetDocs, { userId: args.userId, docIds: [args.screenshotId] });
     } catch (e) {
       console.error("Supermemory store failed", e instanceof Error ? e.message : String(e));
     }

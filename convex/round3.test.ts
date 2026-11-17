@@ -5,7 +5,7 @@ import { api } from "./_generated/api";
 import { headlineFor } from "./lib/headline";
 import schema from "./schema";
 
-vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: vi.fn(), removeMemory: vi.fn() }));
+vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: vi.fn(), removeDocuments: vi.fn(), removeNamespace: vi.fn() }));
 const modules = import.meta.glob("./**/*.ts");
 const TZ = 480;
 const DAY = 86400000;

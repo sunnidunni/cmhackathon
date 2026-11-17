@@ -6,7 +6,7 @@ import schema from "./schema";
 
 const model = vi.fn();
 const search = vi.fn();
-vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: (...a: unknown[]) => search(...a), removeMemory: vi.fn() }));
+vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: (...a: unknown[]) => search(...a), removeDocuments: vi.fn(), removeNamespace: vi.fn() }));
 vi.mock("./lib/llm", () => ({ askModel: (...a: unknown[]) => model(...a), todosFromText: vi.fn() }));
 const modules = import.meta.glob("./**/*.ts");
 

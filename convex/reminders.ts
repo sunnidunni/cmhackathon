@@ -15,15 +15,19 @@ async function ownedScreenshot(ctx: MutationCtx, id: Id<"screenshots">) {
   return { userId, row };
 }
 
-async function dismissActive(ctx: MutationCtx, screenshotId: Id<"screenshots">) {
+// Ends this screenshot's scheduled reminders. Returns their ids: each one is also a local notification
+// on the phone, which only the phone can cancel.
+export async function dismissActive(ctx: MutationCtx, screenshotId: Id<"screenshots">): Promise<Id<"reminders">[]> {
   const existing = await ctx.db
     .query("reminders")
     .withIndex("by_screenshot", (q) => q.eq("screenshotId", screenshotId))
     .collect();
-  for (const r of existing.filter((x) => x.status === "scheduled")) {
+  const active = existing.filter((x) => x.status === "scheduled");
+  for (const r of active) {
     if (r.scheduledId) await ctx.scheduler.cancel(r.scheduledId).catch(() => undefined);
     await ctx.db.patch(r._id, { status: "dismissed", scheduledId: undefined });
   }
+  return active.map((r) => r._id);
 }
 
 const text = (row: Doc<"screenshots">, when: string | null, at: number, tz: number) =>
@@ -47,7 +51,7 @@ export const set = mutation({
       : nextConfidentDate(row, now, tz);
     if (!date) throw new Error("No confident date");
     const dueAt = computeDueAt(date.when, now, tz);
-    await dismissActive(ctx, screenshotId);
+    const replacedReminderIds = await dismissActive(ctx, screenshotId);
     const message = text(row, date.when, dueAt, tz);
     const reminderId = await ctx.db.insert("reminders", {
       userId,
@@ -59,7 +63,7 @@ export const set = mutation({
     });
     const scheduledId = await ctx.scheduler.runAt(dueAt, internal.reminders.fire, { reminderId });
     await ctx.db.patch(reminderId, { scheduledId });
-    return { reminderId, dueAt, text: message };
+    return { reminderId, dueAt, text: message, replacedReminderIds };
   },
 });
 

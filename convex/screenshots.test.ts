@@ -33,7 +33,7 @@ describe("screenshots", () => {
       storageId,
       takenAt: 1000,
     });
-    const row = await t.run((ctx) => ctx.db.get(id));
+    const row = await t.run((ctx) => ctx.db.get(id!));
     expect(row).toMatchObject({ userId, status: "uploaded", deviceAssetId: "asset-1" });
     const list = await me.query(api.screenshots.list, {});
     expect(list).toHaveLength(1);

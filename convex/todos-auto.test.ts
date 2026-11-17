@@ -5,7 +5,7 @@ import { api, internal } from "./_generated/api";
 import schema from "./schema";
 
 const todosFromText = vi.fn();
-vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: vi.fn(), removeMemory: vi.fn() }));
+vi.mock("./lib/memoryClient", () => ({ addMemory: vi.fn(), searchMemory: vi.fn(), removeDocuments: vi.fn(), removeNamespace: vi.fn() }));
 vi.mock("./lib/llm", () => ({ askModel: vi.fn(), todosFromText: (...a: unknown[]) => todosFromText(...a) }));
 const modules = import.meta.glob("./**/*.ts");
 

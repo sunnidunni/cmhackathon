@@ -7,6 +7,7 @@ import { requireUserId } from "./lib/auth";
 import { askModel } from "./lib/llm";
 import { suggestionsFrom } from "./lib/suggestions";
 import { addMemory, searchMemory, type MemoryHit } from "./lib/memoryClient";
+import { chatDocId } from "./lib/memoryDocs";
 
 export type { Source };
 export const NOT_FOUND_ANSWER = "I couldn't find that in your screenshots.";
@@ -62,7 +63,7 @@ export async function answerQuestion(ctx: ActionCtx, userId: Id<"users">, q: str
 
   const turn = (role: "user" | "assistant", content: string) =>
     addMemory(userId, {
-      id: `chat_${questionId}_${role}`,
+      id: chatDocId(questionId, role),
       content: `${role === "user" ? "User asked" : "Assistant answered"}: ${content}`,
       metadata: { kind: "chat", role, questionId },
     });

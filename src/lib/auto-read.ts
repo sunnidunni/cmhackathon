@@ -38,41 +38,6 @@ export async function setAutoRead(on: boolean): Promise<boolean> {
   );
 }
 
-// Device asset ids of screenshots the person removed from Psst. Removing deletes the server row, so the
-// asset would look new again and the next automatic read would bring it back. Sync skips these ids.
-const REMOVED_KEY = "psst.removedAssets";
-const REMOVED_CAP = 200;
-let removed: string[] | null = null;
-let loadingRemoved: Promise<string[]> | null = null;
-
-export function parseRemovedAssets(stored: string | null): string[] {
-  try {
-    const parsed: unknown = stored === null ? [] : JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-export function getRemovedAssets(): Promise<string[]> {
-  if (removed !== null) return Promise.resolve(removed);
-  loadingRemoved ??= SecureStore.getItemAsync(REMOVED_KEY)
-    .then(parseRemovedAssets)
-    .catch(() => [])
-    .then((ids) => {
-      removed ??= ids;
-      return removed;
-    });
-  return loadingRemoved;
-}
-
-export async function markRemovedAsset(deviceAssetId: string) {
-  const ids = await getRemovedAssets();
-  if (ids.includes(deviceAssetId)) return;
-  removed = [...ids, deviceAssetId].slice(-REMOVED_CAP);
-  await SecureStore.setItemAsync(REMOVED_KEY, JSON.stringify(removed)).catch(() => undefined);
-}
-
 // enabled shows the default until the stored value has been read from the device.
 export function useAutoRead() {
   const value = useSyncExternalStore(
