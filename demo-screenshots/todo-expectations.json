@@ -1,0 +1,106 @@
+{
+ "01-pottery-flyer.png": {
+  "todo": true,
+  "startsWith": "Sign up"
+ },
+ "02-course-syllabus.png": {
+  "todo": true,
+  "startsWith": "Submit"
+ },
+ "03-concert-ticket.png": {
+  "todo": false
+ },
+ "04-dentist-text.png": {
+  "todo": false
+ },
+ "05-visa-email.png": {
+  "todo": false
+ },
+ "06-hackathon-post.png": {
+  "todo": true,
+  "startsWith": "Register"
+ },
+ "07-dinner-chat.png": {
+  "todo": false
+ },
+ "08-wifi-chat.png": {
+  "todo": false
+ },
+ "09-rent-chat.png": {
+  "todo": true,
+  "startsWith": "Send"
+ },
+ "10-party-address.png": {
+  "todo": false
+ },
+ "11-book-dm.png": {
+  "todo": false
+ },
+ "12-coffee-receipt.png": {
+  "todo": false
+ },
+ "13-order-confirmation.png": {
+  "todo": false
+ },
+ "14-boarding-pass.png": {
+  "todo": false
+ },
+ "15-utility-bill.png": {
+  "todo": true,
+  "startsWith": "Pay"
+ },
+ "16-headphones-product.png": {
+  "todo": false
+ },
+ "17-refund.png": {
+  "todo": false
+ },
+ "18-miso-pasta.png": {
+  "todo": false
+ },
+ "19-quote-card.png": {
+  "todo": false
+ },
+ "20-map-recommendation.png": {
+  "todo": false
+ },
+ "21-article-tip.png": {
+  "todo": false
+ },
+ "22-ai-answer.png": {
+  "todo": false
+ },
+ "23-workout-plan.png": {
+  "todo": false
+ },
+ "24-blurry-meme.png": {
+  "todo": false
+ },
+ "25-mom-pizza-text.png": {
+  "todo": true,
+  "startsWith": "Order"
+ },
+ "26-flight-delay.png": {
+  "todo": false
+ },
+ "27-lisbon-flight-late.png": {
+  "todo": false
+ },
+ "28-movie-group-chat.png": {
+  "todo": false
+ },
+ "29-error-screen.png": {
+  "todo": false
+ },
+ "30-receipt-request.png": {
+  "todo": true,
+  "startsWith": "Send"
+ },
+ "31-shopping-cart.png": {
+  "todo": false
+ },
+ "32-trial-ending.png": {
+  "todo": true,
+  "startsWith": "Cancel"
+ }
+}
