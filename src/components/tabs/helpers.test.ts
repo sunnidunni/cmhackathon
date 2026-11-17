@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { allScreenshotsCount, buttonLabel, cardSubtitle, formatWhen, lineFor, nudgeSample, reminderCaption, roomName, weekday } from "./helpers";
+import { allScreenshotsCount, buttonLabel, cardSubtitle, formatWhen, lineFor, reminderCaption, roomName, weekday } from "./helpers";
 
 describe("all screenshots count", () => {
   test("sums every room including unsorted", () => {
@@ -45,11 +45,6 @@ describe("tab helpers", () => {
     expect(reminderCaption({ state: "scheduled" })).toBe("Reminder set");
     expect(reminderCaption({ state: "sent" })).toBe("Reminder sent");
     expect(reminderCaption({ state: "dismissed" })).toBe("Remind me");
-  });
-
-  test("nudge sample uses the item's own title", () => {
-    expect(nudgeSample("Brightside Power bill")).toBe("Shots: your Brightside Power bill is due tomorrow. Want to see it?");
-    expect(nudgeSample(undefined)).toBe("Shots: your reminder is due tomorrow. Want to see it?");
   });
 
   test("room names", () => {

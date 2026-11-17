@@ -10,7 +10,7 @@ auth.addHttpRoutes(http);
 http.route({ path: "/whop", method: "POST", handler: whopWebhook });
 http.route({ path: "/whop/done", method: "GET", handler: whopDone });
 
-http.route({ path: "/siri/ask", method: "GET", handler: siriAsk });
+// POST only: the key travels in the body or a header, never in the address.
 http.route({ path: "/siri/ask", method: "POST", handler: siriAsk });
 
 export default http;

@@ -178,7 +178,7 @@ export function actionsFor(item: Item, now: number, tz: number) {
   const sameDay = item.date ? localDay(computeDueAt(item.date.when, now, tz), tz) === item.date.when.slice(0, 10) : false;
   const when = sameDay ? "an hour before" : "the day before";
   const closes = item.section === "justIn" && noun(item.title, item.date?.what) === "sign-up" ? " it closes" : "";
-  const tail = item.keeper === "penny" ? "Shots never pays or moves money." : "You can snooze or turn reminders off.";
+  const tail = item.keeper === "penny" ? "Shots never pays or moves money." : "You can turn the reminder off anytime.";
   if (item.actions.primary === "remind" && label)
     return {
       primary: `Remind me ${label}`,

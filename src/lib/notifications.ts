@@ -1,5 +1,5 @@
 import * as Notifications from "expo-notifications";
-import { planReminderNotification, type ReminderNotification } from "./notification-plan";
+import { planNotificationSync, planReminderNotification, type ReminderNotification } from "./notification-plan";
 
 // Local notifications only. app.json sets enableRemoteNotifications: false so the build has no
 // aps-environment entitlement and still signs with a free personal team.
@@ -65,4 +65,16 @@ export async function cancelAllReminderNotifications(): Promise<void> {
 
 export async function showReminderNow(n: Omit<ReminderNotification, "dueAt">): Promise<boolean> {
   return scheduleReminderNotification({ ...n, dueAt: 0 });
+}
+
+// Makes this phone's pending notifications match the server's upcoming reminders. Safe to call often.
+// It covers the cases where a reminder exists but its notification does not: notifications were off when it was
+// set, the app was reinstalled, or it was set on another phone. It also clears notifications for reminders that
+// ended somewhere else. Does nothing without notification permission, and never asks for it.
+export async function syncReminderNotifications(fetchUpcoming: () => Promise<ReminderNotification[]>): Promise<void> {
+  if (!(await hasNotificationPermission())) return;
+  const pending = await Notifications.getAllScheduledNotificationsAsync();
+  const plan = planNotificationSync(await fetchUpcoming(), pending.map((n) => n.identifier), Date.now());
+  await cancelReminderNotifications(plan.cancel);
+  for (const n of plan.schedule) await scheduleReminderNotification(n);
 }
