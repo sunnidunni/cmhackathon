@@ -1,5 +1,5 @@
 import * as Notifications from "expo-notifications";
-import { planReminderNotification, type ReminderNotification } from "./notification-plan";
+import { planNotificationSync, planReminderNotification, type ReminderNotification } from "./notification-plan";
 
 // Local notifications only. app.json sets enableRemoteNotifications: false so the build has no
 // aps-environment entitlement and still signs with a free personal team.
@@ -50,19 +50,62 @@ export async function scheduleReminderNotification(n: ReminderNotification): Pro
   }
 }
 
+// Counts every cancellation the person causes (turning a reminder off, marking done, removing, deleting everything).
+// A sync that is part-way through scheduling from an older picture of the server checks it and stops, so it cannot
+// put back a notification that was cancelled while it ran.
+let cancellations = 0;
+
+const cancelPending = (reminderId: string) => Notifications.cancelScheduledNotificationAsync(reminderId).catch(() => undefined);
+
 export async function cancelReminderNotification(reminderId: string): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(reminderId).catch(() => undefined);
+  cancellations++;
+  await cancelPending(reminderId);
 }
 
 export async function cancelReminderNotifications(reminderIds: readonly string[]): Promise<void> {
-  await Promise.all(reminderIds.map(cancelReminderNotification));
+  if (reminderIds.length > 0) cancellations++;
+  await Promise.all(reminderIds.map(cancelPending));
 }
 
 // Every notification Shots schedules is a reminder, so this clears them all. For "Delete everything".
 export async function cancelAllReminderNotifications(): Promise<void> {
+  cancellations++;
   await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
 }
 
 export async function showReminderNow(n: Omit<ReminderNotification, "dueAt">): Promise<boolean> {
   return scheduleReminderNotification({ ...n, dueAt: 0 });
+}
+
+// How many times a sync starts over when the person keeps cancelling things while it runs. Far more than a
+// person can cause in the moment a sync takes; it only stops a loop that could otherwise never end.
+const MAX_SYNC_PASSES = 5;
+
+// Makes this phone's pending notifications match the server's upcoming reminders. Safe to call often.
+// It covers the cases where a reminder exists but its notification does not: notifications were off when it was
+// set, the app was reinstalled, or it was set on another phone. It also clears notifications for reminders that
+// ended somewhere else. Does nothing without notification permission, and never asks for it.
+//
+// A pass works from one picture of the server. If the person cancels something while it runs, that picture is out
+// of date, so the pass stops and a new one starts from a fresh picture. Stopping without starting over would leave
+// the reminders it had not reached yet without a notification until the app was next opened.
+export async function syncReminderNotifications(fetchUpcoming: () => Promise<ReminderNotification[]>): Promise<void> {
+  if (!(await hasNotificationPermission())) return;
+  for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
+    if (await syncPass(fetchUpcoming)) return;
+  }
+}
+
+// One pass. Resolves false when the person cancelled something while it ran, which means: start over.
+async function syncPass(fetchUpcoming: () => Promise<ReminderNotification[]>): Promise<boolean> {
+  const startedAt = cancellations;
+  const pending = await Notifications.getAllScheduledNotificationsAsync();
+  const plan = planNotificationSync(await fetchUpcoming(), pending.map((n) => n.identifier), Date.now());
+  if (cancellations !== startedAt) return false;
+  await Promise.all(plan.cancel.map(cancelPending));
+  for (const n of plan.schedule) {
+    if (cancellations !== startedAt) return false;
+    await scheduleReminderNotification(n);
+  }
+  return true;
 }

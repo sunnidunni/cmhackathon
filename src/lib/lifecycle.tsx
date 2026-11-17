@@ -5,17 +5,21 @@ import { type Href, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import { api } from "../../convex/_generated/api";
+import { convex } from "./convex";
 import { screenshotIdFromData, shotRoute } from "./notification-plan";
+import { syncReminderNotifications } from "./notifications";
 import { getAutoRead } from "./auto-read";
 import { getPhotoAccess, hasPhotoAccess } from "./photos";
 import { getImportStarted, runSync } from "./sync";
 
 const LIBRARY_CHANGE_DEBOUNCE_MS = 1500;
 
+export const upcomingReminders = () => convex.query(api.reminders.upcoming, { after: Date.now() });
+
 // Mount once in the root layout, inside the Convex provider. Renders nothing.
-// After sign-in: on launch and every return to the foreground it calls today.appOpened and, once the
-// import has been started and "Read new screenshots automatically" is on, syncs the album. While the
-// app is open it syncs on library changes.
+// After sign-in: on launch and every return to the foreground it calls today.appOpened, brings the phone's
+// reminder notifications in line with the server and, once the import has been started and "Read new
+// screenshots automatically" is on, syncs the album. While the app is open it syncs on library changes.
 // A tap on a reminder notification routes to /shot/<screenshotId>.
 export function AppLifecycle() {
   const { isAuthenticated } = useConvexAuth();
@@ -47,6 +51,7 @@ export function AppLifecycle() {
     };
     const onActive = () => {
       appOpened({ tzOffsetMinutes: new Date().getTimezoneOffset(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }).catch(() => undefined);
+      syncReminderNotifications(upcomingReminders).catch(() => undefined);
       void syncIfStarted();
       void listenToLibrary();
     };

@@ -111,6 +111,7 @@ export default defineSchema({
     scheduledId: v.optional(v.id("_scheduled_functions")),
   })
     .index("by_user_dueAt", ["userId", "dueAt"])
+    .index("by_user_status_dueAt", ["userId", "status", "dueAt"])
     .index("by_screenshot", ["screenshotId"]),
 
   todos: defineTable({
@@ -146,7 +147,9 @@ export default defineSchema({
     keyHash: v.string(),
     userId: v.id("users"),
     createdAt: v.number(),
-  }).index("by_keyHash", ["keyHash"]),
+  })
+    .index("by_keyHash", ["keyHash"])
+    .index("by_user", ["userId"]),
 
   albums: defineTable({
     userId: v.id("users"),

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 import { nextConfidentDate } from "./lib/handful";
@@ -112,5 +112,22 @@ export const fireNow = mutation({
       (await ctx.db.insert("reminders", { userId, screenshotId, whenKey: when ?? undefined, ...fields }));
     if (active) await ctx.db.patch(active._id, fields);
     return { reminderId, text: message };
+  },
+});
+
+// The person's reminders that are still to come, soonest first. The phone uses this to put back local
+// notifications it is missing: after a reinstall, on a new phone, or when notifications were off when a reminder was set.
+// `after` is the phone's clock, passed in so the answer is never an old cached one.
+export const upcoming = query({
+  args: { after: v.number() },
+  handler: async (ctx, { after }) => {
+    const userId = await requireUserId(ctx);
+    // Only scheduled reminders are read. Turned-off and replaced ones keep their future date, and enough of them
+    // would otherwise fill the limit and push a live reminder out of the answer.
+    const rows = await ctx.db
+      .query("reminders")
+      .withIndex("by_user_status_dueAt", (q) => q.eq("userId", userId).eq("status", "scheduled").gt("dueAt", after))
+      .take(300);
+    return rows.map((r) => ({ reminderId: r._id, screenshotId: r.screenshotId, dueAt: r.dueAt, text: r.message }));
   },
 });

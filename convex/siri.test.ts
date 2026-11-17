@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 
 const model = vi.fn();
@@ -13,11 +13,13 @@ const modules = import.meta.glob("./**/*.ts");
 async function setup() {
   const t = convexTest(schema, modules);
   const userId = await t.run((ctx) => ctx.db.insert("users", {}));
-  const key = await t.mutation(internal.siri.mint, { userId });
-  return { t, userId, key };
+  const me = t.withIdentity({ subject: `${userId}|s` });
+  const { key } = await me.action(api.siri.enable, {});
+  return { t, userId, key, me };
 }
+// What the Shortcut does: post the key and the question as a form.
 const get = (t: ReturnType<typeof convexTest>, q: string, key: string) =>
-  t.fetch(`/siri/ask?key=${encodeURIComponent(key)}&q=${encodeURIComponent(q)}`);
+  t.fetch("/siri/ask", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ key, q }).toString() });
 
 beforeEach(() => {
   model.mockReset();
@@ -54,7 +56,7 @@ describe("siri/ask", () => {
   test("a missing or wrong key is 401 and never reaches the model", async () => {
     const { t } = await setup();
     expect((await get(t, "hi", "wrong")).status).toBe(401);
-    expect((await t.fetch("/siri/ask?q=hi")).status).toBe(401);
+    expect((await t.fetch("/siri/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: "hi" }) })).status).toBe(401);
     expect(model).not.toHaveBeenCalled();
   });
 
@@ -116,13 +118,11 @@ describe("siri/ask", () => {
       expect(res.status).toBe(200);
     });
 
-    test("the key in the URL and the question in the body, with an empty body field not overriding the URL", async () => {
+    test("the key in an Authorization header", async () => {
       const { t, key } = await setup();
       ok();
-      const res = await post(t, JSON.stringify({ key: "", question: "when" }), "application/json");
-      expect(res.status).toBe(401);
-      const res2 = await t.fetch(`/siri/ask?key=${key}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: "", Question: "when" }) });
-      expect(res2.status).toBe(200);
+      const res = await t.fetch("/siri/ask", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${key}` }, body: JSON.stringify({ question: "when" }) });
+      expect(res.status).toBe(200);
     });
 
     test("a wrong key is still 401 and an empty question still 400", async () => {
@@ -130,5 +130,74 @@ describe("siri/ask", () => {
       expect((await get(t, "when", " nope ")).status).toBe(401);
       expect((await post(t, JSON.stringify({ Key: key, Question: " " }), "application/json")).status).toBe(400);
     });
+  });
+
+  describe("the key never travels in the address", () => {
+    test("a key in the URL is ignored, and GET is not served at all", async () => {
+      const { t, key } = await setup();
+      model.mockResolvedValue({ found: true, answer: "It is on Friday.", sourceIds: [] });
+      const inUrl = await t.fetch(`/siri/ask?key=${key}&q=when`, { method: "POST" });
+      expect(inUrl.status).toBe(401);
+      expect((await t.fetch(`/siri/ask?key=${key}&q=when`)).status).toBe(404);
+      expect(model).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("turning Siri on and off", () => {
+  const ask = (t: ReturnType<typeof convexTest>, key: string) => get(t, "when", key);
+  beforeEach(() => model.mockResolvedValue({ found: true, answer: "ok", sourceIds: [] }));
+
+  test("status says whether it is on, and never contains the key", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await t.run((ctx) => ctx.db.insert("users", {}));
+    const me = t.withIdentity({ subject: `${userId}|s` });
+    expect(await me.query(api.siri.status, {})).toEqual({ on: false, since: null });
+    const { key } = await me.action(api.siri.enable, {});
+    const status = await me.query(api.siri.status, {});
+    expect(status.on).toBe(true);
+    expect(JSON.stringify(status)).not.toContain(key);
+    expect(key).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  test("turning it on again replaces the key: the old one stops working at once", async () => {
+    const { t, key, me } = await setup();
+    const { key: next } = await me.action(api.siri.enable, {});
+    expect(next).not.toBe(key);
+    expect((await ask(t, key)).status).toBe(401);
+    expect((await ask(t, next)).status).toBe(200);
+    expect(await t.run(async (ctx) => (await ctx.db.query("siriKeys").collect()).length)).toBe(1);
+  });
+
+  test("turning it off ends the key, and only that person's", async () => {
+    const { t, key, me } = await setup();
+    const otherId = await t.run((ctx) => ctx.db.insert("users", {}));
+    const { key: theirs } = await t.withIdentity({ subject: `${otherId}|s` }).action(api.siri.enable, {});
+    await me.mutation(api.siri.disable, {});
+    expect((await ask(t, key)).status).toBe(401);
+    expect((await ask(t, theirs)).status).toBe(200);
+    expect(await me.query(api.siri.status, {})).toEqual({ on: false, since: null });
+  });
+
+  test("a key answers from its owner's screenshots, not someone else's", async () => {
+    const { t, key, userId } = await setup();
+    await ask(t, key);
+    expect(search.mock.calls[0][0]).toBe(userId);
+  });
+
+  test("signed out, Siri cannot be turned on, off or read", async () => {
+    const t = convexTest(schema, modules);
+    await expect(t.action(api.siri.enable, {})).rejects.toThrow("Not signed in");
+    await expect(t.mutation(api.siri.disable, {})).rejects.toThrow("Not signed in");
+    await expect(t.query(api.siri.status, {})).rejects.toThrow("Not signed in");
+  });
+
+  test("an operator can end every key at once", async () => {
+    const { t, key } = await setup();
+    const otherId = await t.run((ctx) => ctx.db.insert("users", {}));
+    const { key: theirs } = await t.withIdentity({ subject: `${otherId}|s` }).action(api.siri.enable, {});
+    expect(await t.mutation(internal.siri.revokeAll, {})).toBe(2);
+    expect((await ask(t, key)).status).toBe(401);
+    expect((await ask(t, theirs)).status).toBe(401);
   });
 });

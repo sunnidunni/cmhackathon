@@ -4,7 +4,7 @@ import { useBigText } from "@/lib/bigText";
 import { confettiFor } from "@/components/delight/confettiPattern";
 import { PsstButton, text, usePalette } from "@/design/psst";
 import { localDay } from "../../../convex/lib/time";
-import { dayLabel, defaultReminder, dueParts, previewText, whenLabel } from "./plan";
+import { defaultReminder, dueParts, previewText, whenLabel } from "./plan";
 import { Banner, Headline, Options, Preview, Priming, TodayPreview } from "./ReminderViews";
 
 export type RemindState = {
@@ -38,13 +38,8 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
   const plan = fresh && existing?.state === "scheduled" ? { ...fresh, ...dueParts(existing.dueAt, tz) } : fresh;
   const isSet = saved || existing?.state === "scheduled";
   const off = isSet && notifOn === false;
-  const options = plan
-    ? [
-        { key: "day-before", title: `Day before, ${plan.clock}`, sub: plan.day, selected: true, available: true },
-        { key: "morning-of", title: "Morning of, 8:00 AM", sub: whenLabel(plan.date.when), selected: false, available: false },
-        { key: "two-days", title: "Two days before, 9:00 AM", sub: dayLabel(plan.dueAt - 86400000, tz), selected: false, available: false },
-      ]
-    : [];
+  // One reminder time for now. Other times would be listed here once they can actually be picked.
+  const options = plan ? [{ key: "day-before", title: `Day before, ${plan.clock}`, sub: plan.day, selected: true, available: true }] : [];
   const preview = shot && plan ? previewText(shot, plan.date, plan.dueAt, tz) : "";
   const when = plan ? `${plan.day.slice(0, 3)} ${plan.clock}` : "";
 
@@ -84,7 +79,7 @@ export function RemindBody({ shot, now, tz, notifOn, saved, failed, cancelFailed
             ) : (
               <>
                 <Preview label="What you'll get" body={preview} time={when} />
-                <Text style={[text.caption, { color: p.ink2 }]}>We&apos;ll remind you once per item. You can snooze or turn reminders off.</Text>
+                <Text style={[text.caption, { color: p.ink2 }]}>We&apos;ll remind you once per item. You can turn a reminder off anytime.</Text>
               </>
             )}
           </>

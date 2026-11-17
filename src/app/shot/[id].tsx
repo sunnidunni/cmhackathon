@@ -9,7 +9,6 @@ import { ZoomViewer } from "@/components/tabs/ZoomViewer";
 import { dateLabel, defaultReminder, monthDay, reminderLabel } from "@/components/rooms/format";
 import { KeeperFace, KeeperLine, PsstButton, ShotSticker, Skeleton, SoftCard, text, useKeeperColors, usePalette, keeperForRoom, type KeeperId } from "@/design/psst";
 import { RoomWash } from "@/components/rooms/RoomWash";
-import { useReminders } from "@/components/tabs/reminders";
 import { FIXTURES } from "@/lib/fixtures";
 import { shareScreenshot } from "@/lib/share";
 import { demoById, isDemoId, useDemoFallback, type DemoRow } from "@/components/rooms/demo";
@@ -18,7 +17,7 @@ import { UndoToast } from "@/components/rooms/UndoToast";
 import { MoveSheet } from "@/components/rooms/MoveSheet";
 import { ROOM_LABEL } from "@/components/rooms/RoomsParts";
 import { AlbumPickSheet } from "@/components/albums/AlbumPickSheet";
-import { cancelDismissed } from "@/lib/reminders";
+import { cancelDismissed, useReminderActions } from "@/lib/reminders";
 
 const UNDO_MS = 5000;
 
@@ -57,7 +56,7 @@ export default function Detail() {
   const markDone = useSafeMutation(api.shots.done);
   const move = useSafeMutation(api.shots.move);
   const retry = useSafeMutation(api.extract.retry);
-  const reminders = useReminders();
+  const reminders = useReminderActions();
   const [moveOpen, setMoveOpen] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [albumsOpen, setAlbumsOpen] = useState(false);
@@ -270,10 +269,9 @@ export default function Detail() {
                 label={primary ? (suggestion ? `Remind me ${suggestion.short}` : "Remind me") : "Choose a reminder time"}
                 disabled={!primary}
                 onPress={() => {
-                  if (!primary) return;
-                  if (isDemo) return router.push(`/remind/${id}` as never);
-                  setError(null);
-                  reminders.remind(shotId, primary.when, shot.title || undefined).catch(() => setError("That didn't save. Try again in a moment."));
+                  // The reminder sheet explains the notification, asks for permission when it is still undecided,
+                  // and says so plainly when notifications are off. Today's "Remind me" opens the same sheet.
+                  if (primary) router.push(`/remind/${id}` as never);
                 }}
               />
               <Text style={[text.caption, { color: p.ink2, textAlign: "center" }]}>
@@ -296,7 +294,6 @@ export default function Detail() {
         }}
       />
       {!isDemo ? <AlbumPickSheet visible={albumsOpen} screenshotId={shotId} onClose={() => setAlbumsOpen(false)} /> : null}
-      {reminders.sheet}
       {shot.imageUrl ? <ZoomViewer uri={shot.imageUrl} visible={zoomOpen} onClose={() => setZoomOpen(false)} /> : null}
     </View>
   );

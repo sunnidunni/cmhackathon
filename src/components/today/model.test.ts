@@ -63,7 +63,7 @@ describe("actions", () => {
   test("remind carries its default time", () => {
     const a = actionsFor(item({}), NOW, TZ);
     expect(a.primary).toBe("Remind me Mon 9:00 AM");
-    expect(a.note).toBe("We'll remind you once, the day before. You can snooze or turn reminders off.");
+    expect(a.note).toBe("We'll remind you once, the day before. You can turn the reminder off anytime.");
     expect(a.secondary).toBe("Already done");
   });
   test("money never pays", () => {

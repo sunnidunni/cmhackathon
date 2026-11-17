@@ -9,7 +9,8 @@ import { DEV_BUILD } from "@/lib/dev-flags";
 import { FIXTURES } from "@/lib/fixtures";
 import { useAutoRead } from "@/lib/auto-read";
 import { useSounds } from "@/lib/sfx";
-import { ensureNotificationPermission, hasNotificationPermission } from "@/lib/notifications";
+import { upcomingReminders } from "@/lib/lifecycle";
+import { ensureNotificationPermission, hasNotificationPermission, syncReminderNotifications } from "@/lib/notifications";
 import { DEV_TOOLS, useLibraryDiagnostics, usePhotoAccess, useReadAllPhotos } from "@/lib/photos";
 import { useSync } from "@/lib/sync";
 
@@ -73,9 +74,11 @@ export default function Settings() {
 
   async function toggleNotify(on: boolean) {
     if (!on) return Linking.openSettings();
-    const ok = await ensureNotificationPermission();
+    const ok = await ensureNotificationPermission().catch(() => false);
     setNotify(ok);
-    if (!ok) Linking.openSettings();
+    if (!ok) return Linking.openSettings();
+    // Reminders saved while notifications were off have no notification yet. Give them one now.
+    syncReminderNotifications(upcomingReminders).catch(() => undefined);
   }
 
   async function setAutoReadSaved(on: boolean) {
@@ -164,7 +167,7 @@ export default function Settings() {
               testID="notifications-switch"
             />
           </Group>
-          <Footer>{"We'll remind you once per item. You can snooze or turn reminders off."}</Footer>
+          <Footer>{"We'll remind you once per item. You can turn a reminder off anytime."}</Footer>
         </View>
 
         <View style={{ gap: 8 }}>
@@ -226,6 +229,7 @@ export default function Settings() {
               </View>
             </View>
             <ActionRow title="Upgrade" detail="Bring in more than 50 screenshots." onPress={() => router.push("/upgrade")} />
+            <ActionRow title="Ask with Siri" detail="Ask about your screenshots by voice." onPress={() => router.push("/siri")} />
           </Group>
         </View>
 
