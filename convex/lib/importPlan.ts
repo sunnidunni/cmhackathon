@@ -18,14 +18,3 @@ export function countImport(counter: { importWindowStart?: number; importCount?:
   const allowed = used < FREE_DAILY_IMPORTS;
   return { allowed, importWindowStart, importCount: allowed ? used + 1 : used };
 }
-
-// candidates are newest first. Free users only ever see the latest 50 in the library;
-// anything already known is skipped.
-export function pickToImport(
-  candidateIds: string[],
-  knownIds: Set<string>,
-  plan: "free" | "paid",
-): string[] {
-  const window = plan === "paid" ? candidateIds : candidateIds.slice(0, FREE_IMPORT_LIMIT);
-  return window.filter((id) => !knownIds.has(id));
-}

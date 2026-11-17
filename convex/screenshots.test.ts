@@ -15,9 +15,13 @@ async function setup() {
     ctx.db.insert("users", { isAnonymous: true, plan: "free" }),
   );
   const storeBlob = () => t.run((ctx) => ctx.storage.store(new Blob(["img"])));
+  // The caller's screenshots as the app pages through them once read, newest first.
+  const rowsOf = (owner: typeof userId) => t.run(async (ctx) => (await ctx.db.query("screenshots").collect()).filter((r) => r.userId === owner));
   return {
     t,
     userId,
+    otherId,
+    rowsOf,
     storeBlob,
     me: t.withIdentity({ subject: `${userId}|session1` }),
     other: t.withIdentity({ subject: `${otherId}|session2` }),
@@ -26,7 +30,7 @@ async function setup() {
 
 describe("screenshots", () => {
   test("create stores an uploaded row owned by the caller", async () => {
-    const { me, storeBlob, userId, t } = await setup();
+    const { me, storeBlob, userId, t, rowsOf } = await setup();
     const storageId = await storeBlob();
     const id = await me.mutation(api.screenshots.create, {
       deviceAssetId: "asset-1",
@@ -34,14 +38,13 @@ describe("screenshots", () => {
       takenAt: 1000,
     });
     const row = await t.run((ctx) => ctx.db.get(id!));
-    expect(row).toMatchObject({ userId, status: "uploaded", deviceAssetId: "asset-1" });
-    const list = await me.query(api.screenshots.list, {});
-    expect(list).toHaveLength(1);
-    expect(list[0].url).toBeTypeOf("string");
+    expect(row).toMatchObject({ userId, status: "uploaded", deviceAssetId: "asset-1", storageId });
+    expect(await rowsOf(userId)).toHaveLength(1);
+    expect(await t.run((ctx) => ctx.storage.getUrl(storageId))).toBeTypeOf("string");
   });
 
   test("a known deviceAssetId is skipped and not uploaded twice", async () => {
-    const { me, storeBlob } = await setup();
+    const { me, storeBlob, rowsOf, userId } = await setup();
     const first = await me.mutation(api.screenshots.create, {
       deviceAssetId: "asset-1",
       storageId: await storeBlob(),
@@ -58,39 +61,27 @@ describe("screenshots", () => {
       takenAt: 1000,
     });
     expect(second).toEqual(first);
-    expect(await me.query(api.screenshots.list, {})).toHaveLength(1);
+    expect(await rowsOf(userId)).toHaveLength(1);
   });
 
   test("users only see their own screenshots", async () => {
-    const { me, other, storeBlob } = await setup();
+    const { me, other, storeBlob, rowsOf, otherId } = await setup();
     await me.mutation(api.screenshots.create, {
       deviceAssetId: "asset-1",
       storageId: await storeBlob(),
       takenAt: 1000,
     });
-    expect(await other.query(api.screenshots.list, {})).toHaveLength(0);
+    expect(await rowsOf(otherId)).toHaveLength(0);
+    expect((await other.query(api.sync.progress, {})).total).toBe(0);
     expect(
       await other.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds: ["asset-1"] }),
     ).toEqual(["asset-1"]);
   });
 
-  test("list is newest first", async () => {
-    const { me, storeBlob } = await setup();
-    for (const [id, takenAt] of [["a", 1], ["b", 3], ["c", 2]] as const) {
-      await me.mutation(api.screenshots.create, {
-        deviceAssetId: id,
-        storageId: await storeBlob(),
-        takenAt,
-      });
-    }
-    const list = await me.query(api.screenshots.list, {});
-    expect(list.map((s) => s.deviceAssetId)).toEqual(["b", "c", "a"]);
-  });
-
   test("signed-out callers are rejected", async () => {
     const { t } = await setup();
     await expect(t.mutation(api.screenshots.generateUploadUrl, {})).rejects.toThrow("Not signed in");
-    await expect(t.query(api.screenshots.list, {})).rejects.toThrow("Not signed in");
+    await expect(t.query(api.screenshots.unknownDeviceAssetIds, { deviceAssetIds: ["a"] })).rejects.toThrow("Not signed in");
   });
 
   test("repeating create with the same storageId keeps the row's own image", async () => {

@@ -29,4 +29,4 @@ pr_review:
             kind: revyl
         always_verify:
             - The app launches to its first screen
-        system_prompt: Psst is an iPhone app with no login. It signs in anonymously in the background. The first screen is a photo-access priming screen, so allow photo access when asked.
+        system_prompt: Shots is an iPhone app with no login. It signs in anonymously in the background. The first screen is a photo-access priming screen, so allow photo access when asked.

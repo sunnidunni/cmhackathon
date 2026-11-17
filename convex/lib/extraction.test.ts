@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import { parseExtraction } from "./extraction";
-import { pickToImport } from "./importPlan";
 import { PLAYFUL_KEYS, SERIOUS_KEYS } from "./lines";
 import manifest from "../../src/content/manifest.json";
 
@@ -55,19 +54,6 @@ describe("parseExtraction", () => {
   });
   test("importance is clamped", () => {
     expect(parseExtraction(JSON.stringify({ ...base, importance: 9 })).importance).toBe(5);
-  });
-});
-
-describe("pickToImport", () => {
-  const ids = Array.from({ length: 80 }, (_, i) => `a${i}`);
-  test("free plan caps at the latest 50", () => {
-    expect(pickToImport(ids, new Set(), "free")).toEqual(ids.slice(0, 50));
-  });
-  test("paid plan takes everything", () => {
-    expect(pickToImport(ids, new Set(), "paid")).toHaveLength(80);
-  });
-  test("skips known ids, and known ids still count against the window", () => {
-    expect(pickToImport(ids, new Set(["a0", "a1"]), "free")).toEqual(ids.slice(2, 50));
   });
 });
 

@@ -4,7 +4,7 @@ Everything lives in `src/design` and is imported from `@/design`. Live gallery: 
 
 ## Tokens (`theme.ts`)
 
-- `APP_NAME` = "Psst". The only place the name lives in code.
+- `APP_NAME` = "Shots". The only place the name lives in code.
 - `colors`: `paper` #FAF6EE (every screen background), `ink` #2B1D14 (text, outlines), `inkSoft` (secondary text), `sun` #FDB92E (primary action, icon, title underline), `white` (stickers, bubbles), `line`.
 - `rooms[key]` for `deadlines | chats | money | ideas`: `{ label, character, color, tint }`. Deadlines #F59E0B, Chats #EC6FA3, Money #2FA37A, Ideas #8B7CF6. Unsorted uses `UNSORTED_ROOM` (ideas). `character` is always "Psst" (kept for code that reads it).
 - `spacing` (xxs 2 … xxxl 48), `radii` (sm 8, md 14, lg 20, xl 28, pill).
