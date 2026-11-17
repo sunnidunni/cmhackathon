@@ -54,25 +54,46 @@ describe("syncReminderNotifications", () => {
     expect(native.cancelScheduledNotificationAsync.mock.calls.map(([id]) => id)).toEqual(["stale", "missing"]);
   });
 
-  test("a reminder the person turns off while a sync is scheduling is not put back by that sync", async () => {
-    native.cancelAllScheduledNotificationsAsync.mockResolvedValue(undefined);
-    // The first schedule call is where the person turns off the third reminder.
-    native.scheduleNotificationAsync.mockImplementationOnce(async () => {
-      await cancelReminderNotification("third");
+  test("when the person turns a reminder off mid-sync, the sync starts over from a fresh picture: the rest are scheduled, the cancelled one is not", async () => {
+    // The server's answer changes once the person has turned "third" off.
+    let turnedOff = false;
+    const fetchUpcoming = vi.fn(async () => (turnedOff ? [soon("first", 60_000), soon("second", 120_000)] : [soon("first", 60_000), soon("second", 120_000), soon("third", 180_000)]));
+    const pendingNow: string[] = [];
+    native.getAllScheduledNotificationsAsync.mockImplementation(async () => pendingNow.map((identifier) => ({ identifier })));
+    native.scheduleNotificationAsync.mockImplementation(async (request: { identifier: string }) => {
+      pendingNow.push(request.identifier);
+      // Right after the first notification is scheduled, the person turns off the third reminder.
+      if (request.identifier === "first" && !turnedOff) {
+        turnedOff = true;
+        await cancelReminderNotification("third");
+      }
       return "id";
     });
-    await syncReminderNotifications(async () => [soon("first", 60_000), soon("second", 120_000), soon("third", 180_000)]);
-    const scheduled = native.scheduleNotificationAsync.mock.calls.map(([request]) => request.identifier);
-    // The sync stops at once: its picture of the server is out of date. The next sync schedules "second".
-    expect(scheduled).toEqual(["first"]);
+    await syncReminderNotifications(fetchUpcoming);
+    expect(fetchUpcoming).toHaveBeenCalledTimes(2);
+    expect(pendingNow).toEqual(["first", "second"]);
   });
 
-  test("delete everything during a sync stops it before it schedules anything", async () => {
+  test("delete everything during a sync: it starts over, finds nothing to schedule, and schedules nothing", async () => {
     native.cancelAllScheduledNotificationsAsync.mockResolvedValue(undefined);
+    let deleted = false;
     await syncReminderNotifications(async () => {
+      if (deleted) return [];
+      deleted = true;
       await cancelAllReminderNotifications();
       return [soon("first", 60_000)];
     });
+    expect(native.scheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
+  test("cancellations that never stop cannot keep a sync going forever", async () => {
+    native.cancelAllScheduledNotificationsAsync.mockResolvedValue(undefined);
+    const fetchUpcoming = vi.fn(async () => {
+      await cancelAllReminderNotifications();
+      return [soon("first", 60_000)];
+    });
+    await syncReminderNotifications(fetchUpcoming);
+    expect(fetchUpcoming).toHaveBeenCalledTimes(5);
     expect(native.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 
