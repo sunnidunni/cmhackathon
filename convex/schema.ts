@@ -119,7 +119,9 @@ export default defineSchema({
     done: v.boolean(),
     screenshotId: v.optional(v.id("screenshots")),
     createdAt: v.number(),
-  }).index("by_user_createdAt", ["userId", "createdAt"]),
+  })
+    .index("by_user_createdAt", ["userId", "createdAt"])
+    .index("by_screenshot", ["screenshotId"]),
 
   dailyPicks: defineTable({
     userId: v.id("users"),
