@@ -122,12 +122,12 @@ export const upcoming = query({
   args: { after: v.number() },
   handler: async (ctx, { after }) => {
     const userId = await requireUserId(ctx);
+    // Only scheduled reminders are read. Turned-off and replaced ones keep their future date, and enough of them
+    // would otherwise fill the limit and push a live reminder out of the answer.
     const rows = await ctx.db
       .query("reminders")
-      .withIndex("by_user_dueAt", (q) => q.eq("userId", userId).gt("dueAt", after))
+      .withIndex("by_user_status_dueAt", (q) => q.eq("userId", userId).eq("status", "scheduled").gt("dueAt", after))
       .take(300);
-    return rows
-      .filter((r) => r.status === "scheduled")
-      .map((r) => ({ reminderId: r._id, screenshotId: r.screenshotId, dueAt: r.dueAt, text: r.message }));
+    return rows.map((r) => ({ reminderId: r._id, screenshotId: r.screenshotId, dueAt: r.dueAt, text: r.message }));
   },
 });

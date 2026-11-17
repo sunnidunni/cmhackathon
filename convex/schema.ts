@@ -111,6 +111,7 @@ export default defineSchema({
     scheduledId: v.optional(v.id("_scheduled_functions")),
   })
     .index("by_user_dueAt", ["userId", "dueAt"])
+    .index("by_user_status_dueAt", ["userId", "status", "dueAt"])
     .index("by_screenshot", ["screenshotId"]),
 
   todos: defineTable({

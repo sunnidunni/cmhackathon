@@ -59,3 +59,14 @@ test("upcoming never includes another person's reminders, and needs a signed-in 
   expect(await me.query(api.reminders.upcoming, { after: 0 })).toEqual([]);
   await expect(t.query(api.reminders.upcoming, { after: 0 })).rejects.toThrow("Not signed in");
 });
+
+test("hundreds of turned-off reminders with future dates do not hide a live one", async () => {
+  const { me, shot, t, userId } = await setup();
+  const live = await me.mutation(api.reminders.set, { screenshotId: await shot("Live", 20), tzOffsetMinutes: TZ });
+  const anyShot = await shot("Old", 5);
+  // 320 dismissed reminders, all due before the live one: more than the query's limit.
+  await t.run(async (ctx) => {
+    for (let i = 0; i < 320; i++) await ctx.db.insert("reminders", { userId, screenshotId: anyShot, dueAt: Date.now() + 60_000 + i, message: "x", status: "dismissed" });
+  });
+  expect((await me.query(api.reminders.upcoming, { after: Date.now() })).map((r) => r.reminderId)).toEqual([live.reminderId]);
+});
