@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { todosFromText } from "./lib/llm";
+import { readText } from "./lib/shotText";
 import { insertTodos } from "./todos";
 
 const BATCH = 60;
@@ -16,14 +17,19 @@ export const batch = internalQuery({
       .withIndex("by_status_todosExtracted", (q) => q.eq("status", "ready").eq("todosExtracted", undefined))
       .take(BATCH);
     return {
-      rows: todo.map((r) => ({
-        id: r._id,
-        skip: SKIP_ROOMS.has(r.category ?? "unsorted") || !(r.text ?? r.summary),
-        title: r.title ?? "",
-        summary: r.summary ?? "",
-        text: r.text ?? "",
-        dates: (r.dates ?? []).map((d) => `${d.what}: ${d.when}${d.confident ? "" : " (not certain)"}`),
-      })),
+      rows: await Promise.all(
+        todo.map(async (r) => {
+          const text = await readText(ctx, r);
+          return {
+            id: r._id,
+            skip: SKIP_ROOMS.has(r.category ?? "unsorted") || !(text || r.summary),
+            title: r.title ?? "",
+            summary: r.summary ?? "",
+            text,
+            dates: (r.dates ?? []).map((d) => `${d.what}: ${d.when}${d.confident ? "" : " (not certain)"}`),
+          };
+        }),
+      ),
     };
   },
 });

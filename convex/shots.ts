@@ -9,6 +9,7 @@ import { reminderFor } from "./lib/cards";
 import { isUrgent, pickLineKey } from "./lib/extraction";
 import { deleteAlbumsBefore, forgetShot } from "./albums";
 import { chatDocIds } from "./lib/memoryDocs";
+import { deleteText } from "./lib/shotText";
 import { dismissActive } from "./reminders";
 
 async function mine(ctx: MutationCtx, id: Id<"screenshots">) {
@@ -92,6 +93,7 @@ async function deleteRow(ctx: MutationCtx, row: Doc<"screenshots">): Promise<Id<
     await ctx.db.delete(r._id);
   }
   await forgetShot(ctx, row._id);
+  await deleteText(ctx, row._id);
   await ctx.storage.delete(row.storageId).catch(() => undefined);
   await ctx.db.delete(row._id);
   return reminders.map((r) => r._id);
