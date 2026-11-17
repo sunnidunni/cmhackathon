@@ -82,13 +82,14 @@ export const recent = query({
   handler: async (ctx, { limit }) => {
     const userId = await requireUserId(ctx);
     const want = Math.max(0, Math.min(100, Math.floor(limit)));
-    // Screenshots still being read sit among the newest, so look a little past the limit to find enough ready ones.
-    const rows = await ctx.db
+    // The filter runs before the limit. The newest screenshots are often still being read (or failed), and
+    // taking the newest few and filtering afterwards could leave nothing even with ready ones just behind them.
+    const ready = await ctx.db
       .query("screenshots")
       .withIndex("by_user_takenAt", (q) => q.eq("userId", userId))
       .order("desc")
-      .take(want * 3);
-    const ready = rows.filter((r) => r.status === "ready" && r.hidden !== true).slice(0, want);
+      .filter((q) => q.and(q.eq(q.field("status"), "ready"), q.neq(q.field("hidden"), true)))
+      .take(want);
     return await Promise.all(ready.map((r) => shape(ctx, r)));
   },
 });

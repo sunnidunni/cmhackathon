@@ -88,6 +88,15 @@ describe("rooms.recent", () => {
     expect(await me.query(api.rooms.recent, { limit: 0 })).toEqual([]);
   });
 
+  test("ready screenshots are found even when a long run of newer ones is not ready", async () => {
+    const { me, shot } = await setup();
+    await shot("ready old", 1);
+    await shot("ready older", 0);
+    // 150 newer screenshots that failed, or are still waiting: more than three times the limit asked for below.
+    for (let i = 0; i < 150; i++) await shot(`stuck ${i}`, 100 + i, { status: i % 2 ? "failed" : "uploaded" });
+    expect((await me.query(api.rooms.recent, { limit: 40 })).map((i) => i.title)).toEqual(["ready old", "ready older"]);
+  });
+
   test("never returns more than 100, whatever is asked, and only the caller's", async () => {
     const { me, other, shot } = await setup();
     for (let i = 0; i < 120; i++) await shot(`s${i}`, i);
